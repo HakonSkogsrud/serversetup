@@ -1,6 +1,6 @@
 ---
 - name: Configure Samba Share on AlmaLinux
-  hosts: localhost # Change if running against a remote host in inventory
+  hosts: all # Change if running against a remote host in inventory
   become: yes # Most tasks require root privileges
   vars_files:
     - vars/secrets.yml

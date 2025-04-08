@@ -1,7 +1,7 @@
 ---
 - name: Install and Configure Docker CE
-  hosts: localhost  # <-- Replace with your target host group or 'all'
-  become: true              # <-- Run tasks with sudo privileges
+  hosts: all
+  become: true 
 
   tasks:
     - name: Ensure prerequisites are installed (yum-utils)
@@ -21,7 +21,7 @@
         name:
           - docker-ce
           - docker-ce-cli
-          - containerd.io
+          - containerd.ioTT
           - docker-compose-plugin
         state: present
         update_cache: yes # Recommended after adding a new repo
