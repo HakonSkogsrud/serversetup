@@ -1,0 +1,150 @@
+---
+- name: Configure Samba Share on AlmaLinux
+  hosts: localhost # Change if running against a remote host in inventory
+  become: yes # Most tasks require root privileges
+  vars_files:
+    - vars/secrets.yml
+  vars:
+    smb_user: haaksk
+    smb_group: sambausers
+    smb_share_path: /mnt/storage/smb
+    sudo_group: wheel # Standard sudo group on AlmaLinux
+
+  tasks:
+    - name: Ensure necessary packages are installed
+      ansible.builtin.dnf:
+        name:
+          - samba         # Samba server
+          - samba-client  # For smbpasswd utility
+          - policycoreutils-python-utils # For semanage/seboolean modules (check exact name if needed)
+          - firewalld     # Ensure firewalld is installed if managing it
+        state: present
+        update_cache: yes
+        disablerepo: "45drives_stable"
+
+    - name: Ensure firewalld service is started and enabled
+      ansible.builtin.systemd:
+        name: firewalld.service
+        state: started
+        enabled: yes
+
+    - name: Create the Samba group
+      ansible.builtin.group:
+        name: "{{ smb_group }}"
+        state: present
+
+    - name: Create the Samba user
+      ansible.builtin.user:
+        name: "{{ smb_user }}"
+        state: present
+        shell: /bin/bash
+        groups:
+          - "{{ sudo_group }}" # Add to sudo group
+          - "{{ smb_group }}"  # Add to samba group
+        append: yes # Append groups, don't replace
+
+    - name: Set Samba password for the user
+      ansible.builtin.shell: "echo -ne '{{ smb_user_password }}\\n{{ smb_user_password }}\\n' | smbpasswd -s -a {{ smb_user }}"
+      args:
+        executable: /bin/bash
+      changed_when: true # Assume password change always happens for simplicity
+      no_log: true # Prevent password from appearing in logs
+
+    - name: Ensure the Samba share directory exists
+      ansible.builtin.file:
+        path: "{{ smb_share_path }}"
+        state: directory
+        mode: '0770' # Set initial permissions (will be reaffirmed)
+        owner: root
+        group: "{{ smb_group }}"
+
+    - name: Set ownership and permissions on the share directory
+      ansible.builtin.file:
+        path: "{{ smb_share_path }}"
+        owner: root
+        group: "{{ smb_group }}"
+        mode: '0770'
+        state: directory # Ensure it's treated as a directory
+
+    - name: Set SELinux context for the Samba share directory
+      community.general.sefcontext:
+        target: "{{ smb_share_path }}(/.*)?"
+        setype: samba_share_t
+        state: present
+
+    - name: Apply SELinux context changes immediately
+      ansible.builtin.command: "restorecon -R -v {{ smb_share_path }}"
+      changed_when: true # restorecon output indicates changes
+
+    - name: Enable necessary Samba SELinux booleans
+      ansible.posix.seboolean:
+        name: "{{ item }}"
+        state: yes
+        persistent: yes
+      loop:
+        - samba_enable_home_dirs
+        - samba_export_all_rw
+
+    - name: Get current state of Samba SELinux booleans (for verification)
+      ansible.builtin.command: "getsebool samba_enable_home_dirs samba_export_all_rw"
+      register: sebool_status
+      changed_when: false # This command doesn't change state
+
+    - name: Display SELinux boolean status
+      ansible.builtin.debug:
+        var: sebool_status.stdout_lines
+
+    - name: Allow Samba service through the firewall
+      ansible.posix.firewalld:
+        service: samba
+        permanent: yes
+        state: enabled
+        immediate: yes # Apply the rule to the running configuration immediately
+
+    - name: Configure Samba share in smb.conf
+      ansible.builtin.blockinfile:
+        path: /etc/samba/smb.conf
+        block: |
+          [share]
+             comment = Cross-Platform Shared Folder
+             path = {{ smb_share_path }}
+             browseable = Yes
+             read only = No
+             valid users = @{{ smb_group }}
+
+             # Permissions
+             force group = {{ smb_group }}
+             create mask = 0660
+             directory mask = 0770
+             inherit permissions = yes
+
+             # macOS Compatibility (VFS Objects)
+             vfs objects = fruit streams_xattr
+             fruit:metadata = stream
+             fruit:model = MacSamba
+             fruit:posix_rename = yes
+             fruit:veto_appledouble = no
+             fruit:wipe_intentionally_left_blank_rfork = yes
+             fruit:delete_empty_adfiles = yes
+        state: present
+        create: no # Don't create smb.conf if it doesn't exist
+        marker: "# ANSIBLE MANAGED BLOCK FOR {{ smb_share_path }}"
+      notify: Restart Samba Services # Notify handler if change is made
+
+    - name: Ensure Samba services are enabled and running
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - smb.service
+        - nmb.service
+
+  handlers:
+    - name: Restart Samba Services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - smb.service
+        - nmb.service

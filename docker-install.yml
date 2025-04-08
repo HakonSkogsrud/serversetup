@@ -1,0 +1,42 @@
+---
+- name: Install and Configure Docker CE
+  hosts: localhost  # <-- Replace with your target host group or 'all'
+  become: true              # <-- Run tasks with sudo privileges
+
+  tasks:
+    - name: Ensure prerequisites are installed (yum-utils)
+      ansible.builtin.dnf:
+        name: yum-utils
+        state: present
+        update_cache: yes # Optional: update cache before installing
+
+    - name: Add Docker CE repository
+      ansible.builtin.command:
+        cmd: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        creates: /etc/yum.repos.d/docker-ce.repo # Makes the task idempotent (won't run if repo file exists)
+      changed_when: true # Assume change if command runs (idempotency handled by 'creates')
+
+    - name: Install Docker packages
+      ansible.builtin.dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: yes # Recommended after adding a new repo
+
+    - name: Ensure Docker service is started and enabled
+      ansible.builtin.systemd:
+        name: docker
+        state: started   # Ensure the service is running
+        enabled: yes     # Ensure the service starts on boot
+
+    - name: Add user 'haaksk' to the docker group
+      ansible.builtin.user:
+        name: haaksk       # The user to modify
+        groups: docker     # The group to add the user to
+        append: yes        # Add the group, don't replace existing groups
+      # Note: The user 'haaksk' must already exist on the target system.
+      # This change requires the user 'haaksk' to log out and log back in
+      # for the new group membership to take effect.
