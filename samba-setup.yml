@@ -1,14 +1,10 @@
 ---
 - name: Configure Samba Share on AlmaLinux
-  hosts: all # Change if running against a remote host in inventory
-  become: yes # Most tasks require root privileges
+  hosts: all
+  become: true
   vars_files:
+    - vars/common.yml
     - vars/secrets.yml
-  vars:
-    smb_user: haaksk
-    smb_group: sambausers
-    smb_share_path: /mnt/storage/smb
-    sudo_group: wheel # Standard sudo group on AlmaLinux
 
   tasks:
     - name: Ensure necessary packages are installed
@@ -19,14 +15,14 @@
           - policycoreutils-python-utils # For semanage/seboolean modules (check exact name if needed)
           - firewalld     # Ensure firewalld is installed if managing it
         state: present
-        update_cache: yes
+        update_cache: true
         disablerepo: "45drives_stable"
 
     - name: Ensure firewalld service is started and enabled
       ansible.builtin.systemd:
         name: firewalld.service
         state: started
-        enabled: yes
+        enabled: true
 
     - name: Create the Samba group
       ansible.builtin.group:
@@ -41,14 +37,15 @@
         groups:
           - "{{ sudo_group }}" # Add to sudo group
           - "{{ smb_group }}"  # Add to samba group
-        append: yes # Append groups, don't replace
+        append: true # Append groups, don't replace
 
     - name: Set Samba password for the user
-      ansible.builtin.shell: "echo -ne '{{ smb_user_password }}\\n{{ smb_user_password }}\\n' | smbpasswd -s -a {{ smb_user }}"
+      ansible.builtin.shell:
+        cmd: "set -o pipefail && echo -ne '{{ smb_user_password }}\\n{{ smb_user_password }}\\n' | smbpasswd -s -a {{ smb_user }}"
       args:
-        executable: /bin/bash
-      changed_when: true # Assume password change always happens for simplicity
-      no_log: true # Prevent password from appearing in logs
+        executable: /bin/bash # pipefail is a bash/zsh feature, good to be explicit
+      changed_when: true
+      no_log: true
 
     - name: Ensure the Samba share directory exists
       ansible.builtin.file:
@@ -79,8 +76,8 @@
     - name: Enable necessary Samba SELinux booleans
       ansible.posix.seboolean:
         name: "{{ item }}"
-        state: yes
-        persistent: yes
+        state: true
+        persistent: true
       loop:
         - samba_enable_home_dirs
         - samba_export_all_rw
@@ -97,9 +94,9 @@
     - name: Allow Samba service through the firewall
       ansible.posix.firewalld:
         service: samba
-        permanent: yes
+        permanent: true
         state: enabled
-        immediate: yes # Apply the rule to the running configuration immediately
+        immediate: true # Apply the rule to the running configuration immediately
 
     - name: Configure Samba share in smb.conf
       ansible.builtin.blockinfile:
@@ -127,15 +124,15 @@
              fruit:wipe_intentionally_left_blank_rfork = yes
              fruit:delete_empty_adfiles = yes
         state: present
-        create: no # Don't create smb.conf if it doesn't exist
-        marker: "# ANSIBLE MANAGED BLOCK FOR {{ smb_share_path }}"
+        create: false # Don't create smb.conf if it doesn't exist
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ smb_share_path }}"
       notify: Restart Samba Services # Notify handler if change is made
 
     - name: Ensure Samba services are enabled and running
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: started
-        enabled: yes
+        enabled: true
       loop:
         - smb.service
         - nmb.service

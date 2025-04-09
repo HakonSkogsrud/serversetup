@@ -1,0 +1,13 @@
+# filepath: /Users/hakon.skogsrud/Workspace/serversetup/.pre-commit-config.yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v6.20.0
+    hooks:
+      - id: ansible-lint

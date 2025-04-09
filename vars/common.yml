@@ -1,0 +1,5 @@
+smb_user: haaksk
+server_user: haaksk
+smb_group: sambausers
+sudo_group: wheel
+smb_share_path: /mnt/storage/smb

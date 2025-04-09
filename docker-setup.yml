@@ -1,14 +1,16 @@
 ---
 - name: Install and Configure Docker CE
   hosts: all
-  become: true 
+  become: true
+  vars_files:
+    - vars/common.yml
 
   tasks:
     - name: Ensure prerequisites are installed (yum-utils)
       ansible.builtin.dnf:
         name: yum-utils
         state: present
-        update_cache: yes # Optional: update cache before installing
+        update_cache: true
 
     - name: Add Docker CE repository
       ansible.builtin.command:
@@ -24,19 +26,16 @@
           - containerd.ioTT
           - docker-compose-plugin
         state: present
-        update_cache: yes # Recommended after adding a new repo
+        update_cache: true
 
     - name: Ensure Docker service is started and enabled
       ansible.builtin.systemd:
         name: docker
         state: started   # Ensure the service is running
-        enabled: yes     # Ensure the service starts on boot
+        enabled: true     # Ensure the service starts on boot
 
-    - name: Add user 'haaksk' to the docker group
+    - name: Add user to the docker group
       ansible.builtin.user:
-        name: haaksk       # The user to modify
-        groups: docker     # The group to add the user to
-        append: yes        # Add the group, don't replace existing groups
-      # Note: The user 'haaksk' must already exist on the target system.
-      # This change requires the user 'haaksk' to log out and log back in
-      # for the new group membership to take effect.
+        name: "{{ server_user }}"  # Use the shared variable
+        groups: docker
+        append: true
