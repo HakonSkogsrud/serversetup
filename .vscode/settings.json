@@ -2,5 +2,6 @@
     "yaml.schemas": {
         "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook": "file:///Users/hakon.skogsrud/Workspace/serversetup/docker-install.yml",
         "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/vars.json": "file:///Users/hakon.skogsrud/Workspace/serversetup/vars/common.yml"
-    }
+    },
+    "ansible.python.interpreterPath": "/Users/hakon.skogsrud/Workspace/serversetup/.venv/bin/python"
 }
