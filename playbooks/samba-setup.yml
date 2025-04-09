@@ -10,13 +10,13 @@
     - name: Ensure necessary packages are installed
       ansible.builtin.dnf:
         name:
-          - samba         # Samba server
-          - samba-client  # For smbpasswd utility
+          - samba # Samba server
+          - samba-client # For smbpasswd utility
           - policycoreutils-python-utils # For semanage/seboolean modules (check exact name if needed)
-          - firewalld     # Ensure firewalld is installed if managing it
+          - firewalld # Ensure firewalld is installed if managing it
         state: present
         update_cache: true
-        disablerepo: "45drives_stable"
+        disablerepo: 45drives_stable
 
     - name: Ensure firewalld service is started and enabled
       ansible.builtin.systemd:
@@ -36,12 +36,12 @@
         shell: /bin/bash
         groups:
           - "{{ sudo_group }}" # Add to sudo group
-          - "{{ smb_group }}"  # Add to samba group
+          - "{{ smb_group }}" # Add to samba group
         append: true # Append groups, don't replace
 
     - name: Set Samba password for the user
       ansible.builtin.shell:
-        cmd: "set -o pipefail && echo -ne '{{ smb_user_password }}\\n{{ smb_user_password }}\\n' | smbpasswd -s -a {{ smb_user }}"
+        cmd: set -o pipefail && echo -ne '{{ smb_user_password }}\n{{ smb_user_password }}\n' | smbpasswd -s -a {{ smb_user }}
       args:
         executable: /bin/bash # pipefail is a bash/zsh feature, good to be explicit
       changed_when: true
@@ -51,7 +51,7 @@
       ansible.builtin.file:
         path: "{{ smb_share_path }}"
         state: directory
-        mode: '0770' # Set initial permissions (will be reaffirmed)
+        mode: "0770" # Set initial permissions (will be reaffirmed)
         owner: root
         group: "{{ smb_group }}"
 
@@ -60,7 +60,7 @@
         path: "{{ smb_share_path }}"
         owner: root
         group: "{{ smb_group }}"
-        mode: '0770'
+        mode: "0770"
         state: directory # Ensure it's treated as a directory
 
     - name: Set SELinux context for the Samba share directory
@@ -70,7 +70,7 @@
         state: present
 
     - name: Apply SELinux context changes immediately
-      ansible.builtin.command: "restorecon -R -v {{ smb_share_path }}"
+      ansible.builtin.command: restorecon -R -v {{ smb_share_path }}
       changed_when: true # restorecon output indicates changes
 
     - name: Enable necessary Samba SELinux booleans
@@ -83,7 +83,7 @@
         - samba_export_all_rw
 
     - name: Get current state of Samba SELinux booleans (for verification)
-      ansible.builtin.command: "getsebool samba_enable_home_dirs samba_export_all_rw"
+      ansible.builtin.command: getsebool samba_enable_home_dirs samba_export_all_rw
       register: sebool_status
       changed_when: false # This command doesn't change state
 

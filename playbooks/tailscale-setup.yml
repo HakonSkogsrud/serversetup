@@ -8,8 +8,8 @@
       ansible.builtin.get_url:
         url: https://tailscale.com/install.sh
         dest: /tmp/install.sh
-        mode: '0755'
+        mode: "0755"
 
     - name: Run Tailscale install script
-      ansible.builtin.command: "bash -o pipefail /tmp/install.sh"
+      ansible.builtin.command: bash -o pipefail /tmp/install.sh
       changed_when: true

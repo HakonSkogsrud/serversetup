@@ -4,7 +4,7 @@ Ansible playbooks for homelab. Currently I use Alma linux.
 
 Run files like this
 ```sh
-ansible-playbook -i inventory.yml --ask-vault-pass -K samba-setup.yml
+ç --ask-vault-pass -K samba-setup.yml
 ```
 
 ## Setup

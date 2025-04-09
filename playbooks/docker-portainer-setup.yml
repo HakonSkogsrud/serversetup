@@ -31,12 +31,12 @@
     - name: Ensure Docker service is started and enabled
       ansible.builtin.systemd:
         name: docker
-        state: started   # Ensure the service is running
-        enabled: true     # Ensure the service starts on boot
+        state: started # Ensure the service is running
+        enabled: true # Ensure the service starts on boot
 
     - name: Add user to the docker group
       ansible.builtin.user:
-        name: "{{ server_user }}"  # Use the shared variable
+        name: "{{ server_user }}" # Use the shared variable
         groups: docker
         append: true
 

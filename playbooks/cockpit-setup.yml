@@ -7,22 +7,22 @@
     - name: Ensure Cockpit package is installed
       ansible.builtin.dnf:
         name: cockpit
-        state: present       # Ensures the package is installed
-        update_cache: yes    # Good practice to update cache before installing
+        state: present # Ensures the package is installed
+        update_cache: true # Good practice to update cache before installing
 
     - name: Enable and start Cockpit socket
       ansible.builtin.systemd:
         name: cockpit.socket # Cockpit listens via socket activation
-        enabled: yes         # Ensure it starts on boot (equivalent to systemctl enable)
-        state: started       # Ensure it's running now (equivalent to systemctl start)
+        enabled: true # Ensure it starts on boot (equivalent to systemctl enable)
+        state: started # Ensure it's running now (equivalent to systemctl start)
 
     # Note: This task requires the ansible.posix collection
     # Install with: ansible-galaxy collection install ansible.posix
     - name: Allow Cockpit service through firewalld
       ansible.posix.firewalld:
-        service: cockpit     # The predefined cockpit service name
-        permanent: yes       # Make the rule persistent (like --permanent)
-        state: enabled       # Ensure the rule exists and is active (like --add-service)
-        immediate: yes       # Apply the rule to the running configuration immediately (like the non-permanent --add-service)
+        service: cockpit # The predefined cockpit service name
+        permanent: true # Make the rule persistent (like --permanent)
+        state: enabled # Ensure the rule exists and is active (like --add-service)
+        immediate: true # Apply the rule to the running configuration immediately (like the non-permanent --add-service)
       # This single task replaces the two firewall-cmd commands and the need for a separate reload/restart.
       # It ensures the service is allowed both persistently and in the current runtime configuration.

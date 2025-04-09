@@ -1,3 +1,4 @@
+---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -10,3 +11,4 @@ repos:
     rev: v6.20.0
     hooks:
       - id: ansible-lint
+        args: [--fix=all]
