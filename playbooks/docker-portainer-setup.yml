@@ -39,3 +39,18 @@
         name: "{{ server_user }}"  # Use the shared variable
         groups: docker
         append: true
+
+    - name: Create Docker volume for Portainer
+      ansible.builtin.command:
+        cmd: docker volume create portainer_data
+        creates: /var/lib/docker/volumes/portainer_data
+
+    - name: Run Portainer container
+      ansible.builtin.command:
+        cmd: >
+          docker run -d -p 8000:8000 -p 9443:9443
+          --name portainer --restart=always
+          -v /var/run/docker.sock:/var/run/docker.sock
+          -v portainer_data:/data
+          portainer/portainer-ce:lts
+        creates: /var/lib/docker/containers/portainer
