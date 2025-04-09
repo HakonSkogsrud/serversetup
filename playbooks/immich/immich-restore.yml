@@ -1,0 +1,184 @@
+---
+- name: Stop, Update, Restore, and Restart Immich
+  hosts: all # <-- Replace with your host or group name from inventory
+  become: true # Run tasks with root privileges (needed for Docker usually)
+
+  vars_files:
+    - vars/secrets.yml # Load sensitive variables like the DB password
+
+  vars:
+    # Paths
+    upload_location: /mnt/storage/immich/library # Absolute path on the host
+    db_data_location: /mnt/storage/immich/postgres # Absolute path for backups on host
+    db_backup_location: /mnt/storage/immich/backups
+    immich_dir: /usr/home/haaksk/immich # Working dir for docker-compose
+
+    # Immich Config
+    immich_version: release # Used for image tags usually, might not be directly used by 'latest' pull
+    immich_compose_url: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+
+    db_username: postgres
+    db_database_name: immich # Name of the database within postgres
+
+    # Safety flag for deleting DB data - DEFAULT IS FALSE!
+    force_delete_db_data: false # SET TO true EXPLICITLY TO WIPE DB DATA
+
+  tasks:
+    - name: Ensure required directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755" # Adjust permissions as needed
+      loop:
+        - "{{ immich_dir }}"
+        - "{{ upload_location }}" # Ensure library dir exists
+        - "{{ db_data_location }}" # Ensure backups dir exists
+        - "{{ db_backup_location }}" # Ensure backups dir exists
+
+    - name: Create .env file for Docker Compose from template
+      ansible.builtin.template:
+        src: immich.env.j2 # Template file (create this)
+        dest: "{{ immich_dir }}/.env"
+        mode: "0640" # Restrict permissions
+
+    - name: Download latest docker-compose.yml
+      ansible.builtin.get_url:
+        url: "{{ immich_compose_url }}"
+        dest: "{{ immich_dir }}/docker-compose.yml"
+        mode: "0644"
+    # Consider adding checksum validation if needed
+
+    - name: Stop and remove all Immich containers and volumes (DANGER!)
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        state: absent
+        remove_volumes: true
+      register: compose_down
+      # This is equivalent to 'docker compose down -v'
+
+    - name: Debug output from compose down
+      ansible.builtin.debug:
+        var: compose_down
+      when: compose_down is defined
+
+    # --- DANGEROUS OPERATION: Wiping Postgres Data ---
+    - name: Check if Postgres data directory exists
+      ansible.builtin.stat:
+        path: "{{ db_data_location }}" # Check the *host* path where backups are
+      register: db_data_stat
+
+    - name: Wipe existing Postgres data directory (IF force_delete_db_data is true)
+      ansible.builtin.file:
+        path: "{{ db_data_location }}" # Remove the *host* path
+        state: absent
+      when:
+        - force_delete_db_data | bool # Only run if explicitly set to true
+        - db_data_stat.stat.exists
+        - db_data_stat.stat.isdir
+      notify: Warn about data deletion # Handler defined below
+
+    - name: Ensure Postgres data directory exists (recreate if wiped)
+      ansible.builtin.file:
+        path: "{{ db_data_location }}"
+        state: directory
+        mode: "0755" # Or appropriate permissions for postgres user inside container
+    # --- End Dangerous Operation ---
+
+    - name: Pull latest Immich images
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        pull: always
+      register: compose_pull
+
+    - name: Debug output from compose pull
+      ansible.builtin.debug:
+        var: compose_pull
+      when: compose_pull is defined
+
+    - name: Create Immich containers (but do not start them yet)
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        state: present
+        recreate: always
+      register: compose_create
+
+    - name: Debug output from compose create
+      ansible.builtin.debug:
+        var: compose_create.stdout_lines
+      when: compose_create is defined
+
+    - name: Start only the immich_postgres container
+      community.docker.docker_container:
+        name: immich_postgres # Assumes this is the service name in docker-compose.yml
+        state: started
+        # Note: docker_compose_v2 doesn't easily start *just one* service.
+        # Using docker_container is more direct for this step.
+      register: postgres_start
+
+    - name: Debug output from postgres start
+      ansible.builtin.debug:
+        var: postgres_start
+      when: postgres_start is defined
+
+    - name: Wait for Postgres server to initialize
+      ansible.builtin.pause:
+        seconds: 15 # Increased slightly for safety
+        prompt: Waiting 15 seconds for PostgreSQL to start...
+
+    - name: Find the latest database dump file
+      ansible.builtin.find:
+        paths: "{{ db_backup_location }}"
+        patterns: "*.sql.gz" # Adjust if your dump files have a different pattern
+        use_regex: false
+        # Sorting happens automatically based on parameters below
+      register: find_result
+
+    # Sort manually in case find module doesn't sort as expected or for clarity
+    - name: Set fact for the latest dump file path
+      ansible.builtin.set_fact:
+        latest_dump_file: "{{ (find_result.files | sort(attribute='mtime', reverse=true) | first).path }}"
+      when: find_result.files | length > 0
+
+    - name: Fail if no dump file found
+      ansible.builtin.fail:
+        msg: No database dump file (*.sql.gz) found in {{ db_backup_location }}
+      when: find_result.files | length == 0
+
+    - name: Restore database from latest dump
+      ansible.builtin.shell:
+        # Ensure bash is used for pipes. Pass PGPASSWORD via environment.
+        cmd: >
+          set -o pipefail &&
+          gunzip --stdout "{{ latest_dump_file }}" |
+          sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" |
+          docker exec -i immich_postgres psql --dbname=postgres --username={{ db_username }}
+        executable: /bin/bash
+      environment:
+        PGPASSWORD: "{{ db_password }}" # Pass password securely via environment
+      register: db_restore
+      changed_when: true # Restore always counts as a change
+      # NOTE: The original command uses --dbname=postgres. Verify this is correct for your backup.
+      # Often, restores target the specific database (--dbname=immich) after it's created.
+      # If this fails, you might need to adjust the --dbname parameter or ensure the dump
+      # handles database creation/connection appropriately.
+
+    - name: Debug output from DB restore
+      ansible.builtin.debug:
+        var: db_restore.stdout_lines
+      when: db_restore is defined
+
+    - name: Start all remaining Immich services
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        state: present # Ensures services are running ('up -d')
+      register: compose_up
+
+    - name: Debug output from compose up
+      ansible.builtin.debug:
+        var: compose_up
+      when: compose_up is defined
+
+  handlers:
+    - name: Warn about data deletion
+      ansible.builtin.debug:
+        msg: "WARNING: Host directory '{{ db_data_location }}' was deleted because 'force_delete_db_data' was set to true."
