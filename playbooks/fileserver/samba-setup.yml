@@ -1,10 +1,10 @@
 ---
 - name: Configure Samba Share on AlmaLinux
-  hosts: all
+  hosts: fileserver
   become: true
   vars_files:
-    - vars/common.yml
-    - vars/secrets.yml
+    - ../../vars/common.yml
+    - ../../vars/secrets.yml
 
   tasks:
     - name: Ensure necessary packages are installed

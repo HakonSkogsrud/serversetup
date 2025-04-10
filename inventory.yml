@@ -1,5 +1,6 @@
 ---
 all:
   hosts:
-    10.0.0.41:
+    fileserver:
+      ansible_host: 10.0.0.44
       ansible_user: haaksk

@@ -1,0 +1,53 @@
+---
+- name: Configure AlmaLinux VM User, Directory, and VirtioFS Mount
+  hosts: fileserver
+  become: true
+  vars_files:
+    - ../../vars/common.yml
+    - ../../vars/secrets.yml
+
+  tasks:
+    - name: Ensure wheel group exists
+      ansible.builtin.group:
+        name: wheel
+        state: present
+
+    - name: Create user 'haaksk' with hashed password from Vault and add to 'wheel' group
+      ansible.builtin.user:
+        name: haaksk
+        state: present
+        shell: /bin/bash
+        create_home: true
+        password: "{{ haaksk_vault_password | password_hash('sha512') }}" # Reference Vault variable & hash it
+        groups: wheel # Add user to wheel group for sudo access
+        append: true # Add to groups without removing existing ones
+
+    - name: Create the mount point directory /mnt/storage/smb
+      ansible.builtin.file:
+        path: /mnt/storage/smb
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Add VirtioFS entry to /etc/fstab
+      ansible.posix.mount:
+        path: /mnt/storage/smb # The mount point inside the VM
+        src: smb # !! The VirtioFS TAG defined in Proxmox VM config !!
+        fstype: virtiofs # Filesystem type
+        opts: defaults # Mount options (consider adding 'nofail' if desired)
+        dump: 0 # fstab dump field
+        passno: 0 # fstab pass field
+        state: present # Ensures the line exists in fstab
+      notify: Mount filesystems # Attempt to mount after fstab is updated
+
+  handlers:
+    - name: Mount filesystems
+      ansible.posix.mount:
+        path: /mnt/storage/smb
+        src: smb
+        fstype: virtiofs
+        state: mounted
+      listen: Mount filesystems
+      # Note: This ensures the specific mount point is mounted.
+      # It avoids issues with other unrelated fstab entries.
