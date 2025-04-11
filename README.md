@@ -4,7 +4,7 @@ Ansible playbooks for homelab. Currently I use Alma linux.
 
 Run files like this
 ```sh
-ç --ask-vault-pass -K samba-setup.yml
+ansible-playbook -i inventory.yml --ask-vault-pass -K samba-setup.yml
 ```
 
 ## Setup
@@ -16,6 +16,7 @@ brew install ansible ansible-lint
 
 ansible-galaxy collection install community.general --force
 ansible-galaxy collection install ansible.posix --force
+ansible-galaxy collection install community.docker --force
 ```
 ## Development
 
