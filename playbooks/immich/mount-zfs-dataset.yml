@@ -1,143 +1,38 @@
 ---
-- name: Configure Immich VM (Host-Side Permissions for VirtioFS - GID 1000 Fix)
-  hosts: immich # Target the AlmaLinux VM running Immich (ensure this matches your inventory)
-  become: true # Requires root privileges on the target VM
+- name: Mount VirtioFS
+  hosts: immich
+  become: true
   vars_files:
     - vars.yml # Assumes vars.yml contains mount_path and virtiofs_tag
-  # Example vars.yml content:
-  # mount_path: /mnt/storage/immich
-  # virtiofs_tag: immich-storage # The tag defined in Proxmox VM hardware settings
 
-  # Define UIDs, GIDs, and directory paths
   vars:
-    # --- Immich Application ---
-    immich_app_uid: 1000 # The UID the Immich container process runs as
-    immich_app_gid: 1000 # The GID the Immich container process needs access via
-    # This GID likely already exists on AlmaLinux (e.g., 'haaksk' group)
-
-    # --- PostgreSQL Database ---
-    postgres_uid: 999 # The UID the PostgreSQL container process runs as
-    postgres_gid: 999 # The GID the PostgreSQL container process needs access via
-    postgres_group_name: "postgres_docker_group" # A unique name for the postgres group in the VM
-
-    # --- Directory Paths ---
-    immich_upload_location: "{{ mount_path }}" # e.g., /mnt/storage/immich (VirtioFS mount)
-    immich_app_folder: "/home/haaksk/immich-app" # Local directory for Immich config/other data
-    immich_db_data_location: "{{ immich_app_folder }}/postgres" # Local directory for Postgres data
+    immich_upload_location: "{{ mount_path }}" # e.g., /mnt/storage/immich
+    virtiofs_tag: "{{ virtiofs_tag }}" # Tag defined in Proxmox VM hardware
 
   tasks:
-    # ------------------------------------------------------------
-    # Step 1: Prerequisites - Ensure Users/Groups exist *in the VM*
-    # These map the numeric IDs used by Docker to known entities in the VM OS.
-    # ------------------------------------------------------------
-
-    - name: "Ensure Immich app user (UID {{ immich_app_uid }}) exists with correct primary GID ({{ immich_app_gid }})"
-      ansible.builtin.user:
-        name: "immich_app_user" # A descriptive name for the user entry in /etc/passwd
-        uid: "{{ immich_app_uid }}" # Ensure this specific UID is used
-        group: "{{ immich_app_gid }}" # Assign the user directly to this primary GID.
-        # Ansible handles associating the user with the existing group that has this GID.
-        state: present # Ensure the user exists
-        system: true # Mark as a system user (optional, good practice)
-        shell: /sbin/nologin # Prevent interactive login for this service user
-
-    - name: "Ensure Postgres group (GID {{ postgres_gid }}) exists in VM"
-      ansible.builtin.group:
-        name: "{{ postgres_group_name }}" # Name for the group in /etc/group
-        gid: "{{ postgres_gid }}" # Ensure this specific GID is used
-        state: present # Ensure the group exists
-
-    - name: "Ensure Postgres user (UID {{ postgres_uid }}) exists in VM"
-      ansible.builtin.user:
-        name: "postgres_docker_user" # Descriptive name for the user entry in /etc/passwd
-        uid: "{{ postgres_uid }}" # Ensure this specific UID is used
-        group: "{{ postgres_group_name }}" # Assign to the postgres group created above
-        state: present # Ensure the user exists
-        system: true # Mark as a system user
-        shell: /sbin/nologin # Prevent interactive login
-
-    # ------------------------------------------------------------
-    # Step 2: Ensure Directories Exist with Base Permissions/Ownership
-    # Permissions for VirtioFS content come from host; these tasks create the structure.
-    # ------------------------------------------------------------
-
     - name: Ensure VirtioFS mount point directory exists
       ansible.builtin.file:
         path: "{{ immich_upload_location }}"
         state: directory
-        mode: "0755" # Standard permissions for a mount point directory itself
-        owner: root # Mount point itself often owned by root
+        mode: "0755"
+        owner: root
         group: root
-
-    - name: Ensure Immich App base directory exists
-      ansible.builtin.file:
-        path: "{{ immich_app_folder }}"
-        state: directory
-        mode: "0750" # Base permissions, will be adjusted later
-        owner: haaksk # Keep original owner for the base folder if desired
-        group: haaksk
-
-    - name: Ensure Immich DB data directory exists
-      ansible.builtin.file:
-        path: "{{ immich_db_data_location }}"
-        state: directory
-        mode: "0700" # PostgreSQL data requires strict permissions (owner only)
-        owner: "{{ postgres_uid }}" # Pre-set ownership for the directory itself
-        group: "{{ postgres_gid }}"
-
-    # ------------------------------------------------------------
-    # Step 3: Configure VirtioFS Mount in /etc/fstab
-    # Assuming permissions are handled on the Proxmox host via chown.
-    # ------------------------------------------------------------
 
     - name: Add VirtioFS entry to /etc/fstab
       ansible.posix.mount:
-        path: "{{ immich_upload_location }}" # Mount destination in VM
-        src: "{{ virtiofs_tag }}" # Tag defined in Proxmox VM hardware
+        path: "{{ immich_upload_location }}"
+        src: "{{ virtiofs_tag }}"
         fstype: virtiofs
-        opts: defaults,nofail # 'defaults' usually implies passthrough security model
-        # 'nofail' prevents boot issues if share isn't ready
+        opts: defaults,nofail
         dump: 0
         passno: 0
-        state: present # Ensure the line exists in fstab
-      notify: Mount VirtioFS filesystem # Trigger handler to mount if fstab changes
+        state: present
+      notify: Mount VirtioFS filesystem
 
-    # ------------------------------------------------------------
-    # Step 4: Ensure Filesystem is Mounted Before Proceeding
-    # Necessary because subsequent tasks might interact with the mount.
-    # ------------------------------------------------------------
-
-    - name: Flush handlers to ensure VirtioFS is mounted
-      ansible.builtin.meta: flush_handlers
-
-    # ------------------------------------------------------------
-    # Step 5: Set Permissions/Ownership for LOCAL VM Directories ONLY
-    # VirtioFS mount (/mnt/storage/immich) permissions rely on host-side chown.
-    # ------------------------------------------------------------
-
-    - name: "Set ownership for Immich App folder contents (UID {{ immich_app_uid }}: GID {{ immich_app_gid }}, excluding DB data)"
-      ansible.builtin.command: "chown -R {{ immich_app_uid }}:{{ immich_app_gid }} {{ immich_app_folder }}"
-      args:
-        # Prevent chown from descending into the postgres data directory
-        removes: "{{ immich_db_data_location }}"
-      changed_when: true # Reports task as changed; use stat/check mode for better idempotency checks
-
-    - name: "Ensure correct ownership (UID {{ postgres_uid }}: GID {{ postgres_gid }}) and strict permissions (0700) for Immich DB data directory"
-      ansible.builtin.file:
-        path: "{{ immich_db_data_location }}"
-        owner: "{{ postgres_uid }}" # Owner UID 999
-        group: "{{ postgres_gid }}" # Group GID 999
-        mode: "0700" # rwx------ (owner only)
-        recurse: true # Apply to all contents within this directory
-
-  # ------------------------------------------------------------
-  # Handlers: Actions triggered by 'notify' statements
-  # ------------------------------------------------------------
   handlers:
     - name: Mount VirtioFS filesystem
       ansible.posix.mount:
         path: "{{ immich_upload_location }}"
         src: "{{ virtiofs_tag }}"
         fstype: virtiofs
-        state: mounted # Ensure it's mounted (or remounted if options changed)
-      listen: Mount VirtioFS filesystem # Name matches the notify directive
+        state: mounted

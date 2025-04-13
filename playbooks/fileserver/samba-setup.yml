@@ -47,26 +47,20 @@
       changed_when: true
       no_log: true
 
-    - name: Ensure the Samba share directory exists
+    - name: Ensure the Samba share directory exists with correct permissions
       ansible.builtin.file:
         path: "{{ smb_share_path }}"
         state: directory
-        mode: "0770" # Set initial permissions (will be reaffirmed)
+        mode: "2770" # Includes setgid bit
         owner: root
         group: "{{ smb_group }}"
-
-    - name: Set ownership and permissions on the share directory
-      ansible.builtin.file:
-        path: "{{ smb_share_path }}"
-        owner: root
-        group: "{{ smb_group }}"
-        mode: "0770"
-        state: directory # Ensure it's treated as a directory
+        recurse: true # Apply recursively to existing contents
 
     - name: Install SELinux Python utilities
       ansible.builtin.package:
         name: policycoreutils-python-utils
         state: present
+
     - name: Set SELinux context for the Samba share directory
       community.general.sefcontext:
         target: "{{ smb_share_path }}(/.*)?"
@@ -90,10 +84,6 @@
       ansible.builtin.command: getsebool samba_enable_home_dirs samba_export_all_rw
       register: sebool_status
       changed_when: false # This command doesn't change state
-
-    - name: Display SELinux boolean status
-      ansible.builtin.debug:
-        var: sebool_status.stdout_lines
 
     - name: Allow Samba service through the firewall
       ansible.posix.firewalld:

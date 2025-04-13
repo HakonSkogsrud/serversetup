@@ -35,7 +35,15 @@
         path: "{{ DATA_DIR }}"
         state: directory # Ensures it's a directory, redundant but safe
         group: "{{ IMMICH_GROUP }}"
+        recurse: true
         # Keep existing owner and mode unless specified
+
+    - name: Ensure setgid bit is set for DATA_DIR
+      ansible.builtin.file:
+        path: "{{ DATA_DIR }}"
+        state: directory
+        mode: "2775" # Setgid bit (2) ensures group inheritance
+        group: "{{ IMMICH_GROUP }}"
 
     - name: Install SELinux Python utilities
       ansible.builtin.package:
