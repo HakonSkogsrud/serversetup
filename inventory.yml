@@ -4,3 +4,6 @@ all:
     fileserver:
       ansible_host: 10.0.0.44
       ansible_user: haaksk
+    immich:
+      ansible_host: 10.0.0.42
+      ansible_user: haaksk

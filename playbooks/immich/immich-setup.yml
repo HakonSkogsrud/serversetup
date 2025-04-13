@@ -1,0 +1,81 @@
+---
+- name: Setup Immich Application Environment
+  hosts: immich
+  become: true # Most tasks require root privileges
+  vars:
+    IMMICH_DIR: /home/haaksk/immich-app
+    DATA_DIR: /mnt/storage/immich
+    IMMICH_USER: haaksk # Define the user who will "own" the app dir
+    IMMICH_GROUP: docker # Define the group for the directories
+
+  tasks:
+    - name: Ensure IMMICH_DIR exists
+      ansible.builtin.file:
+        path: "{{ IMMICH_DIR }}"
+        state: directory
+        owner: "{{ IMMICH_USER }}"
+        group: "{{ IMMICH_GROUP }}"
+        mode: "0755"
+
+    - name: Ensure DATA_DIR exists (Fail if not)
+      ansible.builtin.stat:
+        path: "{{ DATA_DIR }}"
+      register: data_dir_stat
+      failed_when: not data_dir_stat.stat.exists or not data_dir_stat.stat.isdir
+      ignore_errors: true # Check existence first without failing playbook immediately
+      # Re-check and fail explicitly if needed after ignoring errors
+
+    - name: Fail if DATA_DIR does not exist or is not a directory
+      ansible.builtin.fail:
+        msg: "DATA_DIR '{{ DATA_DIR }}' must exist and be a directory."
+      when: not data_dir_stat.stat.exists or not data_dir_stat.stat.isdir
+
+    - name: Set group for DATA_DIR
+      ansible.builtin.file:
+        path: "{{ DATA_DIR }}"
+        state: directory # Ensures it's a directory, redundant but safe
+        group: "{{ IMMICH_GROUP }}"
+        # Keep existing owner and mode unless specified
+
+    - name: Install SELinux Python utilities
+      ansible.builtin.package:
+        name: policycoreutils-python-utils
+        state: present
+
+    - name: Ensure SELinux context 'container_file_t' for IMMICH_DIR
+      community.general.sefcontext:
+        target: "{{ IMMICH_DIR }}(/.*)?" # Regex matching the dir and contents
+        setype: container_file_t
+        state: present
+        reload: true # Apply context immediately (like restorecon)
+
+    - name: Ensure SELinux context 'container_file_t' for DATA_DIR
+      community.general.sefcontext:
+        target: "{{ DATA_DIR }}(/.*)?" # Regex matching the dir and contents
+        setype: container_file_t
+        state: present
+        reload: true # Apply context immediately (like restorecon)
+
+    - name: Copy .env file from DATA_DIR to IMMICH_DIR
+      ansible.builtin.copy:
+        src: "{{ DATA_DIR }}/.env"
+        dest: "{{ IMMICH_DIR }}/.env"
+        remote_src: true # IMPORTANT: Source is on the remote machine
+        owner: "{{ IMMICH_USER }}"
+        group: "{{ IMMICH_GROUP }}"
+        mode: "0640" # Restrict permissions
+
+    - name: Download latest docker-compose.yml for Immich
+      ansible.builtin.get_url:
+        url: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+        dest: "{{ IMMICH_DIR }}/docker-compose.yml"
+        owner: "{{ IMMICH_USER }}"
+        group: "{{ IMMICH_GROUP }}"
+        mode: "0644"
+
+    - name: Run docker compose up -d
+      community.docker.docker_compose_v2:
+        project_src: "{{ IMMICH_DIR }}"
+        state: present # Ensures services are running ('absent' to stop/remove)
+      environment:
+        COMPOSE_PROJECT_NAME: immich # Optional: set a project name

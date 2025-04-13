@@ -1,3 +1,8 @@
 .ansible/.lock
 .venv/
 .vault_pass
+terraform/terraform.tfvars
+*hcl
+*lock
+.terraform/
+terraform/immich_vm/terraform.tfvars

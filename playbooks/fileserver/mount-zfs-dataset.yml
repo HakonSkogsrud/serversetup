@@ -1,0 +1,35 @@
+---
+- name: Configure AlmaLinux VM User, Directory, and VirtioFS Mount
+  hosts: immich
+  become: true
+  vars_files:
+    - vars.yml # Include the new variables file
+
+  tasks:
+    - name: Create the mount point directory
+      ansible.builtin.file:
+        path: "{{ mount_path }}" # Use the variable for the mount path
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Add VirtioFS entry to /etc/fstab
+      ansible.posix.mount:
+        path: "{{ mount_path }}" # Use the variable for the mount path
+        src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
+        fstype: virtiofs
+        opts: defaults
+        dump: 0
+        passno: 0
+        state: present
+      notify: Mount filesystems
+
+  handlers:
+    - name: Mount filesystems
+      ansible.posix.mount:
+        path: "{{ mount_path }}" # Use the variable for the mount path
+        src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
+        fstype: virtiofs
+        state: mounted
+      listen: Mount filesystems

@@ -1,9 +1,9 @@
 ---
 - name: Install and Configure Docker CE
-  hosts: all
+  hosts: immich
   become: true
   vars_files:
-    - vars/common.yml
+    - ../../vars/common.yml
 
   tasks:
     - name: Ensure prerequisites are installed (yum-utils)
@@ -23,7 +23,7 @@
         name:
           - docker-ce
           - docker-ce-cli
-          - containerd.ioTT
+          - containerd.io
           - docker-compose-plugin
         state: present
         update_cache: true

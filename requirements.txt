@@ -1,2 +1,5 @@
 pre-commit
 passlib
+ansible
+ansible-core
+policycoreutils-python
