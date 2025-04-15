@@ -1,6 +1,6 @@
 # Server setup - Ansible playbooks
 
-Ansible playbooks for homelab. Currently I use Alma linux.
+Ansible playbooks for homelab. 
 
 Run files like this
 ```sh
@@ -11,6 +11,7 @@ ansible-playbook -i inventory.yml --ask-vault-pass -K samba-setup.yml
 
 Playbooks require passwordless ssh to server.
 
+Install ansible with extensions. 
 ```sh
 brew install ansible ansible-lint
 
@@ -18,6 +19,7 @@ ansible-galaxy collection install ansible.posix --force
 ansible-galaxy collection install community.general --force
 ansible-galaxy collection install community.docker --force
 ```
+
 ## Development
 
 ```sh
@@ -78,48 +80,43 @@ Edit 9000:
     - Memory: Remove ballooning
     - Processors: more cpu and socket, enable Numa, cpu type: Host
     - Hard Disk: enable ssd emulation
-    - Add virtiofs with tag and enable xattr for samba share
 - Cloud-init:
     - set username and password
     - paste in id_rsa.pub
     - ip config -> static
+    - dns host is `telenor.net`
+    - dns-server is `148.122.164.253`
 
-## Cloning template
-For all:
-- `Cloud-init`. Make sure dns host is `telenor.net` and dns-server is `148.122.164.253`. Otherwise it might inherit tailscale settings from proxmox.
+## Cloning - Setting up servers/vms
+
+Make sure dns host is `telenor.net` and dns-server is `148.122.164.253`. Otherwise it might inherit tailscale settings from proxmox.
 
 ### Fileserver
 - `Hardware` add virtiofs with tag and enable xattr for samba share.
 - Set ip to 10.0.0.44/24 with gateway 10.0.0.138
 
+Setup with
+```sh
+ansible-playbook -i servers/inventory.yml -K --ask-vault-pass servers/fileserver-44/main.yml 
+```
+
 ### Immich server
 - `Hardware` Add virtiofs for immich dataset.
 - Set ip to 10.0.0.42/24 with gateway 10.0.0.138
 
+Setup with 
+```sh
+ansible-playbook -i servers/inventory.yml -K servers/immich-42/main.yml 
+```
+
+#### Immich restore
+gunzip command for database restore:
+```sh
+sudo gunzip --stdout "$(sudo ls /mnt/storage/immich/library/backups/immich-db-backup-*.sql.gz | sort -V | tail -n 1)" | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
+```
+
+
 
 # Backups external harddrives
 
-## wdred
-open
-```sh
-cryptsetup luksOpen $(blkid -o device -t UUID="3e92926f-ec99-4907-a6e4-796f0ae035d2") wdred_encrypted
-mount /dev/mapper/wdred_encrypted /mnt/wdred
-```
-
-close
-```sh
-umount /mnt/wdred
-cryptsetup luksClose wdred_encrypted
-```
-
-backup 
-
-```sh
-rsync -aHAX --progress /storage/immich/ /mnt/wdred/immich/ 
-```
-
-restore
-
-```sh
-rsync -aHAX --progress /mnt/wdred/immich/ /storage/immich/
-```
+TODO
