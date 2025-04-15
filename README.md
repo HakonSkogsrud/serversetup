@@ -36,33 +36,36 @@ Add a file `.vault_pass` with vault password
 
 # Proxmox
 
-## Setup
+## First setup
 
 - Change repos to non-subscription
-- Create a zfs pool on /storage
-- Create two datasets, immich and smb
-- in Datacenter - Directory Mapping create mapping/tag for both datasets
+- Upgrade and update
+- Create vm template, see below
+- Create zfs datasets, see below
 - Something with snippets?
+- Install `vim` and `wget`
 
 ## ZFS
 
-- Create a zfs pool
+- Create a zfs pool `storage`
+  ```sh
+  zpool create storage /dev/sdX
+  ```
 - Create a dataset `immich` and `smb`
-```sh
-if ! getent group 1000 > /dev/null; then groupadd -g 1000 immich_docker_grp; fi
-if ! id -u 1000 > /dev/null 2>&1; then useradd -u 1000 -g 1000 -M -N -s /sbin/nologin immich_docker_usr; fi
-chown -R 1000:1000 /storage/immich
-chmod -R u+rwX,g+rX,o= /storage/immich # Example: Give owner RWX, group RX, others nothing
-zfs set group=docker storage/immich
-zfs set primarygroup=993 storage/immich
-```
+    ```sh
+    zfs create storage/immich
+    zfs create storage/smb
+    ```
+In Datacenter - Directory Mapping create mapping/tag for both datasets
+
 
 ## VM template
 
-- On host, download alma cloud image into /var/lib/vz/template/qcow
+- On proxmox host, download alma cloud image into `/var/lib/vz/template/qcow`
 
 ```sh
 cd /var/lib/vz/template/qcow
+# wget ....
 qm create 9000 --name alma-cloud-template --memory 4096 --net0 virtio,bridge=vmbr0
 qm importdisk 9000 AlmaLinux-9-GenericCloud-9.5-20241120.x86_64.qcow2 local-lvm
 qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
@@ -73,13 +76,26 @@ qm set 9000 --serial0 socket --vga serial0
 Edit 9000:
 - Hardware
     - Memory: Remove ballooning
-    - Processors: more cpu and socket, enable Numa,  type: Host
+    - Processors: more cpu and socket, enable Numa, cpu type: Host
     - Hard Disk: enable ssd emulation
     - Add virtiofs with tag and enable xattr for samba share
 - Cloud-init:
     - set username and password
     - paste in id_rsa.pub
     - ip config -> static
+
+## Cloning template
+For all:
+- `Cloud-init`. Make sure dns host is `telenor.net` and dns-server is `148.122.164.253`. Otherwise it might inherit tailscale settings from proxmox.
+
+### Fileserver
+- `Hardware` add virtiofs with tag and enable xattr for samba share.
+- Set ip to 10.0.0.44/24 with gateway 10.0.0.138
+
+### Immich server
+Add virtiofs for immich dataset.
+- Set ip to 10.0.0.42/24 with gateway 10.0.0.138
+
 
 # Backups external harddrives
 
