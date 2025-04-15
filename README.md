@@ -2,10 +2,6 @@
 
 Ansible playbooks for homelab. 
 
-Run files like this
-```sh
-ansible-playbook -i inventory.yml --ask-vault-pass -K samba-setup.yml
-```
 
 ## Setup
 
