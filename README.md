@@ -1,4 +1,4 @@
-# Server setup
+# Server setup - Ansible playbooks
 
 Ansible playbooks for homelab. Currently I use Alma linux.
 
@@ -93,7 +93,7 @@ For all:
 - Set ip to 10.0.0.44/24 with gateway 10.0.0.138
 
 ### Immich server
-Add virtiofs for immich dataset.
+- `Hardware` Add virtiofs for immich dataset.
 - Set ip to 10.0.0.42/24 with gateway 10.0.0.138
 
 
