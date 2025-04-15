@@ -1,11 +1,8 @@
-# Server setup - Ansible playbooks
+# Ansible playbooks for homelab. 
 
-Ansible playbooks for homelab. 
-
+WORK IN PROGRESS 🔨🧱🏗️
 
 ## Setup
-
-Playbooks require passwordless ssh to server.
 
 Install ansible with extensions. 
 ```sh
@@ -16,7 +13,7 @@ ansible-galaxy collection install community.general --force
 ansible-galaxy collection install community.docker --force
 ```
 
-## Development
+Playbooks require passwordless ssh to server. I configure this automatically in the template I clone.
 
 ```sh
 uv venv
@@ -72,6 +69,8 @@ qm set 9000 --boot c --bootdisk scsi0
 qm set 9000 --serial0 socket --vga serial0
 ```
 Edit 9000:
+- Options:
+    - Start on boot
 - Hardware
     - Memory: Remove ballooning
     - Processors: more cpu and socket, enable Numa, cpu type: Host
