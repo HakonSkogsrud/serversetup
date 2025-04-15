@@ -1,0 +1,82 @@
+---
+- name: Setup and Deploy Immich Application
+  hosts: immich
+  become: false # Run tasks as the remote user (haaksk)
+
+  vars:
+    immich_dir: "/home/haaksk/immich-app"
+    immich_user: "haaksk"
+    immich_group: "docker"
+    compose_url: "https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml"
+    env_file_dir: "/mnt/storage/immich/" 
+
+
+  tasks:
+    - name: Ensure target directory exists
+      ansible.builtin.file:
+        path: "{{ immich_dir }}"
+        state: directory
+        owner: "{{ immich_user }}"
+        group: "{{ immich_group }}" # Good practice to set group too
+        mode: '0755'
+
+
+    - name: Download docker-compose.yml
+      ansible.builtin.get_url:
+        url: "{{ compose_url }}"
+        dest: "{{ immich_dir }}/docker-compose.yml"
+        owner: "{{ immich_user }}"
+        group: "{{ immich_user }}"
+        mode: '0644'
+
+    - name: Check if .env file exists
+      ansible.builtin.stat:
+        path: "{{ env_file_dir }}/.env"
+      register: env_file_stat
+
+    - name: Copy .env file to target directory
+      ansible.builtin.copy:
+        src: "{{ env_file_dir }}/.env" # Path on the remote host
+        dest: "{{ immich_dir }}/.env"
+        owner: "{{ immich_user }}"
+        group: "{{ immich_user }}"
+        mode: '0600' # Restrict permissions as it contains secrets
+        remote_src: true # Indicates the file is on the remote host
+
+    - name: Stop and remove containers, networks, and volumes
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        state: absent
+
+    - name: Pull the latest images
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        pull: missing
+
+    - name: Create containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        state: present
+
+    - name: Start immich_postgres container
+      community.docker.docker_container:
+        name: immich_postgres
+        state: started
+
+    - name: Wait for 10 seconds
+      ansible.builtin.wait_for:
+        timeout: 10
+
+    - name: Find the file with the highest number in the filename
+      ansible.builtin.shell: |
+        set -o pipefail
+        ls -1 /mnt/storage/immich/library/backups | sort -n | tail -n 1
+      args:
+        warn: false
+      register: highest_numbered_file
+
+    - name: Display the file with the highest number in the filename
+      ansible.builtin.debug:
+        msg: "The file with the highest number in the filename is: {{ highest_numbered_file.stdout }}"
+
+

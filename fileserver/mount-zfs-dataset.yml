@@ -1,18 +1,24 @@
 ---
 - name: Configure AlmaLinux VM User, Directory, and VirtioFS Mount
-  hosts: immich
+  hosts: fileserver
   become: true
   vars_files:
     - vars.yml # Include the new variables file
 
   tasks:
+
+    - name: Create the Samba group
+      ansible.builtin.group:
+        name: "{{ smb_group }}"
+        state: present
+
     - name: Create the mount point directory
       ansible.builtin.file:
         path: "{{ mount_path }}" # Use the variable for the mount path
         state: directory
         mode: "0755"
         owner: root
-        group: smb_group
+        group: "{{ smb_group }}"
 
     - name: Add VirtioFS entry to /etc/fstab
       ansible.posix.mount:

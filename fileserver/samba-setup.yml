@@ -3,8 +3,8 @@
   hosts: fileserver
   become: true
   vars_files:
-    - ../../vars/common.yml
-    - ../../vars/secrets.yml
+    - ../common/secrets.yml
+    - vars.yml
 
   tasks:
     - name: Ensure necessary packages are installed
@@ -56,21 +56,6 @@
         group: "{{ smb_group }}"
         recurse: true # Apply recursively to existing contents
 
-    - name: Install SELinux Python utilities
-      ansible.builtin.package:
-        name: policycoreutils-python-utils
-        state: present
-
-    - name: Set SELinux context for the Samba share directory
-      community.general.sefcontext:
-        target: "{{ smb_share_path }}(/.*)?"
-        setype: samba_share_t
-        state: present
-
-    - name: Apply SELinux context changes immediately
-      ansible.builtin.command: restorecon -R -v {{ smb_share_path }}
-      changed_when: true # restorecon output indicates changes
-
     - name: Enable necessary Samba SELinux booleans
       ansible.posix.seboolean:
         name: "{{ item }}"
@@ -101,22 +86,24 @@
              path = {{ smb_share_path }}
              browseable = Yes
              read only = No
+             writable = yes
              valid users = @{{ smb_group }}
-
-             # Permissions
-             force group = {{ smb_group }}
-             create mask = 0660
-             directory mask = 0770
+             write list = @{{ smb_group }}
              inherit permissions = yes
 
+             # Permissions
+             create mask = 0660
+             directory mask = 0775
+
              # macOS Compatibility (VFS Objects)
-             vfs objects = fruit streams_xattr
+             vfs objects = fruit streams_xattr  
              fruit:metadata = stream
              fruit:model = MacSamba
-             fruit:posix_rename = yes
              fruit:veto_appledouble = no
-             fruit:wipe_intentionally_left_blank_rfork = yes
-             fruit:delete_empty_adfiles = yes
+             fruit:nfs_aces = no
+             fruit:wipe_intentionally_left_blank_rfork = yes 
+             fruit:delete_empty_adfiles = yes 
+             fruit:posix_rename = yes  
         state: present
         create: false # Don't create smb.conf if it doesn't exist
         marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ smb_share_path }}"

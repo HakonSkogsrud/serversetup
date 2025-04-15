@@ -1,0 +1,35 @@
+---
+- name: Setup Immich Application Environment
+  hosts: immich
+  become: true # Most tasks require root privileges
+  vars:
+    immich_dir: /home/haaksk/immich-app
+    data_dir: /mnt/storage/immich
+    immich_user: haaksk # Define the user who will "own" the app dir
+    immich_group: docker # Define the group for the directories
+
+  tasks:
+
+    - name: Copy .env file from data_dir to immich_dir
+      ansible.builtin.copy:
+        src: "{{ data_dir }}/.env"
+        dest: "{{ immich_dir }}/.env"
+        remote_src: true # IMPORTANT: Source is on the remote machine
+        owner: "{{ immich_user }}"
+        group: "{{ immich_group }}"
+        mode: "0640" # Restrict permissions
+
+    - name: Download latest docker-compose.yml for Immich
+      ansible.builtin.get_url:
+        url: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+        dest: "{{ immich_dir }}/docker-compose.yml"
+        owner: "{{ immich_user }}"
+        group: "{{ immich_group }}"
+        mode: "0644"
+
+    - name: Run docker compose up -d
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_dir }}"
+        state: present # Ensures services are running ('absent' to stop/remove)
+      environment:
+        COMPOSE_PROJECT_NAME: immich # Optional: set a project name

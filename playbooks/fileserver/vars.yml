@@ -1,3 +1,0 @@
----
-mount_path: /mnt/storage/smb
-virtiofs_tag: smb

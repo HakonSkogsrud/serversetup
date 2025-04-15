@@ -2,8 +2,8 @@
 - name: Install and Configure Docker CE
   hosts: immich
   become: true
-  vars_files:
-    - ../../vars/common.yml
+  vars:
+    user: haaksk
 
   tasks:
     - name: Ensure prerequisites are installed (yum-utils)
@@ -36,7 +36,7 @@
 
     - name: Add user to the docker group
       ansible.builtin.user:
-        name: "{{ server_user }}" # Use the shared variable
+        name: "{{ user }}" # Use the shared variable
         groups: docker
         append: true
 
@@ -46,11 +46,15 @@
         creates: /var/lib/docker/volumes/portainer_data
 
     - name: Run Portainer container
-      ansible.builtin.command:
-        cmd: >
-          docker run -d -p 8000:8000 -p 9443:9443
-          --name portainer --restart=always
-          -v /var/run/docker.sock:/var/run/docker.sock
-          -v portainer_data:/data
-          portainer/portainer-ce:lts
-        creates: /var/lib/docker/containers/portainer
+      community.docker.docker_container:
+        name: portainer
+        image: portainer/portainer-ce:lts
+        state: started
+        restart_policy: always
+        published_ports:
+          - "8000:8000"
+          - "9443:9443"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - portainer_data:/data
+
