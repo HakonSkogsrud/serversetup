@@ -1,0 +1,35 @@
+---
+- name: Mount VirtioFS
+  hosts: immich
+  become: true
+  vars:
+    mount_path: /mnt/storage/immich
+    virtiofs_tag: immich
+
+  tasks:
+    - name: Ensure VirtioFS mount point directory exists
+      ansible.builtin.file:
+        path: "{{ mount_path }}"
+        state: directory
+        mode: '0775'
+
+
+    - name: Add VirtioFS entry to /etc/fstab
+      ansible.posix.mount:
+        path: "{{ mount_path }}"
+        src: "{{ virtiofs_tag }}"
+        fstype: virtiofs
+        opts: defaults,nofail
+        dump: 0
+        passno: 0
+        state: present
+      notify: Mount VirtioFS filesystem
+
+
+  handlers:
+    - name: Mount VirtioFS filesystem
+      ansible.posix.mount:
+        path: "{{ mount_path }}"
+        src: "{{ virtiofs_tag }}"
+        fstype: virtiofs
+        state: mounted

@@ -1,4 +1,0 @@
----
-- import_playbook: mount-zfs-dataset.yml
-- import_playbook: samba-setup.yml
-- import_playbook: ../common/tailscale-setup.yml

@@ -1,0 +1,9 @@
+---
+- name: Mount zfs dataset
+  import_playbook: mount-fileserver-dataset.yml
+
+- name: Setup samba sharing
+  import_playbook: samba-setup.yml
+
+- name: Connect server to tailscale network
+  import_playbook: ../common/tailscale-setup.yml

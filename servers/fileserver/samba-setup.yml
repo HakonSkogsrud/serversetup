@@ -10,13 +10,12 @@
     - name: Ensure necessary packages are installed
       ansible.builtin.dnf:
         name:
-          - samba # Samba server
-          - samba-client # For smbpasswd utility
-          - policycoreutils-python-utils # For semanage/seboolean modules (check exact name if needed)
-          - firewalld # Ensure firewalld is installed if managing it
+          - samba
+          - samba-client
+          - policycoreutils-python-utils
+          - firewalld
         state: present
         update_cache: true
-        disablerepo: 45drives_stable
 
     - name: Ensure firewalld service is started and enabled
       ansible.builtin.systemd:
@@ -43,13 +42,13 @@
       ansible.builtin.shell:
         cmd: set -o pipefail && echo -ne '{{ smb_user_password }}\n{{ smb_user_password }}\n' | smbpasswd -s -a {{ smb_user }}
       args:
-        executable: /bin/bash # pipefail is a bash/zsh feature, good to be explicit
+        executable: /bin/bash
       changed_when: true
       no_log: true
 
     - name: Ensure the Samba share directory exists with correct permissions
       ansible.builtin.file:
-        path: "{{ smb_share_path }}"
+        path: "{{ share_path }}"
         state: directory
         mode: "2770" # Includes setgid bit
         owner: root
@@ -83,7 +82,7 @@
         block: |
           [share]
              comment = Cross-Platform Shared Folder
-             path = {{ smb_share_path }}
+             path = {{ share_path }}
              browseable = Yes
              read only = No
              writable = yes
@@ -96,17 +95,17 @@
              directory mask = 0775
 
              # macOS Compatibility (VFS Objects)
-             vfs objects = fruit streams_xattr  
+             vfs objects = fruit streams_xattr
              fruit:metadata = stream
              fruit:model = MacSamba
              fruit:veto_appledouble = no
              fruit:nfs_aces = no
-             fruit:wipe_intentionally_left_blank_rfork = yes 
-             fruit:delete_empty_adfiles = yes 
-             fruit:posix_rename = yes  
+             fruit:wipe_intentionally_left_blank_rfork = yes
+             fruit:delete_empty_adfiles = yes
+             fruit:posix_rename = yes
         state: present
         create: false # Don't create smb.conf if it doesn't exist
-        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ smb_share_path }}"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ share_path }}"
       notify: Restart Samba Services # Notify handler if change is made
 
     - name: Ensure Samba services are enabled and running

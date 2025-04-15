@@ -1,0 +1,12 @@
+---
+- name: Mount ZFS Dataset
+  import_playbook: mount-immich-dataset.yml
+
+- name: Setup docker
+  import_playbook: docker-setup.yml
+
+- name: Setup portainer
+  import_playbook: portainer-setup.yml
+
+- name: Connect server to tailscale network
+  import_playbook: ../common/tailscale-setup.yml

@@ -1,9 +1,10 @@
 ---
 - name: Install and Configure Docker CE
   hosts: immich
-  become: true
+  become: false
   vars:
     user: haaksk
+    docker_group: docker
 
   tasks:
     - name: Ensure prerequisites are installed (yum-utils)
@@ -15,8 +16,8 @@
     - name: Add Docker CE repository
       ansible.builtin.command:
         cmd: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-        creates: /etc/yum.repos.d/docker-ce.repo # Makes the task idempotent (won't run if repo file exists)
-      changed_when: true # Assume change if command runs (idempotency handled by 'creates')
+        creates: /etc/yum.repos.d/docker-ce.repo
+      changed_when: true
 
     - name: Install Docker packages
       ansible.builtin.dnf:
@@ -36,25 +37,6 @@
 
     - name: Add user to the docker group
       ansible.builtin.user:
-        name: "{{ user }}" # Use the shared variable
-        groups: docker
+        name: "{{ user }}"
+        groups: "{{ docker }}"
         append: true
-
-    - name: Create Docker volume for Portainer
-      ansible.builtin.command:
-        cmd: docker volume create portainer_data
-        creates: /var/lib/docker/volumes/portainer_data
-
-    - name: Run Portainer container
-      community.docker.docker_container:
-        name: portainer
-        image: portainer/portainer-ce:lts
-        state: started
-        restart_policy: always
-        published_ports:
-          - "8000:8000"
-          - "9443:9443"
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-          - portainer_data:/data
-

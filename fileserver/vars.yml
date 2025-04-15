@@ -1,8 +1,0 @@
----
-mount_path: /mnt/storage/smb
-virtiofs_tag: smb
-smb_group: sambausers
-smb_user: haaksk
-server_user: haaksk
-sudo_group: wheel
-smb_share_path: /mnt/storage/smb

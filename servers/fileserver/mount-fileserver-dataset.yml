@@ -14,15 +14,15 @@
 
     - name: Create the mount point directory
       ansible.builtin.file:
-        path: "{{ mount_path }}" # Use the variable for the mount path
+        path: "{{ share_path }}" # Use the variable for the mount path
         state: directory
-        mode: "0755"
+        mode: "0775"
         owner: root
         group: "{{ smb_group }}"
 
     - name: Add VirtioFS entry to /etc/fstab
       ansible.posix.mount:
-        path: "{{ mount_path }}" # Use the variable for the mount path
+        path: "{{ share_path }}" # Use the variable for the mount path
         src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
         fstype: virtiofs
         opts: defaults
@@ -34,7 +34,7 @@
   handlers:
     - name: Mount filesystems
       ansible.posix.mount:
-        path: "{{ mount_path }}" # Use the variable for the mount path
+        path: "{{ share_path }}" # Use the variable for the mount path
         src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
         fstype: virtiofs
         state: mounted
