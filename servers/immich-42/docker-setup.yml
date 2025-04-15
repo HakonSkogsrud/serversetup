@@ -1,7 +1,7 @@
 ---
 - name: Install and Configure Docker CE
   hosts: immich
-  become: false
+  become: true
   vars:
     user: haaksk
     docker_group: docker
@@ -38,5 +38,5 @@
     - name: Add user to the docker group
       ansible.builtin.user:
         name: "{{ user }}"
-        groups: "{{ docker }}"
+        groups: "{{ docker_group }}"
         append: true

@@ -104,6 +104,8 @@ Setup with
 ansible-playbook -i servers/inventory.yml -K servers/immich-42/main.yml 
 ```
 
+This does not install or restore Immich, just sets up server.
+
 #### Immich restore
 gunzip command for database restore:
 ```sh
