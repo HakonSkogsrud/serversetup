@@ -38,7 +38,7 @@
           [template_production]
               frequently = 0
               hourly = 0
-              daily = 14
+              daily = 7
               weekly = 8
               monthly = 6
               yearly = 0
@@ -60,7 +60,7 @@
           [template_backup_template]
               frequently = 0
               hourly = 0
-              daily = 30
+              daily = 0
               weekly = 12
               monthly = 12
               yearly = 3
