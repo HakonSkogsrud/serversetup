@@ -1,0 +1,76 @@
+---
+- name: Install and Configure Sanoid on Debian
+  hosts: proxmox
+  become: true
+
+  tasks:
+    - name: Update apt cache (required before package installation)
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install sanoid package
+      ansible.builtin.apt:
+        name: sanoid
+        state: present
+
+    - name: Ensure sanoid configuration directory exists
+      ansible.builtin.file:
+        path: /etc/sanoid
+        state: directory
+        mode: '0755' # Standard directory permissions
+
+    - name: Create sanoid configuration file (/etc/sanoid/sanoid.conf) using blockinfile
+      ansible.builtin.blockinfile:
+        path: /etc/sanoid/sanoid.conf
+        owner: root
+        group: root
+        mode: '0644' # Standard config file permissions
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR SANOID"
+        block: |
+          [storage/immich]
+              use_template = production
+              recursive = yes
+
+          [storage/smb]
+              use_template = production
+              recursive = yes
+
+          [template_production]
+              frequently = 0
+              hourly = 0
+              daily = 14
+              weekly = 8
+              monthly = 6
+              yearly = 0
+              autosnap = yes
+              autoprune = yes
+
+          [wdred/backup/immich]
+              use_template = backup_template
+              recursive = yes
+              autosnap = no
+              autoprune = yes
+
+          [wdred/backup/smb]
+              use_template = backup_template
+              recursive = yes
+              autosnap = no
+              autoprune = yes
+
+          [template_backup_template]
+              frequently = 0
+              hourly = 0
+              daily = 30
+              weekly = 12
+              monthly = 12
+              yearly = 3
+
+    - name: Enable sanoid timer service (starts on boot)
+      ansible.builtin.systemd:
+        name: sanoid.timer
+        enabled: true
+
+    - name: Start sanoid timer service immediately
+      ansible.builtin.systemd:
+        name: sanoid.timer
+        state: restarted

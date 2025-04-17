@@ -116,4 +116,83 @@ sudo gunzip --stdout "$(sudo ls /mnt/storage/immich/library/backups/immich-db-ba
 
 # Backups external harddrives
 
-TODO
+create encrypted pools like this for ssds
+```sh
+zpool create \
+    -o ashift=12 \
+    -o autotrim=on \
+    -O encryption=on \
+    -O keyformat=passphrase \
+    -O keylocation=prompt \
+    -O compression=lz4 \
+    -O acltype=posixacl \
+    -O xattr=sa \
+    -O dnodesize=auto \
+    -O normalization=formD \
+    -O relatime=on \
+    -O mountpoint=/wdred \
+    wdred /dev/sda1
+```
+
+mount external zpool
+```sh
+zpool import wdred
+zfs load-key -r wdred
+```
+
+unmount
+```sh
+zfs unmount -a wdred
+zpool export wdred
+```
+
+## sanoid
+
+```sh
+apt install sanoid
+mkdir /etc/sanoid
+zfs create wdred/backup
+systemctl enable sanoid.timer
+systemctl start sanoid.timer
+```
+
+```txt
+[storage/immich]
+    use_template = production
+    recursive = res
+
+[storage/smb]
+    use_template = production
+    recursive = yes 
+
+[template_production]
+    frequently = 0      
+    hourly = 0         
+    daily = 14          
+    weekly = 8          
+    monthly = 6         
+    yearly = 0          
+    autosnap = yes      
+    autoprune = yes     
+
+[wdred/backup/immich]
+    use_template = backup_template
+    recursive = yes 
+    autosnap = no  
+    autoprune = yes 
+
+[wdred/backup/smb]
+    use_template = backup_template
+    recursive = yes 
+    autosnap = no
+    autoprune = yes
+
+[template_backup_template]
+    frequently = 0
+    hourly = 0    
+    daily = 30    
+    weekly = 12   
+    monthly = 12  
+    yearly = 3 
+```
+
