@@ -2,6 +2,8 @@
 
 WORK IN PROGRESS 🔨🧱🏗️
 
+![setup](setup.png)
+
 ## Setup
 
 Install ansible with extensions. 
