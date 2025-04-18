@@ -5,9 +5,9 @@
   vars:
     # == Proxmox Connection Details (CHANGE THESE or use Vault/Environment Vars) ==
     pve_api_host: "10.0.0.41" # e.g., pve.example.com or 192.168.1.10
-    # pve_api_token_id: "your_token_id"     # Example: ansible_user@pve!mytoken
-    # pve_api_token_secret: "your_token_secret_uuid" # Example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    pve_node: "proxmox" # e.g., pve1
+    pve_api_token_id: "your_token_id"     # Example: ansible_user@pve!mytoken
+    pve_api_token_secret: "your_token_secret_uuid" # Example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    pve_node: "proxmox"
 
     # == VM Clone Source Details ==
     source_vmid: 9000

@@ -21,7 +21,7 @@ Playbooks require passwordless ssh to server. I configure this automatically in 
 uv venv
 uv pip install -r requirements.txt
 pre-commit install
-````
+```
 
 Before commit run
 
@@ -111,7 +111,14 @@ This does not install or restore Immich, just sets up server.
 #### Immich restore
 gunzip command for database restore:
 ```sh
+cd /home/haaksk/immich-app
+docker compose down -v
+docker compose pull 
+docker compose create 
+docker start immich_postgres
+sleep 10 
 sudo gunzip --stdout "$(sudo ls /mnt/storage/immich/library/backups/immich-db-backup-*.sql.gz | sort -V | tail -n 1)" | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
+docker compose up -d 
 ```
 
 
@@ -146,6 +153,14 @@ unmount
 ```sh
 zfs unmount -a wdred
 zpool export wdred
+```
+
+## Restore
+
+List most recent snapshot
+```sh
+zfs list -t snapshot -o name,creation -s creation | tail -n 2
+zfs send wedred/backups/LATEST_IMMICH_SNAPSHOT | zfs receive storage/immich
 ```
 
 ## sanoid
