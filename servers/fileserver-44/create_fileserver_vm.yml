@@ -1,136 +1,66 @@
 ---
 - name: Clone and Configure Proxmox VM
-  hosts: localhost # Run on the control node, connect to PVE API
+  hosts: proxmox # Run on the control node, connect to PVE API
   gather_facts: false
-  vars:
-    # == Proxmox Connection Details (CHANGE THESE or use Vault/Environment Vars) ==
-    pve_api_host: "10.0.0.41" # e.g., pve.example.com or 192.168.1.10
-    pve_api_token_id: "your_token_id"     # Example: ansible_user@pve!mytoken
-    pve_api_token_secret: "your_token_secret_uuid" # Example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    pve_node: "proxmox"
-
-    # == VM Clone Source Details ==
-    source_vmid: 9000
-
-    # == New VM Details ==
-    new_vmid: 4000
-    new_vm_name: "fileserver-test"
-    new_vm_memory: 4096
-    new_vm_cores: 2
-    new_vm_sockets: 1
-    new_vm_cpu_type: "host"
-    new_vm_ipconfig0: "ip=10.0.0.54/24,gw=10.0.0.138"
-    new_vm_ciuser: "haaksk"
-    new_vm_cipassword_hash: "$5$yOaMe4Tr$aeWDPKsA0ehkzsGQZrSzfLu4pgtcHi291.0xvuWTHvD" # Use the exact hash
-    new_vm_scsihw: "virtio-scsi-pci"
-    new_vm_net0_bridge: "vmbr0" # MAC will be auto-generated unless specified
-    new_vm_onboot: true
-    new_vm_numa: true
-    new_vm_balloon: 0 # Target balloon value
-    new_vm_boot_order: "order=scsi0" # boot: c means boot from first disk (scsi0)
-    new_vm_serial0: "socket"
-    new_vm_vga: "serial0"
-    new_vm_virtiofs0_hostpath: "/mnt/pve/smb" # !!! IMPORTANT: CHANGE THIS to your actual host share path !!!
-    new_vm_virtiofs0_options: "expose-xattr=1" # VirtioFS options
-
-    # URL-decoded SSH key (split into multiple lines for readability if needed)
-    # Original: ssh-rsa%20AAAAB...%0A
-    # Decoded: ssh-rsa AAAAB... \n
-    new_vm_ssh_key: |
-      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCzyMriPvf6XXxG+CGV7swMOr2LgKORsnXUiBlQQHN/Bqu6Mx9WTyr/DvFu3yvUYyFH5+BS1zZ6IZObw7bFwbfTevaMuiv1tPOu50ygP8Vz2A5UhvjDgX5o/n2W3o1e3oVxY6RKnF0jE/mIOynT9H0BHWPz82QZq1+YfrkcUV1D9pSFx696ksWauKxUyFcSvyd4y9aBoFO8plbffwgS4d6qArfCn9whSLqueWRJ2i4+Hd+16zvHBuAoESl192QBWXpvtOU2JM3paS+9KKOFMMZqbJfqMS0tmWFbnwz4kCCQMP/E1FyzgcyQg7JG/m2KktSZ+gfuP0rWVjL2wjZMUODkwCFZ+h+FiozBoL6v1EEenEllze5CwGUgOXgJR7w70eOOL8FvVBeAIj67HnouWoPgSGDdSRM3+a+dglxSQIm+kIw8NorRe0/RtlxHmF3KvSrU2xjjMebEAxlK6LNALUZLww9r6n56fTDUgiir1lXQxkfcNROT0w0cKTU1Vxi/seGwTwPEaWJlnLOXyIUOB+NKJqhrhWGjqSzK7RIFvlXVHULVvhNQfjescZuUGPh5Mosah3LKmL1B6W58yLbk/QHoKb/RKRIAExqPRHrP4mEyaVYlBnxlrWHbW9ESdKrElAfmpNHQ/dRT9ZiGWkxzV/YIiHPAsFMYCu+5MypcrCq6wQ== haaksk@gmail.com
-
+  vars_files:
+    - ../common/secrets.yml
   tasks:
-    - name: Clone VM {{ source_vmid }} to {{ new_vmid }} and apply initial config
+    - name: Ensure Python 3 and venv are installed
+      ansible.builtin.package:
+        name: 
+          - python3
+          - python3-venv
+        state: present
+      become: true
+
+    - name: Create a Python virtual environment for Ansible
+      ansible.builtin.command:
+        cmd: python3 -m venv /opt/ansible_venv
+        creates: /opt/ansible_venv
+      become: true
+
+    - name: Ensure proxmoxer and requests libraries are installed in the virtual environment
+      ansible.builtin.command:
+        cmd: /opt/ansible_venv/bin/pip install proxmoxer requests
+      become: true
+
+    - name: Set the Python interpreter to use the virtual environment
+      set_fact:
+        ansible_python_interpreter: /opt/ansible_venv/bin/python3
+
+    - name: Clone VM with source vmid and target newid with specified settings
       community.general.proxmox_kvm:
-        api_host: "{{ pve_api_host }}"
-        api_user: "{{ pve_api_user }}"
-        api_password: "{{ pve_api_password | default(omit) }}"
-        # api_token_id: "{{ pve_api_token_id | default(omit) }}"           # Uncomment if using API Token
-        # api_token_secret: "{{ pve_api_token_secret | default(omit) }}"   # Uncomment if using API Token
-        validate_certs: false # Set to true if you have valid SSL certs
-
-        node: "{{ pve_node }}"
-        vmid: "{{ new_vmid }}"
-        name: "{{ new_vm_name }}"
-        state: present # Ensures VM exists, clones if not
-        clone: "{{ source_vmid }}"
-        full: true # Create a full clone (independent disks)
-
-        # == Apply supported configuration during clone/ensure present ==
-        cores: "{{ new_vm_cores }}"
-        sockets: "{{ new_vm_sockets }}"
-        cpu: "{{ new_vm_cpu_type }}"
-        memory: "{{ new_vm_memory }}"
-        scsihw: "{{ new_vm_scsihw }}"
-        onboot: "{{ new_vm_onboot }}"
-        # Network - letting clone handle MAC, setting bridge
-        net:
-          net0: "virtio,bridge={{ new_vm_net0_bridge }}"
-        # Cloud-Init settings
-        cloudinit:
-          user: "{{ new_vm_ciuser }}"
-          password: "{{ new_vm_cipassword_hash }}"
-          sshkeys: "{{ new_vm_ssh_key }}"
-          ipconfig:
-            ipconfig0: "{{ new_vm_ipconfig0 }}"
-      register: clone_result
-
-    # == Apply settings not directly supported by proxmox_kvm module via qm set ==
-    #    Run these only if the VM was newly created/cloned or changed by the previous task
-    #    or simply run them always - qm set is mostly idempotent.
-
-    - name: Set VM boot order
-      ansible.builtin.command: "qm set {{ new_vmid }} --boot {{ new_vm_boot_order | quote }}"
-      delegate_to: "{{ pve_node }}" # Requires SSH access to the PVE node OR use API shell
-      become: true # Usually need root to run qm
-      when: clone_result.changed # Optional: only run if cloned/changed
-      changed_when: false # qm set doesn't give good change feedback
-
-    - name: Set VM ballooning ({{ new_vm_balloon }})
-      ansible.builtin.command: "qm set {{ new_vmid }} --balloon {{ new_vm_balloon }}"
-      delegate_to: "{{ pve_node }}"
-      become: true
-      when: clone_result.changed # Optional
-      changed_when: false
-
-    - name: Set VM NUMA ({{ new_vm_numa }})
-      ansible.builtin.command: "qm set {{ new_vmid }} --numa {{ 1 if new_vm_numa else 0 }}"
-      delegate_to: "{{ pve_node }}"
-      become: true
-      when: clone_result.changed # Optional
-      changed_when: false
-
-    - name: Set VM serial0 device ({{ new_vm_serial0 }})
-      ansible.builtin.command: "qm set {{ new_vmid }} --serial0 {{ new_vm_serial0 | quote }}"
-      delegate_to: "{{ pve_node }}"
-      become: true
-      when: clone_result.changed # Optional
-      changed_when: false
-
-    - name: Set VM VGA type ({{ new_vm_vga }})
-      ansible.builtin.command: "qm set {{ new_vmid }} --vga {{ new_vm_vga | quote }}"
-      delegate_to: "{{ pve_node }}"
-      become: true
-      when: clone_result.changed # Optional
-      changed_when: false
-
-    - name: Set VM VirtioFS share (virtiofs0)
-      ansible.builtin.command: "qm set {{ new_vmid }} --virtiofs0 {{ new_vm_virtiofs0_hostpath | quote }},{{ new_vm_virtiofs0_options }}"
-      delegate_to: "{{ pve_node }}"
-      become: true
-      when: clone_result.changed # Optional
-      changed_when: false
-      # Note: Ensure the host path exists and has correct permissions on the PVE node.
-
-    # Optional: Start the VM if it's not running
-    # - name: Start the new VM
-    #   community.general.proxmox_kvm:
-    #     api_host: "{{ pve_api_host }}"
-    #     api_user: "{{ pve_api_user }}"
-    #     api_password: "{{ pve_api_password | default(omit) }}"
-    #     # api_token_id: "{{ pve_api_token_id | default(omit) }}"
-    #     # api_token_secret: "{{ pve_api_token_secret | default(omit) }}"
-    #     validate_certs: false
-    #     node: "{{ pve_node }}"
-    #     vmid: "{{ new_vmid }}"
-    #     state: started
+        api_host: 10.0.0.41
+        api_user: root@pam
+        api_token_id: ansible-automation
+        api_token_secret: "{{ pve_api_token_secret }}"
+        clone: "vm-9000"
+        vmid: 9000
+        newid: 4000
+        name: "fileserver-44"
+        node: proxmox
+        balloon: 0
+        boot: "c"
+        bootdisk: "scsi0"
+        cipassword: "$5$yOaMe4Tr$aeWDPKsA0ehkzsGQZrSzfLu4pgtcHi291.0xvuWTHvD"
+        ciuser: "haaksk"
+        cores: 4
+        cpu: "host"
+        memory: 4096
+        nameserver: "148.122.164.253"
+        numa: 1
+        onboot: 1
+        scsihw: "virtio-scsi-pci"
+        searchdomain: "telenor.net"
+        smbios1: "uuid=4a06fa63-777b-4423-84d4-13b9235d5671"
+        sockets: 2
+        sshkeys: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCzyMriPvf6XXxG+CGV7swMOr2LgKORsnXUiBlQQHN/Bqu6Mx9WTyr/DvFu3yvUYyFH5+BS1zZ6IZObw7bFwbfTevaMuiv1tPOu50ygP8Vz2A5UhvjDgX5o/n2W3o1e3oVxY6RKnF0jE/mIOynT9H0BHWPz82QZq1+YfrkcUV1D9pSFx696ksWauKxUyFcSvyd4y9aBoFO8plbffwgS4d6qArfCn9whSLqueWRJ2i4+Hd+16zvHBuAoESl192QBWXpvtOU2JM3paS+9KKOFMMZqbJfqMS0tmWFbnwz4kCCQMP/E1FyzgcyQg7JG/m2KktSZ+gfuP0rWVjL2wjZMUODkwCFZ+h+FiozBoL6v1EEenEllze5CwGUgOXgJR7w70eOOL8FvVBeAIj67HnouWoPgSGDdSRM3+a+dglxSQIm+kIw8NorRe0/RtlxHmF3KvSrU2xjjMebEAxlK6LNALUZLww9r6n56fTDUgiir1lXQxkfcNROT0w0cKTU1Vxi/seGwTwPEaWJlnLOXyIUOB+NKJqhrhWGjqSzK7RIFvlXVHULVvhNQfjescZuUGPh5Mosah3LKmL1B6W58yLbk/QHoKb/RKRIAExqPRHrP4mEyaVYlBnxlrWHbW9ESdKrElAfmpNHQ/dRT9ZiGWkxzV/YIiHPAsFMYCu+5MypcrCq6wQ== haaksk@gmail.com"
+        tablet: 0
+        template: 1
+        vga: "serial0"
+        vmgenid: "84bf44ce-d174-4738-951b-adb15f7bfa96"
+        description: "Fileserver VM created with Ansible"
+        net0: "virtio=BC:24:11:B5:30:A8,bridge=vmbr0"
+        serial0: "socket"
+        ssd: 1
+        full: yes
