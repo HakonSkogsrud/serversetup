@@ -7,6 +7,12 @@ all:
     immich:
       ansible_host: 10.0.0.42
       ansible_user: haaksk
+    mail:
+      ansible_host: 10.0.0.45
+      ansible_user: haaksk
+    workmachine:
+      ansible_host: 10.0.0.46
+      ansible_user: haaksk
     proxmox:
       ansible_host: 10.0.0.41
       ansible_user: root

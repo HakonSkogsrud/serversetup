@@ -1,0 +1,80 @@
+---
+- name: Configure AlmaLinux VM User, Directory, and VirtioFS Mount
+  hosts: mail
+  become: true
+  vars_files:
+    - vars.yml # Include the new variables file
+
+  tasks:
+
+    - name: Create the Samba group
+      ansible.builtin.group:
+        name: "{{ smb_group }}"
+        state: present
+
+    - name: Create the mount point directory
+      ansible.builtin.file:
+        path: "{{ share_path }}" # Use the variable for the mount path
+        state: directory
+        mode: "0775"
+        owner: root
+        group: "{{ smb_group }}"
+
+    - name: Add VirtioFS entry to /etc/fstab
+      ansible.posix.mount:
+        path: "{{ share_path }}" # Use the variable for the mount path
+        src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
+        fstype: virtiofs
+        opts: defaults
+        dump: 0
+        passno: 0
+        state: present
+      notify: Mount filesystems
+
+    - name: Create the Samba group
+      ansible.builtin.group:
+        name: "{{ smb_group }}"
+        state: present
+
+    - name: Add user 'haaksk' to the 'wheel' group
+      ansible.builtin.user:
+        name: haaksk
+        groups: wheel
+        append: true
+
+    - name: Add user 'haaksk' to the Samba group
+      ansible.builtin.user:
+        name: haaksk
+        groups: "{{ smb_group }}"
+        append: true
+
+    - name: Install GNOME Desktop
+      ansible.builtin.yum:
+        name: "@gnome-desktop"
+        state: present
+
+    - name: Install Thunderbird
+      ansible.builtin.yum:
+        name: thunderbird
+        state: present
+
+    - name: install gnome-tweaks
+
+    - name: set autologin to gnome-tweaks
+
+    - name: autostart thunderbird on login
+
+    - name: Set default boot target to graphical
+      ansible.builtin.command:
+        cmd: systemctl set-default graphical.target
+
+  handlers:
+    - name: Mount filesystems
+      ansible.posix.mount:
+        path: "{{ share_path }}" # Use the variable for the mount path
+        src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
+        fstype: virtiofs
+        state: mounted
+      listen: Mount filesystems
+
+
