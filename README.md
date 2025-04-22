@@ -167,3 +167,6 @@ zfs send wedred/backups/LATEST_IMMICH_SNAPSHOT | zfs receive storage/immich
 
 [Managed by `servers/proxmox-41/sanoid-setup.yml`](servers/proxmox-41/sanoid-setup.yml)
 
+# Remote desktop
+- install xrdp
+- force layout *414 in xrdp.ini
