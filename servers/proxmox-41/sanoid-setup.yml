@@ -57,6 +57,18 @@
               autosnap = no
               autoprune = yes
 
+          [sgblack/backup/immich]
+              use_template = backup_template
+              recursive = yes
+              autosnap = no
+              autoprune = yes
+
+          [sgblack/backup/smb]
+              use_template = backup_template
+              recursive = yes
+              autosnap = no
+              autoprune = yes
+
           [template_backup_template]
               frequently = 0
               hourly = 0
