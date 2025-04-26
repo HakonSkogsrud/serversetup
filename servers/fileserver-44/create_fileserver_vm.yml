@@ -1,66 +1,123 @@
 ---
 - name: Clone and Configure Proxmox VM
-  hosts: proxmox # Run on the control node, connect to PVE API
+  hosts: proxmox
   gather_facts: false
   vars_files:
     - ../common/secrets.yml
   tasks:
-    - name: Ensure Python 3 and venv are installed
+    # --- venv tasks remain the same ---
+    - name: Ensure Python 3 and venv are installed (if running on PVE node)
       ansible.builtin.package:
-        name: 
+        name:
           - python3
           - python3-venv
         state: present
       become: true
+      when: inventory_hostname == 'proxmox' # Example condition
 
-    - name: Create a Python virtual environment for Ansible
+    - name: Create a Python virtual environment for Ansible (if running on PVE node)
       ansible.builtin.command:
         cmd: python3 -m venv /opt/ansible_venv
         creates: /opt/ansible_venv
       become: true
+      when: inventory_hostname == 'proxmox' # Example condition
 
-    - name: Ensure proxmoxer and requests libraries are installed in the virtual environment
+    - name: Ensure proxmoxer and requests libraries are installed in the venv (if running on PVE node)
       ansible.builtin.command:
         cmd: /opt/ansible_venv/bin/pip install proxmoxer requests
+        creates: /opt/ansible_venv/lib/python3.*/site-packages/proxmoxer
       become: true
+      when: inventory_hostname == 'proxmox' # Example condition
 
-    - name: Set the Python interpreter to use the virtual environment
+    - name: Set the Python interpreter (if running on PVE node)
       set_fact:
         ansible_python_interpreter: /opt/ansible_venv/bin/python3
+      when: inventory_hostname == 'proxmox' # Example condition
 
-    - name: Clone VM with source vmid and target newid with specified settings
+    # --- Task to Clone and Configure ---
+    - name: Clone VM 'alma-cloud-template' (9000) to 101 and configure
       community.general.proxmox_kvm:
+        # --- Connection ---
         api_host: 10.0.0.41
         api_user: root@pam
         api_token_id: ansible-automation
         api_token_secret: "{{ pve_api_token_secret }}"
-        clone: "vm-9000"
-        vmid: 9000
-        newid: 4000
-        name: "fileserver-44"
         node: proxmox
-        balloon: 0
-        boot: "c"
-        bootdisk: "scsi0"
-        cipassword: "$5$yOaMe4Tr$aeWDPKsA0ehkzsGQZrSzfLu4pgtcHi291.0xvuWTHvD"
-        ciuser: "haaksk"
-        cores: 4
+
+        # --- Clone Operation ---
+        clone: "alma-cloud-template"
+        vmid: 9000              # Source VM ID
+        name: "fileserver-test"
+        newid: 4001              # Target VM ID
+        full: yes                 # Create a full clone
+
+        # --- Target VM State ---
+        state: present            # Ensure VM 4000 exists (should trigger clone if not)
+        description: "Fileserver VM created with Ansible"
+
+        # --- Hardware ---
+        agent: 1
+        balloon: 500
+        cores: 2
         cpu: "host"
         memory: 4096
-        nameserver: "148.122.164.253"
-        numa: 1
-        onboot: 1
+        numa_enabled: 1
+        sockets: 1
         scsihw: "virtio-scsi-pci"
-        searchdomain: "telenor.net"
-        smbios1: "uuid=4a06fa63-777b-4423-84d4-13b9235d5671"
-        sockets: 2
-        sshkeys: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCzyMriPvf6XXxG+CGV7swMOr2LgKORsnXUiBlQQHN/Bqu6Mx9WTyr/DvFu3yvUYyFH5+BS1zZ6IZObw7bFwbfTevaMuiv1tPOu50ygP8Vz2A5UhvjDgX5o/n2W3o1e3oVxY6RKnF0jE/mIOynT9H0BHWPz82QZq1+YfrkcUV1D9pSFx696ksWauKxUyFcSvyd4y9aBoFO8plbffwgS4d6qArfCn9whSLqueWRJ2i4+Hd+16zvHBuAoESl192QBWXpvtOU2JM3paS+9KKOFMMZqbJfqMS0tmWFbnwz4kCCQMP/E1FyzgcyQg7JG/m2KktSZ+gfuP0rWVjL2wjZMUODkwCFZ+h+FiozBoL6v1EEenEllze5CwGUgOXgJR7w70eOOL8FvVBeAIj67HnouWoPgSGDdSRM3+a+dglxSQIm+kIw8NorRe0/RtlxHmF3KvSrU2xjjMebEAxlK6LNALUZLww9r6n56fTDUgiir1lXQxkfcNROT0w0cKTU1Vxi/seGwTwPEaWJlnLOXyIUOB+NKJqhrhWGjqSzK7RIFvlXVHULVvhNQfjescZuUGPh5Mosah3LKmL1B6W58yLbk/QHoKb/RKRIAExqPRHrP4mEyaVYlBnxlrWHbW9ESdKrElAfmpNHQ/dRT9ZiGWkxzV/YIiHPAsFMYCu+5MypcrCq6wQ== haaksk@gmail.com"
-        tablet: 0
-        template: 1
         vga: "serial0"
-        vmgenid: "84bf44ce-d174-4738-951b-adb15f7bfa96"
-        description: "Fileserver VM created with Ansible"
-        net0: "virtio=BC:24:11:B5:30:A8,bridge=vmbr0"
-        serial0: "socket"
-        ssd: 1
-        full: yes
+        tablet: 0
+        onboot: 1
+
+        # --- Boot ---
+        boot: "c"
+        bootdisk: "scsi0"
+
+        # --- Network (Structured Parameters) ---
+        net:
+          net0: "virtio,bridge=vmbr0"
+        ipconfig:
+          ipconfig0: "ip=10.0.0.44/24,gw=10.0.0.138"
+        nameservers: "148.122.164.253"
+        searchdomains: "telenor.net"
+
+        # --- Cloud-Init ---
+        ciuser: "haaksk"
+        cipassword: "$5$yOaMe4Tr$aeWDPKsA0ehkzsGQZrSzfLu4pgtcHi291.0xvuWTHvD"
+        sshkeys: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCzyMriPvf6XXxG+CGV7swMOr2LgKORsnXUiBlQQHN/Bqu6Mx9WTyr/DvFu3yvUYyFH5+BS1zZ6IZObw7bFwbfTevaMuiv1tPOu50ygP8Vz2A5UhvjDgX5o/n2W3o1e3oVxY6RKnF0jE/mIOynT9H0BHWPz82QZq1+YfrkcUV1D9pSFx696ksWauKxUyFcSvyd4y9aBoFO8plbffwgS4d6qArfCn9whSLqueWRJ2i4+Hd+16zvHBuAoESl192QBWXpvtOU2JM3paS+9KKOFMMZqbJfqMS0tmWFbnwz4kCCQMP/E1FyzgcyQg7JG/m2KktSZ+gfuP0rWVjL2wjZMUODkwCFZ+h+FiozBoL6v1EEenEllze5CwGUgOXgJR7w70eOOL8FvVBeAIj67HnouWoPgSGDdSRM3+a+dglxSQIm+kIw8NorRe0/RtlxHmF3KvSrU2xjjMebEAxlK6LNALUZLww9r6n56fTDUgiir1lXQxkfcNROT0w0cKTU1Vxi/seGwTwPEaWJlnLOXyIUOB+NKJqhrhWGjqSzK7RIFvlXVHULVvhNQfjescZuUGPh5Mosah3LKmL1B6W58yLbk/QHoKb/RKRIAExqPRHrP4mEyaVYlBnxlrWHbW9ESdKrElAfmpNHQ/dRT9ZiGWkxzV/YIiHPAsFMYCu+5MypcrCq6wQ== haaksk@gmail.com"
+
+        # --- Console (Structured Parameter) ---
+        serial:
+          serial0: "socket"
+
+        # --- Disk Configuration (Structured Parameter) ---
+        scsi:
+          scsi0: "ssd=1,discard=1"
+
+    # --- Task to add virtiofs0 using qm set ---
+    - name: Set virtiofs0 configuration using qm command
+      ansible.builtin.command:
+        # Use qm set <vmid> --option 'value'
+        cmd: qm set 4001 --virtiofs0 'smb,expose-xattr=1'
+      become: true # qm set usually requires root privileges
+      changed_when: true # Assume this command makes a change, or add checks for idempotency later
+
+    # --- Tasks to ensure cloud-init config is applied ---
+    - name: Regenerate cloud-init config
+      ansible.builtin.command:
+        cmd: qm cloudinit update 4001
+      become: true
+      changed_when: true
+      
+    - name: Stop VM if running
+      ansible.builtin.command:
+        cmd: qm stop 4001
+      become: true
+      register: stop_result
+      changed_when: stop_result.rc == 0
+      failed_when: stop_result.rc != 0 and 'not running' not in stop_result.stderr
+      
+    - name: Start VM to apply cloud-init configuration
+      ansible.builtin.command:
+        cmd: qm start 4001
+      become: true
+      changed_when: true
