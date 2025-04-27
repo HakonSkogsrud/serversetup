@@ -76,7 +76,7 @@
         net:
           net0: "virtio,bridge=vmbr0"
         ipconfig:
-          ipconfig0: "ip=10.0.0.44/24,gw=10.0.0.138"
+          ipconfig0: "ip=10.0.0.44/24"
         nameservers: "148.122.164.253"
         searchdomains: "telenor.net"
 
@@ -116,8 +116,3 @@
       changed_when: stop_result.rc == 0
       failed_when: stop_result.rc != 0 and 'not running' not in stop_result.stderr
       
-    - name: Start VM to apply cloud-init configuration
-      ansible.builtin.command:
-        cmd: qm start 4001
-      become: true
-      changed_when: true

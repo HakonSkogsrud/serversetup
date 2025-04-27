@@ -1,7 +1,7 @@
 ---
 - name: Install and Configure Tailscale
-  hosts: all
-  become: fileserver, immich
+  hosts: fileserver, immich
+  become: true
   vars_files:
     - secrets.yml
 
