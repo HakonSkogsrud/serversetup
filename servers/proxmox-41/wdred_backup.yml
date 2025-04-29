@@ -1,0 +1,9 @@
+- name: Configure syncoid backup on VM
+  hosts: proxmox
+  become: true
+  tasks:
+    - name: Copy backup script to VM
+      ansible.builtin.copy:
+        src: wdred_backup.sh
+        dest: /usr/local/bin/wdred_backup.sh
+        mode: '0775'
