@@ -4,6 +4,15 @@ WORK IN PROGRESS 🔨🧱🏗️
 
 ![setup](setup.png)
 
+## VMs
+
+| Server       | IP          | User       | Services/ports  | os  |
+|--------------|-------------|------------|-----------------|-----------|
+| Fileserver   | 10.0.0.44   | haaksk     | samba           | Alma 9.5  |
+| Immich       | 10.0.0.42   | haaksk     | Immich:2283     | Alma 9.5  |
+| Proxmox      | 10.0.0.41   | root       | Hypervisor:8006 | Debian    |
+| Workmachine2 | 10.0.0.21   | haaksk     |                 |Fedora 42  |
+
 ## Setup
 
 Install ansible with extensions. 
