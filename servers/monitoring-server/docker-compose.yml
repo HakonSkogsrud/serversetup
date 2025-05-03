@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    # Expose Prometheus on port 9090. Adjust if needed.
+    ports:
+      - "9090:9090"
+    volumes:
+      # Mount the generated prometheus.yml config
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      # Persist Prometheus data
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.html=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle' # Enable /-/reload endpoint
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    # Expose Grafana on port 3000. Adjust if needed.
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist Grafana data (dashboards, users, etc.)
+      - grafana_data:/var/lib/grafana
+      # Optional: Mount provisioning files here if you want to automate data source/dashboard setup
+      # - ./grafana/provisioning/:/etc/grafana/provisioning/
+    restart: unless-stopped
+    # Ensure Grafana starts after Prometheus
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}

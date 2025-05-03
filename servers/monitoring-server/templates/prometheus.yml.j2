@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds.
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'proxmox_host_node'
+    static_configs:
+      - targets: [{% for host in groups['proxmox_hosts'] %}'{{ hostvars[host]['ansible_host'] }}:9100'{% if not loop.last %}, {% endif %}{% endfor %}]
+
+  - job_name: 'proxmox_ve'
+    static_configs:
+      - targets: [{% for host in groups['proxmox_hosts'] %}'{{ hostvars[host]['ansible_host'] }}:9221'{% if not loop.last %}, {% endif %}{% endfor %}]
+
+  # Monitored VMs - Node Exporter
+  - job_name: 'monitored_vm_node'
+    static_configs:
+      - targets: [{% for host in groups['monitored_vms'] %}'{{ hostvars[host]['ansible_host'] }}:9100'{% if not loop.last %}, {% endif %}{% endfor %}]
+
+  # Monitored VMs - cAdvisor
+  - job_name: 'monitored_vm_cadvisor'
+    static_configs:
+      - targets: [{% for host in groups['monitored_vms'] %}'{{ hostvars[host]['ansible_host'] }}:8080'{% if not loop.last %}, {% endif %}{% endfor %}]

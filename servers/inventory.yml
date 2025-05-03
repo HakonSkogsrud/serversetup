@@ -16,3 +16,6 @@ all:
     proxmox:
       ansible_host: 10.0.0.41
       ansible_user: root
+    monitoring-server:
+      ansible_host: 10.0.0.47
+      ansible_user: haaksk
