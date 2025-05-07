@@ -45,38 +45,6 @@
               autosnap = yes
               autoprune = yes
 
-          [wdred/backup/immich]
-              use_template = backup_template
-              recursive = yes
-              autosnap = no
-              autoprune = yes
-
-          [wdred/backup/smb]
-              use_template = backup_template
-              recursive = yes
-              autosnap = no
-              autoprune = yes
-
-          [sgblack/backup/immich]
-              use_template = backup_template
-              recursive = yes
-              autosnap = no
-              autoprune = yes
-
-          [sgblack/backup/smb]
-              use_template = backup_template
-              recursive = yes
-              autosnap = no
-              autoprune = yes
-
-          [template_backup_template]
-              frequently = 0
-              hourly = 0
-              daily = 0
-              weekly = 12
-              monthly = 12
-              yearly = 3
-
     - name: Enable sanoid timer service (starts on boot)
       ansible.builtin.systemd:
         name: sanoid.timer
@@ -86,3 +54,4 @@
       ansible.builtin.systemd:
         name: sanoid.timer
         state: restarted
+
