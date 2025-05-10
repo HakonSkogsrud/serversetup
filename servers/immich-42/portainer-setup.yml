@@ -1,7 +1,7 @@
 ---
 - name: Install and Configure Docker CE
   hosts: immich
-  become: false
+  become: true
 
 
   tasks:

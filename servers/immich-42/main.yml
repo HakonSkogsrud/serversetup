@@ -1,7 +1,7 @@
 ---
 
-- name: Create vm from template
-  import_playbook: create_vm.yml
+- name: Clone vm from template
+  import_playbook: clone_vm.yml
 
 - name: Mount ZFS Dataset
   import_playbook: mount-immich-dataset.yml
@@ -11,6 +11,9 @@
 
 - name: Setup portainer
   import_playbook: portainer-setup.yml
+
+- name: Start Immich
+  import_playbook: immich-setup.yml
 
 - name: Connect server to tailscale network
   import_playbook: ../common/tailscale-setup.yml

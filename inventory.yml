@@ -5,7 +5,7 @@ all:
       ansible_host: 10.0.0.44
       ansible_user: haaksk
     immich:
-      ansible_host: 10.0.0.42
+      ansible_host: 10.0.0.100
       ansible_user: haaksk
     mail:
       ansible_host: 10.0.0.45
