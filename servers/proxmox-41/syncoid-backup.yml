@@ -5,7 +5,7 @@
     - name: Copy syncoid backup script to VM
       ansible.builtin.copy:
         src: scripts/syncoid-backup.sh
-        dest: /usr/local/bin/syncoid-backup.sh
+        dest: /usr/bin/syncoid-backup.sh
         mode: '0775'
 
     #- name: Add syncoid backup script to crontab
