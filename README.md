@@ -8,14 +8,14 @@ WORK IN PROGRESS 🔨🧱🏗️
 
 | Server       | IP          | User       | Services/ports  | os  |
 |--------------|-------------|------------|-----------------|-----------|
-| Fileserver   | 10.0.0.44   | haaksk     | samba           | Alma 9.5  |
+| Services     | 10.0.0.44   | haaksk     | samba           | Alma 9.5  |
 | Immich       | 10.0.0.42   | haaksk     | Immich:2283     | Alma 9.5  |
 | Proxmox      | 10.0.0.41   | root       | Hypervisor:8006 | Debian    |
 | Workmachine2 | 10.0.0.21   | haaksk     |                 |Fedora 42  |
 
 ## Setup
 
-Install ansible with extensions. 
+Install ansible with extensions on machine you run ansible on. 
 ```sh
 brew install ansible ansible-lint
 
@@ -65,60 +65,9 @@ Add a file `.vault_pass` with vault password
 In Datacenter - Directory Mapping create mapping/tag for both datasets
 
 
-## VM template
-
-- On proxmox host, download alma cloud image into `/var/lib/vz/template/qcow`
-
-```sh
-cd /var/lib/vz/template/qcow
-# wget ....
-qm create 9000 --name alma-cloud-template --memory 4096 --net0 virtio,bridge=vmbr0
-qm importdisk 9000 AlmaLinux-9-GenericCloud-9.5-20241120.x86_64.qcow2 local-lvm
-qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
-qm set 9000 --ide2 local-lvm:cloudinit
-qm set 9000 --boot c --bootdisk scsi0
-qm set 9000 --serial0 socket --vga serial0
-```
-Edit 9000:
-- Options:
-    - Start on boot
-- Hardware
-    - Memory: Remove ballooning
-    - Processors: more cpu and socket, enable Numa, cpu type: Host
-    - Hard Disk: enable ssd emulation
-- Cloud-init:
-    - set username and password
-    - paste in id_rsa.pub
-    - ip config -> static
-    - dns host is `telenor.net`
-    - dns-server is `148.122.164.253`
-
-## Cloning - Setting up servers/vms
-
-Make sure dns host is `telenor.net` and dns-server is `148.122.164.253`. Otherwise it might inherit tailscale settings from proxmox.
-
-### Fileserver
-- `Hardware` add virtiofs with tag and enable xattr for samba share.
-- Set ip to 10.0.0.44/24 with gateway 10.0.0.138
-
-Setup with
-```sh
-ansible-playbook -i servers/inventory.yml -K --ask-vault-pass servers/fileserver-44/main.yml 
-```
-
-### Immich server
-- `Hardware` Add virtiofs for immich dataset.
-- Set ip to 10.0.0.42/24 with gateway 10.0.0.138
-
-Setup with 
-```sh
-ansible-playbook -i servers/inventory.yml -K servers/immich-42/main.yml 
-```
-
-This does not install or restore Immich, just sets up server.
-
 #### Immich restore
-gunzip command for database restore:
+
+script for Immich restore
 ```sh
 cd /home/haaksk/immich-app
 docker compose down -v
@@ -129,8 +78,6 @@ sleep 10
 sudo gunzip --stdout "$(sudo ls /mnt/storage/immich/library/backups/immich-db-backup-*.sql.gz | sort -V | tail -n 1)" | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
 docker compose up -d 
 ```
-
-
 
 # Backups external harddrives
 
@@ -169,7 +116,6 @@ zpool export wdred
 List most recent snapshot
 ```sh
 zfs list -t snapshot -o name,creation -s creation | tail -n 2
-zfs send wedred/backups/LATEST_IMMICH_SNAPSHOT | zfs receive storage/immich
 ```
 
 ## sanoid

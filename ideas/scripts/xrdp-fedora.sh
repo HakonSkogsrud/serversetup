@@ -1,4 +1,3 @@
-sudo dnf -y install @workstation-product-environment
 sudo dnf install xrdp -y 
 sudo systemctl enable xrdp 
 sudo systemctl start xrdp 
