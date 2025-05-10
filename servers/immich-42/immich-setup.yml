@@ -1,0 +1,42 @@
+---
+- name: Setup Immich
+  hosts: immich
+  become: true
+
+  tasks:
+    - name: Ensure immich-app directory exists
+      file:
+        path: /home/haaksk/immich-app
+        state: directory
+        owner: haaksk
+        group: haaksk
+        mode: '0755'
+
+    - name: Copy environment file
+      copy:
+        src: /mnt/storage/immich/.env
+        dest: /home/haaksk/immich-app/.env
+        remote_src: true
+        owner: haaksk
+        group: haaksk
+        mode: '0644'
+        backup: yes
+
+    - name: Download latest docker-compose.yml
+      get_url:
+        url: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+        dest: /home/haaksk/immich-app/docker-compose.yml
+        owner: haaksk
+        group: haaksk
+        mode: '0644'
+        force: no
+      register: compose_download
+
+    - name: Run Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /home/haaksk/immich-app
+        files:
+          - docker-compose.yml
+        state: present
+      become_user: haaksk
+      register: output
