@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="UHk2xnjYhgRBFFR_S6qz" name="Page-1">
-        <mxGraphModel dx="299" dy="1968" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#FFFFFF" math="0" shadow="0">
+        <mxGraphModel dx="808" dy="1895" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#FFFFFF" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -231,6 +231,17 @@
                 </mxCell>
                 <mxCell id="117" value="sanoid" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="115" vertex="1" connectable="0">
                     <mxGeometry x="0.0194" y="-2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="118" style="edgeStyle=none;html=1;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="610" as="sourcePoint"/>
+                        <mxPoint x="414" y="505" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="119" value="Ansible" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="118">
+                    <mxGeometry x="-0.0404" y="3" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>

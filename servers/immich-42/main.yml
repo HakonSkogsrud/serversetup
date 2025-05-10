@@ -1,4 +1,8 @@
 ---
+
+- name: Create vm from template
+  import_playbook: create_vm.yml
+
 - name: Mount ZFS Dataset
   import_playbook: mount-immich-dataset.yml
 

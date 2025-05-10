@@ -4,7 +4,7 @@
   tasks:
     - name: Copy syncoid backup script to VM
       ansible.builtin.copy:
-        src: syncoid-backup.sh
+        src: scripts/syncoid-backup.sh
         dest: /usr/local/bin/syncoid-backup.sh
         mode: '0775'
 

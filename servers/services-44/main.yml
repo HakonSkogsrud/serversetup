@@ -1,6 +1,6 @@
 ---
 - name: Clone template and create fileserver vm
-  import_playbook: create_fileserver_vm.yml
+  import_playbook: create_vm.yml
 
 - name: Mount zfs dataset
   import_playbook: mount-fileserver-dataset.yml

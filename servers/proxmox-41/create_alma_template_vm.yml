@@ -6,7 +6,7 @@
   tasks:
     - name: Copy script to VM
       ansible.builtin.copy:
-        src: create_alma_template.sh
+        src: scripts/create_alma_template.sh
         dest: /usr/local/bin/alma_template.sh
         mode: '0775'
 
