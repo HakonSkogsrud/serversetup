@@ -36,7 +36,7 @@
         ansible_python_interpreter: /opt/ansible_venv/bin/python3
       when: inventory_hostname == 'proxmox' 
 
-    # --- Task to Clone and Configure ---
+    # --- Task to Clone
     - name: Clone VM 
       community.general.proxmox_kvm:
         # --- Connection ---
@@ -57,13 +57,28 @@
         state: present            # Ensure VM exists
         description: "Fileserver VM created with Ansible"
 
+
+    - name: configure Hardware
+      community.general.proxmox_kvm:
+        # --- Connection ---
+        api_host: 10.0.0.41
+        api_user: root@pam
+        api_token_id: ansible-automation
+        api_token_secret: "{{ pve_api_token_secret }}"
+        node: proxmox
+
+        # --- Clone Operation ---
+        vmid: "{{ target_vmid }}"  
+        state: present
+        update: true
+
         # --- Hardware ---
-        balloon: 500
+        balloon: 1024
         cores: 1
-        memory: 4096
+        memory: 6000
         sockets: 1
         onboot: 1
-
+        
     # --- Task to add virtiofs0 using qm set ---
     - name: Set virtiofs0 configuration using qm command
       ansible.builtin.command:

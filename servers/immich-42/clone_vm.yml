@@ -17,29 +17,29 @@
           - python3-venv
         state: present
       become: true
-      when: inventory_hostname == 'proxmox' 
+      when: inventory_hostname == 'proxmox'
 
     - name: Create a Python virtual environment for Ansible (if running on PVE node)
       ansible.builtin.command:
         cmd: python3 -m venv /opt/ansible_venv
         creates: /opt/ansible_venv
       become: true
-      when: inventory_hostname == 'proxmox' 
+      when: inventory_hostname == 'proxmox'
 
     - name: Ensure proxmoxer and requests libraries are installed in the venv (if running on PVE node)
       ansible.builtin.command:
         cmd: /opt/ansible_venv/bin/pip install proxmoxer requests
         creates: /opt/ansible_venv/lib/python3.*/site-packages/proxmoxer
       become: true
-      when: inventory_hostname == 'proxmox' 
+      when: inventory_hostname == 'proxmox'
 
     - name: Set the Python interpreter (if running on PVE node)
       set_fact:
         ansible_python_interpreter: /opt/ansible_venv/bin/python3
-      when: inventory_hostname == 'proxmox' 
+      when: inventory_hostname == 'proxmox'
 
-    # --- Task to Clone ---
-    - name: Clone VM 
+    # --- Task to Clone (initial creation) ---
+    - name: Clone VM (initial creation if needed)
       community.general.proxmox_kvm:
         # --- Connection ---
         api_host: 10.0.0.41
@@ -50,23 +50,36 @@
 
         # --- Clone Operation ---
         clone: "alma-cloud-template-automated"
-        vmid: 9003              # Source VM ID (matches your template script)
+        vmid: 9003             
         name: "immich"
-        newid: "{{ target_vmid }}"  # Use the variable for the target VM ID
-        full: yes                 # Create a full clone
-        # The disk 'scsi0' will be cloned to the same storage 'local-lvm' by default,
-        # or you can specify 'storage: your_target_storage_for_scsi0' if different.
+        newid: "{{ target_vmid }}"  
+        full: yes                 
 
-        # --- Target VM State ---
-        state: present            # Ensure VM exists
-        description: "Fileserver VM created with Ansible"
+        state: present     
 
-        # --- Hardware ---
+
+    # --- Task to ensure configuration 
+    - name: Ensure VM configuration is correct
+      community.general.proxmox_kvm:
+        # --- Connection ---
+        api_host: 10.0.0.41
+        api_user: root@pam
+        api_token_id: ansible-automation
+        api_token_secret: "{{ pve_api_token_secret }}"
+        node: proxmox # Or discover automatically if not cloning here
+
+        # --- Target VM ---
+        vmid: "{{ target_vmid }}" # Target the VM by its ID
+        state: present            # Ensure VM exists (this task won't create, just check)
+        update: true              # <-- Use update: true here!
+
+        # --- Desired Configuration ---
+        description: "Fileserver VM created and configured with Ansible" # Can update description
         balloon: 4000
-        cores: 2
-        memory: 20096 
-        sockets: 2
-        onboot: 1
+        cores: 4
+        memory: 20096
+        sockets: 1
+        onboot: true # Ensure it starts with the node
 
     # --- Task to resize the primary disk ---
     - name: Resize the primary disk of the VM to {{ primary_disk_size }}
@@ -79,27 +92,32 @@
     - name: Set virtiofs0 configuration using qm command
       ansible.builtin.command:
         cmd: "qm set {{ target_vmid }} --virtiofs0 'immich'"
-      changed_when: true 
+      changed_when: true
 
-    - name: Change IP configuration
+    # --- Task to Change IP configuration using qm set ---
+    # Using qm set here is fine, alternative is using 'net' and 'ipconfig' with update: true in the second proxmox_kvm task.
+    - name: Change IP configuration using qm command
       ansible.builtin.command:
         cmd: "qm set {{ target_vmid }} --ipconfig0 ip=10.0.0.42/24,gw=10.0.0.138"
       changed_when: true
+
 
     - name: Check VM status
       ansible.builtin.command:
         cmd: "qm status {{ target_vmid }}"
       register: vm_status
       changed_when: false
-      ignore_errors: true
+      ignore_errors: true # Ignore errors if VM doesn't exist yet
 
     - name: Start the VM if not running
       ansible.builtin.command:
         cmd: "qm start {{ target_vmid }}"
-      when: vm_status.rc != 0 or "stopped" in vm_status.stdout
+      # Check rc != 0 or if stdout contains "stopped" (case-insensitive check)
+      when: vm_status.rc != 0 or vm_status.stdout | default('') is search("stopped", ignorecase=True)
       changed_when: true
 
     - name: Wait for VM to start
       ansible.builtin.pause:
         seconds: 10
-      when: vm_status.rc != 0 or "stopped" in vm_status.stdout
+      # Only pause if the start command was potentially run
+      when: vm_status.rc != 0 or vm_status.stdout | default('') is search("stopped", ignorecase=True)
