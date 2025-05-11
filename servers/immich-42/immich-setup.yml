@@ -25,6 +25,7 @@
         mode: '0644'
         backup: yes
 
+
     - name: Download latest docker-compose.yml
       get_url:
         url: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
@@ -34,6 +35,11 @@
         mode: '0644'
         force: no
       register: compose_download
+
+    - name: Tear down Docker Compose services
+      community.docker.docker_compose_v2:
+        project_src: "{{ immich_project_dir }}"
+        state: absent
 
     - name: Pull latest images and ensure services are created (will also start them)
       community.docker.docker_compose_v2:
