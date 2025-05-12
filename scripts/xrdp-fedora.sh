@@ -5,3 +5,6 @@ sudo firewall-cmd --permanent --add-port=3389/tcp
 sudo firewall-cmd --reload 
 sudo chcon --type=bin_t /usr/sbin/xrdp 
 sudo chcon --type=bin_t /usr/sbin/xrdp-sesman 
+
+# add exec YOUR_PREFEED SESSION to .xsession
+#chmod +x ~/.xsession

@@ -1,0 +1,7 @@
+
+# vm configuration
+balloon: 4000
+cores: 4
+memory: 20096
+sockets: 1
+onboot: true
