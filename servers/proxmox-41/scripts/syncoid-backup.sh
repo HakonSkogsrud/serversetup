@@ -13,11 +13,23 @@ log() {
 }
 
 log "Starting Syncoid backup script."
-log "Checking for attached and online ZFS pools on $REMOTE_HOST from list: ${POSSIBLE_POOLS[*]}..."
+log "Checking for ZFS pools on $REMOTE_HOST from list: ${POSSIBLE_POOLS[*]}..."
 
 for current_pool in "${POSSIBLE_POOLS[@]}"; do
     log "Checking status of pool '$current_pool'..."
-
+    
+    if ! ssh "$REMOTE_USER@$REMOTE_HOST" "zpool list -H $current_pool" &> /dev/null; then
+        log "Pool '$current_pool' is not imported. Attempting to import..."
+        
+        if ssh "$REMOTE_USER@$REMOTE_HOST" "zpool import $current_pool" >> "$LOG_FILE" 2>&1; then
+            log "Successfully imported pool '$current_pool'."
+        else
+            log "Failed to import pool '$current_pool'. It may not be available. Skipping."
+            continue
+        fi
+    fi
+    
+    # Now check if the pool is online
     if ssh "$REMOTE_USER@$REMOTE_HOST" "zpool status $current_pool | grep -q 'state: ONLINE'"; then
         log "Pool '$current_pool' is ONLINE. Proceeding with backup steps for this pool."
 
@@ -51,14 +63,11 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
             log "Failed to load ZFS key for '$current_pool'. Skipping backups for this pool."
             log "Could not process pool '$current_pool' due to key load failure. Exiting."
             exit 1 
-
         fi 
-
     else
-        log "Pool '$current_pool' is not online. Skipping."
+        log "Pool '$current_pool' is found but not in ONLINE state. Skipping."
     fi
-
 done 
 
-log "No online ZFS pools (${POSSIBLE_POOLS[*]}) found to process."
+log "No suitable ZFS pools (${POSSIBLE_POOLS[*]}) found to process."
 exit 1
