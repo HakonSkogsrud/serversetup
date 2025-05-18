@@ -40,7 +40,7 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
             for current_dataset in "${DATASETS_TO_BACKUP[@]}"; do
                 log "Backing up dataset '$current_dataset'..."
 
-                if syncoid -r "$PROXMOX_DATASET/$current_dataset" "$REMOTE_USER@$REMOTE_HOST:$current_pool/$BACKUP_DATASET/$current_dataset" >> "$LOG_FILE" 2>&1; then
+                if /usr/sbin/syncoid -r "$PROXMOX_DATASET/$current_dataset" "$REMOTE_USER@$REMOTE_HOST:$current_pool/$BACKUP_DATASET/$current_dataset" >> "$LOG_FILE" 2>&1; then
                     log "Backup for dataset '$current_dataset' to '$current_pool' completed successfully."
                 else
                     log "Backup for dataset '$current_dataset' to '$current_pool' failed. Check syncoid output in log file on Proxmox."
