@@ -1,14 +1,29 @@
 ---
-server_ips:
-  immich: 10.0.0.42
-  mail: 10.0.0.45
-  proxmox: 10.0.0.41
+
 gateway: 10.0.0.138
+
+proxmox:
+  ip: 10.0.0.41
+  api_user: root@pam
+  host: proxmox
+  user: root
+
+mail:
+  ip: 10.0.0.45
+  name: mail
+  vmid: 4002
+
+immich:
+  ip: 10.0.0.42
+  name: immich
+  vmid: 4001
+  user: haaksk
 
 services:
   ip: 10.0.0.44
   name: services
   vmid: 4000
+  user: haaksk
 
 virtiofs_tags:
   smb: "smb"

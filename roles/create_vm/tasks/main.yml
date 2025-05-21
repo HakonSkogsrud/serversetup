@@ -28,15 +28,14 @@
     ansible_python_interpreter: /opt/ansible_venv/bin/python3
   when: inventory_hostname == "{{ node }}"
 
-# --- Task to Clone (initial creation) ---
+
 - name: Clone VM (initial creation if needed)
   community.general.proxmox_kvm:
-    # --- Connection ---
-    api_host: "{{ server_ips.proxmox }}"
-    api_user: "{{ api_user }}"
+    api_host: "{{ proxmox.ip }}"
+    api_user: "{{ proxmox.api_user }}"
     api_token_id: "{{ api_token_id }}"
     api_token_secret: "{{ pve_api_token_secret }}"
-    node: "{{ node }}"
+    node: "{{ proxmox.node }}"
 
     # --- Clone Operation ---
     clone: "{{ clone }}"
@@ -44,14 +43,11 @@
     name: "{{ name }}"
     newid: "{{ newid }}"  
     full: yes                 
-
     state: present
 
 
-# --- Task to ensure configuration 
 - name: Ensure VM configuration is correct
   community.general.proxmox_kvm:
-    # --- Connection ---
     api_host: "{{ server_ips.proxmox }}"
     api_user: "{{ api_user }}"
     api_token_id: "{{ api_token_id }}"
@@ -64,28 +60,25 @@
     update: true             
 
     # --- Desired Configuration ---
-    description: "Fileserver VM created and configured with Ansible" # Can update description
+    description: "{{ description }}"
     balloon: "{{ balloon }}"
     cores: "{{ cores }}"
     memory: "{{ memory }}"
     sockets: "{{ sockets }}"
-    onboot: true # Ensure it starts with the node
+    onboot: true
     sshkeys: "{{ vm_public_ssh_keys }}"
 
-# --- Task to resize the primary disk ---
-- name: Resize the primary disk of the VM to {{ primary_disk_size }}
+- name: Resize the primary disk of the VM
   ansible.builtin.command:
     cmd: "qm resize {{ newid }} {{ primary_disk_name }} {{ primary_disk_size }}"
   changed_when: true
 
-# --- Task to add virtiofs0 using qm set ---
-- name: Set virtiofs0 configuration using qm command
+- name: Set virtiofs0 configuration
   ansible.builtin.command:
     cmd: "qm set {{ newid }} --virtiofs0 ''{{ virtiofs_tag }}''"
   changed_when: true
 
-# --- Task to Change IP configuration using qm set ---
-- name: Change IP configuration using qm command
+- name: Change IP configuration
   ansible.builtin.command:
     cmd: "qm set {{ newid }} --ipconfig0 ip='{{ ipaddr }}'/24,gw='{{ gateway }}'"
   changed_when: true
@@ -96,7 +89,7 @@
     cmd: "qm status {{ newid }}"
   register: vm_status
   changed_when: false
-  ignore_errors: true # Ignore errors if VM doesn't exist yet
+  ignore_errors: true 
 
 - name: Start the VM if not running
   ansible.builtin.command:

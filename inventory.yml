@@ -3,13 +3,13 @@ all:
   hosts:
     services:
       ansible_host: "{{ services.ip }}"
-      ansible_user: haaksk
+      ansible_user: "{{ services.user }}"
     immich:
-      ansible_host: "{{ server_ips.immich }}"
-      ansible_user: haaksk
+      ansible_host: "{{ immich.ip }}"
+      ansible_user: "{{ immich.user }}"
     mail:
-      ansible_host: "{{ server_ips.mail }}"
-      ansible_user: haaksk
+      ansible_host: "{{ mail.ip }}"
+      ansible_user: "{{ mail.user }}"
     proxmox:
-      ansible_host: "{{ server_ips.proxmox }}"
-      ansible_user: root
+      ansible_host: "{{ proxmox.ip }}"
+      ansible_user: "{{ proxmox.user }}"
