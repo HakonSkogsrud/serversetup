@@ -15,4 +15,3 @@
         cmd: /usr/local/bin/alma_template.sh
       environment:
         VM_PASSWORD: "{{ vm_password }}"
-    

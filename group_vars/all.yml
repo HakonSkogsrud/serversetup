@@ -1,0 +1,15 @@
+---
+server_ips:
+  immich: 10.0.0.42
+  mail: 10.0.0.45
+  proxmox: 10.0.0.41
+gateway: 10.0.0.138
+
+services:
+  ip: 10.0.0.44
+  name: services
+  vmid: 4000
+
+virtiofs_tags:
+  smb: "smb"
+  immich: "immich"

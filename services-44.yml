@@ -1,0 +1,45 @@
+---
+- name: Create services VM
+  hosts: proxmox
+  become: false 
+  vars_files:
+    - secrets.yml  
+  roles:
+    - role: create_vm
+      vars:
+        node: proxmox
+        api_user: root@pam
+        clone: "alma-cloud-template-automated" # name of the template to clone from
+        vmid: 9003  # VMID of the template to clone
+        balloon: 1024
+        cores: 2
+        memory: 6000
+        sockets: 1
+        virtiofs_tag: "{{ virtiofs_tags.smb }}"
+        name: "{{ services.name }}" 
+        primary_disk_size: 20G
+        newid: "{{ services.vmid }}"
+        ipaddr: "{{ services.ip }}"
+
+- name: Configure sevices
+  hosts: services
+  become: true      
+  vars_files:
+    - secrets.yml
+  roles:
+    - role: mount_virtiofs
+      vars:
+        virtiofs_tag: "{{ virtiofs_tags.smb }}" 
+        share_path: "/mnt/storage/smb" 
+        group: "sambausers" 
+        owner: "root"
+
+    - role: samba_setup
+      vars: 
+        share_path: "/mnt/storage/smb"
+        smb_group: "sambausers" 
+        owner: "root"              
+    
+    - role: tailscale_setup
+      vars:
+        tailscale_hostname: "{{ services.name }}"

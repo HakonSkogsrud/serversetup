@@ -1,6 +1,5 @@
----
-virtiofs_tag: smb
 smb_group: sambausers
 smb_user: haaksk
 sudo_group: wheel
 share_path: /mnt/storage/smb
+owner: root

@@ -2,20 +2,14 @@
 all:
   hosts:
     services:
-      ansible_host: 10.0.0.44
+      ansible_host: "{{ services.ip }}"
       ansible_user: haaksk
     immich:
-      ansible_host: 10.0.0.42
+      ansible_host: "{{ server_ips.immich }}"
       ansible_user: haaksk
     mail:
-      ansible_host: 10.0.0.45
-      ansible_user: haaksk
-    workmachine:
-      ansible_host: 10.0.0.46
+      ansible_host: "{{ server_ips.mail }}"
       ansible_user: haaksk
     proxmox:
-      ansible_host: 10.0.0.41
+      ansible_host: "{{ server_ips.proxmox }}"
       ansible_user: root
-    monitoring-server:
-      ansible_host: 10.0.0.47
-      ansible_user: haaksk

@@ -1,0 +1,23 @@
+---
+- name: Ensure the update script directory exists
+  file:
+    path: /usr/local/bin
+    state: directory
+    mode: '0755'
+
+- name: Create the update script
+  copy:
+    dest: /usr/local/bin/update_packages.sh
+    content: |
+      #!/bin/bash
+      sudo yum update -y
+    mode: '0755'
+
+- name: Add a cron job to run the update script weekly as root
+  cron:
+    name: "Weekly package updates"
+    job: "/usr/local/bin/update_packages.sh"
+    user: root
+    weekday: "0"  # Sunday
+    hour: "3"     # 3 AM
+    minute: "0"

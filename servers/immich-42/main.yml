@@ -7,8 +7,11 @@
   import_playbook: mount-immich-dataset.yml
 
 - name: Setup docker
-  import_playbook: docker-setup.yml
-
+  hosts: immich
+  become: true
+  roles: 
+    - role: docker_setup
+    
 - name: Setup portainer
   import_playbook: portainer-setup.yml
 
