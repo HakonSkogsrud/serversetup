@@ -39,10 +39,10 @@
 
 - name: Ensure the Samba share directory exists with correct permissions
   ansible.builtin.file:
-    path: "{{ share_path }}"
+    path: "{{ mount_path }}"
     state: directory
     mode: "2770" # Includes setgid bit
-    owner: "{{ owner }}"
+    owner: "{{ mount_path_owner }}"
     group: "{{ smb_group }}"
     recurse: true # Apply recursively to existing contents
 
@@ -73,7 +73,7 @@
     block: |
       [share]
           comment = Cross-Platform Shared Folder
-          path = {{ share_path }}
+          path = {{ mount_path }}
           browseable = Yes
           read only = No
           writable = yes
@@ -96,7 +96,7 @@
           fruit:posix_rename = yes
     state: present
     create: false # Don't create smb.conf if it doesn't exist
-    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ share_path }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ mount_path }}"
   notify: Restart Samba Services # Notify handler if change is made
 
 - name: Ensure Samba services are enabled and running

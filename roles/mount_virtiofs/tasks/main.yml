@@ -1,20 +1,15 @@
-- name: Create the Samba group
-  ansible.builtin.group:
-    name: "{{ group }}"
-    state: present
-
 - name: Create the mount point directory
   ansible.builtin.file:
-    path: "{{ share_path }}" # Use the variable for the mount path
+    path: "{{ mount_path }}" 
     state: directory
     mode: "0775"
-    owner: "{{ owner }}"
-    group: "{{ group }}"
+    owner: "{{ mount_path_owner }}"
+    group: "{{ mount_oath_owner_group }}"
 
 - name: Add VirtioFS entry to /etc/fstab
   ansible.posix.mount:
-    path: "{{ share_path }}" # Use the variable for the mount path
-    src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
+    path: "{{ mount_path }}" 
+    src: "{{ virtiofs_tag }}" 
     fstype: virtiofs
     opts: defaults
     dump: 0

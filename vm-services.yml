@@ -7,19 +7,19 @@
   roles:
     - role: create_vm
       vars:
-        node: proxmox
-        api_user: root@pam
-        clone: "alma-cloud-template-automated" # name of the template to clone from
-        vmid: 9003  # VMID of the template to clone
+        node: "{{ proxmox.node }}"
+        api_user: "{{ proxmox.api_user }}"
+        clone: template.name
+        vmid: template.vmid
         balloon: 1024
         cores: 2
         memory: 6000
         sockets: 1
         virtiofs_tag: "{{ virtiofs_tags.smb }}"
-        name: "{{ services.name }}" 
+        name: "{{ vms.services.name }}" 
         primary_disk_size: 20G
-        newid: "{{ services.vmid }}"
-        ipaddr: "{{ services.ip }}"
+        newid: "{{ vms.services.vmid }}"
+        ipaddr: "{{ vms.services.ip }}"
 
 - name: Configure sevices
   hosts: services
@@ -30,16 +30,16 @@
     - role: mount_virtiofs
       vars:
         virtiofs_tag: "{{ virtiofs_tags.smb }}" 
-        share_path: "/mnt/storage/smb" 
-        group: "sambausers" 
-        owner: "root"
+        mount_path: "/mnt/storage/smb" 
+        mount_path_owner_group: "sambausers" 
+        mount_path_owner: "root"
 
     - role: samba_setup
       vars: 
-        share_path: "/mnt/storage/smb"
+        mount_path: "/mnt/storage/smb"
         smb_group: "sambausers" 
-        owner: "root"              
+        mount_path_owner: "root"              
     
     - role: tailscale_setup
       vars:
-        tailscale_hostname: "{{ services.name }}"
+        tailscale_hostname: "{{ vms.services.name }}"

@@ -1,0 +1,47 @@
+---
+- name: Create services VM
+  hosts: proxmox
+  become: false 
+  vars_files:
+    - secrets.yml  
+  roles:
+    - role: create_vm
+      vars:
+        node: "{{ proxmox.node }}"
+        api_user: "{{ proxmox.api_user }}"
+        clone: template.name
+        vmid: template.vmid
+        balloon: 4024
+        cores: 4
+        memory: 20000
+        sockets: 1
+        virtiofs_tag: "{{ virtiofs_tags.immich }}"
+        name: "{{ vms.immich.name }}" 
+        primary_disk_size: 120G
+        newid: "{{ vms.immich.vmid }}"
+        ipaddr: "{{ vms.immich.ip }}"
+
+- name: mount virtiofs immich
+  hosts: immich
+  become: true      
+  roles:
+    - role: mount_virtiofs
+      vars:
+        virtiofs_tag: "{{ virtiofs_tags.immich }}" 
+        mount_path: "/mnt/storage/immich" 
+    
+    - role: docker_setup
+      vars:
+        user: "{{ template.user }}"
+        docker_group: docker
+   
+    - role: portainer_setup
+
+    - role: tailscale_setup
+      vars:
+        tailscale_hostname: "{{ vms.immich.name }}"
+
+    - role: restore_immich 
+      vars:
+        immich_project_dir: /home/haaksk/immich-app
+

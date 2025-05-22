@@ -1,8 +1,2 @@
-group: sambausers
-owner: root
-mount_path: /mnt/
-virtiofs_tag: smb
-smb_group: sambausers
-smb_user: haaksk
-sudo_group: wheel
-share_path: /mnt/storage/smb
+mount_path_owner: root
+mount_path_owner_group: root

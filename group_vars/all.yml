@@ -7,24 +7,27 @@ proxmox:
   api_user: root@pam
   host: proxmox
   user: root
+  node: proxmox
 
-mail:
-  ip: 10.0.0.45
-  name: mail
-  vmid: 4002
+vms:
+  mail:
+    ip: 10.0.0.45
+    name: mail
+    vmid: 4002
+  immich:
+    ip: 10.0.0.42
+    name: immich
+    vmid: 4001
+  services:
+    ip: 10.0.0.44
+    name: services
+    vmid: 4000
 
-immich:
-  ip: 10.0.0.42
-  name: immich
-  vmid: 4001
-  user: haaksk
-
-services:
-  ip: 10.0.0.44
-  name: services
-  vmid: 4000
+template: # template for cloning
+  name: alma-cloud-template-automated
+  vmid: 9003
   user: haaksk
 
 virtiofs_tags:
-  smb: "smb"
-  immich: "immich"
+  smb: smb
+  immich: immich

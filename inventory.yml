@@ -2,14 +2,14 @@
 all:
   hosts:
     services:
-      ansible_host: "{{ services.ip }}"
-      ansible_user: "{{ services.user }}"
+      ansible_host: "{{ vms.services.ip }}"
+      ansible_user: "{{ vms.services.user }}"
     immich:
-      ansible_host: "{{ immich.ip }}"
-      ansible_user: "{{ immich.user }}"
+      ansible_host: "{{ vms.immich.ip }}"
+      ansible_user: "{{ vms.immich.user }}"
     mail:
-      ansible_host: "{{ mail.ip }}"
-      ansible_user: "{{ mail.user }}"
+      ansible_host: "{{ vms.mail.ip }}"
+      ansible_user: "{{ vms.mail.user }}"
     proxmox:
-      ansible_host: "{{ proxmox.ip }}"
-      ansible_user: "{{ proxmox.user }}"
+      ansible_host: "{{ vms.proxmox.ip }}"
+      ansible_user: "{{ vms.proxmox.user }}"
