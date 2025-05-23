@@ -1,0 +1,13 @@
+---
+- name: Restore Immich backup
+  ansible.builtin.shell: |
+    docker compose down -v
+    docker compose pull
+    docker compose create
+    docker start immich_postgres
+    sleep 10
+    sudo gunzip --stdout "$(sudo ls /mnt/storage/immich/library/backups/immich-db-backup-*.sql.gz | sort -V | tail -n 1)" | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
+    docker compose up -d
+  args:
+    chdir: /home/haaksk/immich-app
+  become: true

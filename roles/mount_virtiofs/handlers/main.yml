@@ -1,0 +1,8 @@
+---
+- name: Mount filesystems
+  ansible.posix.mount:
+    path: "{{ mount_path }}" # Use the variable for the mount path
+    src: "{{ virtiofs_tag }}" # Use the variable for the VirtioFS tag
+    fstype: virtiofs
+    state: mounted
+  listen: Mount filesystems

@@ -1,0 +1,33 @@
+---
+- name: Ensure immich-app directory exists
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}"
+    state: directory
+    owner: haaksk
+    group: docker
+    mode: "0755"
+
+- name: Copy environment file
+  ansible.builtin.copy:
+    src: /mnt/storage/immich/.env
+    dest: "{{ immich_project_dir }}/.env"
+    remote_src: true
+    owner: haaksk
+    group: docker
+    mode: "0644"
+    backup: true
+
+- name: Download latest docker-compose.yml
+  ansible.builtin.get_url:
+    url: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+    dest: "{{ immich_project_dir }}/docker-compose.yml"
+    owner: haaksk
+    group: docker
+    mode: "0644"
+    force: false
+  register: compose_download
+
+- name: Pull Docker images
+  ansible.builtin.command:
+    cmd: docker compose pull
+    chdir: "{{ immich_project_dir }}"
