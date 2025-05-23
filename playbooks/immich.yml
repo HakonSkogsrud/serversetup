@@ -11,7 +11,7 @@
         api_user: "{{ proxmox.api_user }}"
         clone: "{{ template.name }}"
         vmid: "{{ template.vmid }} "
-        balloon: 4024
+        balloon: 10024
         cores: 4
         memory: 20000
         sockets: 1
