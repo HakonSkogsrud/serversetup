@@ -31,3 +31,8 @@
   ansible.builtin.command:
     cmd: docker compose pull
     chdir: "{{ immich_project_dir }}"
+
+- name: restart immich docker images
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ immich_project_dir }}"
