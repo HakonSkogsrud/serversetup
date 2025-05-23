@@ -1,3 +1,4 @@
+---
 - name: Mount filesystems
   ansible.posix.mount:
     path: "{{ mount_path }}" # Use the variable for the mount path

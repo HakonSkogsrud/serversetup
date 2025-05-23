@@ -1,45 +1,46 @@
 ---
 - name: Create services VM
   hosts: proxmox
-  become: false 
+  become: false
   vars_files:
-    - secrets.yml  
+    - ../secrets.yml
   roles:
     - role: create_vm
       vars:
         node: "{{ proxmox.node }}"
         api_user: "{{ proxmox.api_user }}"
-        clone: template.name
-        vmid: template.vmid
+        clone: "{{ template.name }}"
+        vmid: "{{ template.vmid }} "
         balloon: 1024
         cores: 2
         memory: 6000
         sockets: 1
         virtiofs_tag: "{{ virtiofs_tags.smb }}"
-        name: "{{ vms.services.name }}" 
+        name: "{{ vms.services.name }}"
         primary_disk_size: 20G
         newid: "{{ vms.services.vmid }}"
         ipaddr: "{{ vms.services.ip }}"
 
 - name: Configure sevices
   hosts: services
-  become: true      
+  become: true
   vars_files:
-    - secrets.yml
+    - ../secrets.yml
   roles:
     - role: mount_virtiofs
+      tags: mount_virtiofs
       vars:
-        virtiofs_tag: "{{ virtiofs_tags.smb }}" 
-        mount_path: "/mnt/storage/smb" 
-        mount_path_owner_group: "sambausers" 
-        mount_path_owner: "root"
+        virtiofs_tag: "{{ virtiofs_tags.smb }}"
+        mount_path: "/mnt/storage/smb"
 
     - role: samba_setup
-      vars: 
+      tags: samba_setup
+      vars:
         mount_path: "/mnt/storage/smb"
-        smb_group: "sambausers" 
-        mount_path_owner: "root"              
-    
+        smb_group: "sambausers"
+        mount_path_owner: "root"
+
     - role: tailscale_setup
+      tags: tailscale_setup
       vars:
         tailscale_hostname: "{{ vms.services.name }}"

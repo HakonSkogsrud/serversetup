@@ -6,7 +6,6 @@
     - vars.yml # Include the new variables file
 
   tasks:
-
     - name: Create the Samba group
       ansible.builtin.group:
         name: "{{ smb_group }}"
@@ -76,5 +75,3 @@
         fstype: virtiofs
         state: mounted
       listen: Mount filesystems
-
-

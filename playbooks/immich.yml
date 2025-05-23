@@ -1,47 +1,53 @@
 ---
-- name: Create services VM
+- name: Create immich VM
   hosts: proxmox
-  become: false 
+  become: false
   vars_files:
-    - secrets.yml  
+    - ../secrets.yml
   roles:
     - role: create_vm
       vars:
         node: "{{ proxmox.node }}"
         api_user: "{{ proxmox.api_user }}"
-        clone: template.name
-        vmid: template.vmid
+        clone: "{{ template.name }}"
+        vmid: "{{ template.vmid }} "
         balloon: 4024
         cores: 4
         memory: 20000
         sockets: 1
         virtiofs_tag: "{{ virtiofs_tags.immich }}"
-        name: "{{ vms.immich.name }}" 
+        name: "{{ vms.immich.name }}"
         primary_disk_size: 120G
         newid: "{{ vms.immich.vmid }}"
         ipaddr: "{{ vms.immich.ip }}"
 
-- name: mount virtiofs immich
+- name: Mount virtiofs immich
   hosts: immich
-  become: true      
+  become: true
+  vars_files:
+    - ../secrets.yml
   roles:
     - role: mount_virtiofs
+      tags: mount_virtiofs
       vars:
-        virtiofs_tag: "{{ virtiofs_tags.immich }}" 
-        mount_path: "/mnt/storage/immich" 
-    
+        virtiofs_tag: "{{ virtiofs_tags.immich }}"
+        mount_path: "/mnt/storage/immich"
+
     - role: docker_setup
+      tags: docker_setup
       vars:
         user: "{{ template.user }}"
         docker_group: docker
-   
+
     - role: portainer_setup
+      tags: portainer_setup
 
     - role: tailscale_setup
+      tags: tailscale_setup
       vars:
         tailscale_hostname: "{{ vms.immich.name }}"
 
-    - role: restore_immich 
+    - role: immich_update
+      tags: immich_update
       vars:
-        immich_project_dir: /home/haaksk/immich-app
-
+        immich_project_dir: "/home/{{ template.user }}/immich-app"

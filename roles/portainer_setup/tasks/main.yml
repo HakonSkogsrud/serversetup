@@ -1,3 +1,4 @@
+---
 - name: Create Docker volume for Portainer
   community.docker.docker_volume:
     name: portainer_data

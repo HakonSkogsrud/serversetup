@@ -11,5 +11,5 @@ all:
       ansible_host: "{{ vms.mail.ip }}"
       ansible_user: "{{ vms.mail.user }}"
     proxmox:
-      ansible_host: "{{ vms.proxmox.ip }}"
-      ansible_user: "{{ vms.proxmox.user }}"
+      ansible_host: "{{ proxmox.ip }}"
+      ansible_user: "{{ proxmox.user }}"

@@ -1,4 +1,4 @@
-# Ansible playbooks for homelab. 
+# Ansible playbooks for homelab.
 
 WORK IN PROGRESS 🔨🧱🏗️
 
@@ -15,7 +15,7 @@ WORK IN PROGRESS 🔨🧱🏗️
 
 ## Setup
 
-Install ansible with extensions on machine you run ansible on. 
+Install ansible with extensions on machine you run ansible on.
 ```sh
 brew install ansible ansible-lint
 
@@ -71,12 +71,12 @@ script for Immich restore
 ```sh
 cd /home/haaksk/immich-app
 docker compose down -v
-docker compose pull 
-docker compose create 
+docker compose pull
+docker compose create
 docker start immich_postgres
-sleep 10 
+sleep 10
 sudo gunzip --stdout "$(sudo ls /mnt/storage/immich/library/backups/immich-db-backup-*.sql.gz | sort -V | tail -n 1)" | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
-docker compose up -d 
+docker compose up -d
 ```
 
 # Backups external harddrives
@@ -125,3 +125,13 @@ zfs list -t snapshot -o name,creation -s creation | tail -n 2
 # Remote desktop
 - install xrdp
 - force layout *414 in xrdp.ini
+
+```sh
+sudo dnf install xrdp -y
+sudo systemctl enable xrdp
+sudo systemctl start xrdp
+sudo firewall-cmd --permanent --add-port=3389/tcp
+sudo firewall-cmd --reload
+sudo chcon --type=bin_t /usr/sbin/xrdp
+sudo chcon --type=bin_t /usr/sbin/xrdp-sesman
+```

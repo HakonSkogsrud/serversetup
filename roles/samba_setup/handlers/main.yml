@@ -1,3 +1,4 @@
+---
 - name: Restart Samba Services
   ansible.builtin.systemd:
     name: "{{ item }}"

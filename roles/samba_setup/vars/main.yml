@@ -1,3 +1,4 @@
+---
 smb_group: sambausers
 smb_user: haaksk
 sudo_group: wheel

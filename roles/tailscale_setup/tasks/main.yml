@@ -1,3 +1,4 @@
+---
 - name: Download Tailscale install script
   ansible.builtin.get_url:
     url: https://tailscale.com/install.sh
@@ -17,5 +18,5 @@
 - name: Register node with Tailscale using auth key and force re-authentication
   ansible.builtin.command: >
     tailscale up --authkey={{ tailscale_auth_key }} --hostname={{ tailscale_hostname }} --force-reauth --accept-routes=false
-  changed_when: true # Assume this command always makes a change or ensures state
+  changed_when: true
   notify: Restart tailscaled
