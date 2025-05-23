@@ -21,7 +21,7 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
     if ! ssh "$REMOTE_USER@$REMOTE_HOST" "zpool list -H $current_pool" &> /dev/null; then
         log "Pool '$current_pool' is not imported. Attempting to import..."
 
-        if ssh "$REMOTE_USER@$REMOTE_HOST" "zpool import $current_pool" >> "$LOG_FILE" 2>&1; then
+        if ssh "$REMOTE_USER@$REMOTE_HOST" "zpool import -d /dev/disk/by-uuid/ $current_pool" >> "$LOG_FILE" 2>&1; then
             log "Successfully imported pool '$current_pool'."
         else
             log "Failed to import pool '$current_pool'. It may not be available. Skipping."
