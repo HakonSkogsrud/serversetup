@@ -27,12 +27,18 @@
     force: false
   register: compose_download
 
+- name: stop all services
+  community.docker.docker_compose_v2:
+    project_src: "{{ immich_project_dir }}"
+    state: absent
+  register: output
+
 - name: Pull Docker images
-  ansible.builtin.command:
-    cmd: docker compose pull
-    chdir: "{{ immich_project_dir }}"
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ immich_project_dir }}"
+  register: output
 
 - name: restart immich docker images
-  ansible.builtin.command:
-    cmd: docker compose up -d
-    chdir: "{{ immich_project_dir }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ immich_project_dir }}"
+  register: output
