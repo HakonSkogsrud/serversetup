@@ -44,3 +44,6 @@
       tags: tailscale_setup
       vars:
         tailscale_hostname: "{{ vms.services.name }}"
+
+    - role: cron_updates
+      tags: cron_updates

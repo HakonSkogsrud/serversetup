@@ -12,3 +12,6 @@
 
     - role: syncoid_setup
       tags: syncoid_setup
+      
+    - role: cron_updates
+      tags: cron_updates

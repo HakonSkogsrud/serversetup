@@ -51,3 +51,7 @@
       tags: immich_update
       vars:
         immich_project_dir: "/home/{{ template.user }}/immich-app"
+
+    - role: cron_updates
+      tags: cron_updates
+      

@@ -10,7 +10,17 @@
     dest: /usr/local/bin/update_packages.sh
     content: |
       #!/bin/bash
-      sudo yum update -y
+      if command -v sudo >/dev/null 2>&1; then
+        SUDO="sudo"
+      else
+        SUDO=""
+      fi
+
+      if command -v apt-get >/dev/null 2>&1; then
+        $SUDO apt-get update -y && $SUDO apt-get upgrade -y
+      elif command -v yum >/dev/null 2>&1; then
+        $SUDO yum update -y
+      fi
     mode: "0755"
 
 - name: Add a cron job to run the update script weekly as root
