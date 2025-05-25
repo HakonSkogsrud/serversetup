@@ -47,6 +47,13 @@
     group: "{{ smb_group }}"
     recurse: true # Apply recursively to existing contents
 
+- name: Set SELinux context for Samba share directory
+  community.general.sefcontext:
+    target: "{{ mount_path }}(/.*)?" # Matches the directory and all its contents
+    setype: samba_share_t
+    state: present
+  notify: Apply SELinux contexts
+
 - name: Enable necessary Samba SELinux booleans
   ansible.posix.seboolean:
     name: "{{ item }}"
