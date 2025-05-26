@@ -1,15 +1,14 @@
+# filepath: /home/haaksk/Git/serversetup/inventory.yml
 ---
 all:
-  hosts:
-    services:
-      ansible_host: "{{ vms.services.ip }}"
-      ansible_user: "{{ vms.services.user }}"
-    immich:
-      ansible_host: "{{ vms.immich.ip }}"
-      ansible_user: "{{ vms.immich.user }}"
-    mail:
-      ansible_host: "{{ vms.mail.ip }}"
-      ansible_user: "{{ vms.mail.user }}"
-    proxmox:
-      ansible_host: "{{ proxmox.ip }}"
-      ansible_user: "{{ proxmox.user }}"
+  children:
+    vms:
+      hosts:
+        services:
+        immich:   
+        mail:  
+    proxmox_servers: 
+      hosts:
+        proxmox: 
+          ansible_host: "{{ proxmox.ip }}" 
+          ansible_user: "{{ proxmox.user }}" 

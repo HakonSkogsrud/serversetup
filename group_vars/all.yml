@@ -13,22 +13,6 @@ proxmox:
   user: root
   node: proxmox
 
-vms:
-  mail:
-    ip: 10.0.0.45
-    name: mail
-    vmid: 4002
-    user: "{{ template.user }}"
-  immich:
-    ip: 10.0.0.42
-    name: immich
-    vmid: 4001
-    user: "{{ template.user }}"
-  services:
-    ip: 10.0.0.44
-    name: services
-    vmid: 4000
-    user: "{{ template.user }}"
 
 virtiofs_tags:
   smb: smb

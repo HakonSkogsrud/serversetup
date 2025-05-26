@@ -37,7 +37,6 @@
 
     # --- Clone Operation ---
     clone: "{{ clone }}"
-    vmid: "{{ vmid }}"
     name: "{{ name }}"
     newid: "{{ newid }}"
     full: true

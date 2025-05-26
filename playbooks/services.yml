@@ -1,28 +1,34 @@
+# filepath: /home/haaksk/Git/serversetup/playbooks/services.yml
 ---
 - name: Create services VM
-  hosts: proxmox
+  hosts: proxmox # This play runs on the proxmox host
   become: false
   vars_files:
     - ../secrets.yml
+  vars:
+    target_vm_host: services
   roles:
     - role: create_vm
       vars:
+        # Global Proxmox and template variables
         node: "{{ proxmox.node }}"
         api_user: "{{ proxmox.api_user }}"
-        clone: "{{ template.name }}"
-        vmid: "{{ template.vmid }} "
-        balloon: 1024
-        cores: 2
-        memory: 6000
-        sockets: 1
-        virtiofs_tag: "{{ virtiofs_tags.smb }}"
-        name: "{{ vms.services.name }}"
-        primary_disk_size: 20G
-        newid: "{{ vms.services.vmid }}"
-        ipaddr: "{{ vms.services.ip }}"
+        clone: "{{ template.name }}" #
+        source_vmid_for_clone: "{{ template.vmid }}" 
 
-- name: Configure sevices
-  hosts: services
+        # VM-specific variables from hostvars/services.yml
+        name: "{{ hostvars[target_vm_host].vm_name }}"
+        newid: "{{ hostvars[target_vm_host].vmid }}"
+        ipaddr: "{{ hostvars[target_vm_host].ansible_host }}"
+        balloon: "{{ hostvars[target_vm_host].balloon_mb }}"
+        cores: "{{ hostvars[target_vm_host].cores }}"
+        memory: "{{ hostvars[target_vm_host].memory_mb }}"
+        sockets: "{{ hostvars[target_vm_host].sockets }}"
+        primary_disk_size: "{{ hostvars[target_vm_host].primary_disk_size }}"
+        virtiofs_tag: "{{ hostvars[target_vm_host].virtiofs_tag_ref }}"
+
+- name: Configure services
+  hosts: services 
   become: true
   vars_files:
     - ../secrets.yml
@@ -30,7 +36,7 @@
     - role: mount_virtiofs
       tags: mount_virtiofs
       vars:
-        virtiofs_tag: "{{ virtiofs_tags.smb }}"
+        virtiofs_tag: "{{ virtiofs_tag_ref }}"
         mount_path: "/mnt/storage/smb"
 
     - role: samba_setup
@@ -43,7 +49,6 @@
     - role: tailscale_setup
       tags: tailscale_setup
       vars:
-        tailscale_hostname: "{{ vms.services.name }}"
-
+        tailscale_hostname: "{{ vm_name }}"
     - role: cron_updates
       tags: cron_updates
