@@ -1,26 +1,5 @@
-- name: add EPEL repository
-  ansible.builtin.yum:
-    name: epel-release
-    state: present
-
-- name: add rpmfusion free
-  ansible.builtin.yum:
-    name: rpmfusion-free-release
-    state: present
-
-
-- name: add rpmfusion non-free
-  ansible.builtin.yum:
-    name: rpmfusion-nonfree-release
-    state: present
-
-- name: upgrade all packages
-  ansible.builtin.yum:
-    name: '*'
-    state: latest
-
 - name: install stuff
-  ansible.builtin.yum:
+  ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
   loop:

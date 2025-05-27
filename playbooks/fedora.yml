@@ -1,0 +1,216 @@
+---
+- name: Setup installations of fedora 
+  hosts: fedora
+  become: true
+  vars_files:
+    - ../secrets.yml
+
+  roles:
+    - cron_updates
+
+  tasks:
+
+    - name: Import Microsoft GPG key
+      rpm_key:
+        state: present 
+        key: https://packages.microsoft.com/keys/microsoft.asc 
+    - name: Add VS Code repository
+      copy:
+        content: | # Use the '|' for multi-line string content
+          [code]
+          name=Visual Studio Code
+          baseurl=https://packages.microsoft.com/yumrepos/vscode
+          enabled=1
+          autorefresh=1
+          type=rpm-md
+          gpgcheck=1
+          gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+        dest: /etc/yum.repos.d/vscode.repo # Destination file path
+        owner: root 
+        group: root 
+        mode: '0644' 
+
+
+    - name: "Add rpmfustion repo gpg keys"
+      ansible.builtin.rpm_key:
+        key: "{{ item }}"
+        state: present
+      with_items: 
+        - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-2020"
+        - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-2020"
+
+    - name: install the rpmfusion repo packages
+      dnf:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm
+        - http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm
+
+    - name: install packages
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop: 
+        - vim
+        - code
+        - vlc 
+        - uv
+
+    - name: update all
+      ansible.builtin.dnf:
+        name: '*'
+        state: latest
+      
+
+    - name: Ensure VS Code user config directory exists
+      ansible.builtin.file:
+        path: "/home/haaksk/.config/Code/User"
+        state: directory
+        owner: haaksk
+        group: haaksk
+        mode: '0755' 
+      become: true 
+          
+
+    - name: set vscode keyboard bindings
+      ansible.builtin.copy: 
+        dest: /home/haaksk/.config/Code/User/keybindings.json
+        content: |
+          [
+              {
+                  "key": "alt+[Semicolon]",
+                  "command": "workbench.action.terminal.toggleTerminal",
+                  "when": "terminal.active"
+              },
+              {
+                  "key": "ctrl+shift+[Equal]",
+                  "command": "-workbench.action.terminal.toggleTerminal",
+                  "when": "terminal.active"
+              },
+              {
+                  "key": "ctrl+w",
+                  "command": "-workbench.action.terminal.killEditor",
+                  "when": "terminalEditorFocus && terminalFocus && terminalHasBeenCreated || terminalEditorFocus && terminalFocus && terminalProcessSupported"
+              },
+              {
+                  "key": "ctrl+t ctrl+t",
+                  "command": "workbench.action.terminal.kill"
+              }
+          ]
+
+    - name: set vscode settings
+      ansible.builtin.copy:
+        dest: /home/haaksk/.config/Code/User/settings.json
+        content: |
+            {
+                "window.titleBarStyle": "native",
+                "window.menuBarVisibility": "toggle",
+                "workbench.colorTheme": "Night Owl Light",
+                "window.customTitleBarVisibility": "never",
+                "window.zoomLevel": 1.1,
+                "editor.fontSize": 13,
+                "window.autoDetectColorScheme": true,
+                "editor.scrollbar.verticalScrollbarSize": 6,
+                "editor.scrollbar.horizontalScrollbarSize": 6,
+                "terminal.integrated.fontSize": 13,
+                "github.copilot.enable": {
+                    "*": false
+                },
+                "redhat.telemetry.enabled": false,    
+                "editor.minimap.enabled": false,
+                "git.confirmSync": false,
+                "git.autofetch": true,
+                "explorer.confirmDelete": false,
+            }       
+
+    - name: Download Brave browser repository file
+      ansible.builtin.get_url:
+        url: https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+        dest: /tmp/brave-browser.repo # Download to a temporary location
+        mode: '0644' # Set standard file permissions
+
+    - name: Copy Brave browser repository file to dnf configuration directory
+      ansible.builtin.copy:
+        src: /tmp/brave-browser.repo
+        dest: /etc/yum.repos.d/brave-browser.repo # Place the file in the dnf repo directory
+        remote_src: yes # Indicate that the source file is on the remote host
+        mode: '0644'
+        owner: root
+        group: root
+
+    - name: Clean up downloaded repository file
+      ansible.builtin.file:
+        path: /tmp/brave-browser.repo
+        state: absent # Remove the temporary file
+
+    - name: Install Brave browser package
+      ansible.builtin.dnf:
+        name: brave-browser
+        state: present 
+
+    - name: Ensure export editor="vim" line is in .bashrc
+      ansible.builtin.lineinfile:
+        path: ~/.bashrc  
+        regexp: '^export editor=' 
+        line: 'export EDITOR="vim"'
+        state: present      
+        create: yes          
+
+    - name: Ensure necessary aliases are in .bashrc
+      ansible.builtin.lineinfile:
+        path: ~/.bashrc
+        regexp: '^{{ item.regexp }}$' # Use regexp from the loop item
+        line: '{{ item.line }}'     # Use the line from the loop item
+        state: present
+        create: yes
+      loop:
+        - { regexp: 'alias restart=', line: 'alias restart="source ~/.bashrc"' }
+        - { regexp: 'alias proxmox=', line: 'alias proxmox="ssh root@10.0.0.41"' }
+        - { regexp: 'alias services=', line: 'alias services="ssh haaksk@10.0.0.44"' }
+        - { regexp: 'alias immich=', line: 'alias immich="ssh haaksk@10.0.0.42"' }
+        - { regexp: 'alias backupserver=', line: 'alias backupserver="ssh haaksk@10.0.0.36"' }
+        - { regexp: 'alias venv=', line: 'alias venv="source .venv/bin/activate"' }
+
+    - name: Ensure the SMB mount point directory exists
+      ansible.builtin.file:
+        path: /mnt/smbshare        
+        state: directory           
+        mode: '0755'             
+        owner: haaksk                
+        group: haaksk                
+
+    - name: Ensure /etc/samba directory exists
+      ansible.builtin.file:
+        path: /etc/samba
+        state: directory
+        mode: '0755' # Standard directory permissions
+        owner: root
+        group: root
+
+    - name: Add username and password to /etc/samba/credentials
+      ansible.builtin.lineinfile:
+        path: /etc/samba/credentials
+        regexp: '^{{ item.regexp }}$' 
+        line: '{{ item.line }}'    
+        state: present              
+        create: yes                 
+        owner: root                
+        group: root                
+        mode: '0600'                
+        backup: yes
+      loop:
+        - { regexp: 'username=', line: 'username=haaksk' }
+        - { regexp: 'password=', line: 'password={{ smb_user_password }}' } 
+
+    - name: Add the SMB share line to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab              
+        regexp: '^//10\.0\.0\.44/share /mnt/smbshare ' 
+        line: '//10.0.0.44/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,_netdev 0 0' 
+        state: present               
+        create: yes                   
+        owner: root                   
+        group: root                   
+        mode: '0644'                  
+        backup: yes                
