@@ -45,6 +45,15 @@
         mount_path: "/mnt/storage/smb"
         smb_group: "sambausers"
         mount_path_owner: "root"
+    
+    - role: docker_setup
+      tags: docker_setup
+
+    - role: uhd_passthrough
+      tags: uhd_passthrough
+
+    - role: jellyfin_setup
+      tags: jellyfin_setup
 
     - role: tailscale_setup
       tags: tailscale_setup

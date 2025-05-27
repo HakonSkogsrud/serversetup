@@ -51,6 +51,9 @@ Add a file `.vault_pass` with vault password
 - Something with snippets?
 - Install `vim` and `wget`
 
+## IGPU passthrough
+Create a resource mapping in datacenter for the igpu. Add as pcie to vm. make sure immou, vt-d etc are enabled in bios on host. 
+
 ## ZFS
 
 - Create a zfs pool `storage`
