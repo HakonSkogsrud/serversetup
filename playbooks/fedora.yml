@@ -114,6 +114,7 @@
                 "workbench.colorTheme": "Night Owl Light",
                 "window.customTitleBarVisibility": "never",
                 "window.zoomLevel": 1.0,
+                "chat.editor.fontSize": 12,
                 "editor.fontSize": 13,
                 "window.autoDetectColorScheme": true,
                 "editor.scrollbar.verticalScrollbarSize": 6,
