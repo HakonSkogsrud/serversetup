@@ -153,30 +153,24 @@
       ansible.builtin.dnf:
         name: brave-browser
         state: present 
+    
 
-    - name: Ensure export editor="vim" line is in .bashrc
-      ansible.builtin.lineinfile:
-        path: ~/.bashrc  
-        regexp: '^export editor=' 
-        line: 'export EDITOR="vim"'
-        state: present      
-        create: yes          
-
-    - name: Ensure necessary aliases are in .bashrc
-      tags: bashrc
-      ansible.builtin.lineinfile:
-        path: ~/.bashrc
-        regexp: '^{{ item.regexp }}$' # Use regexp from the loop item
-        line: '{{ item.line }}'     # Use the line from the loop item
-        state: present
+    - name: Add aliases block to .bashrc
+      ansible.builtin.blockinfile:
+        path: "/home/haaksk/.bashrc"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - ALIASES"
+        block: |
+          alias restart="source ~/.bashrc"
+          alias proxmox="ssh root@10.0.0.41"
+          alias services="ssh haaksk@10.0.0.44"
+          alias immich="ssh haaksk@10.0.0.42"
+          alias backupserver="ssh haaksk@10.0.0.36"
+          alias venv="source .venv/bin/activate"
+          export EDITOR="vim"
         create: yes
-      loop:
-        - { regexp: 'alias restart=', line: 'alias restart="source ~/.bashrc"' }
-        - { regexp: 'alias proxmox=', line: 'alias proxmox="ssh root@10.0.0.41"' }
-        - { regexp: 'alias services=', line: 'alias services="ssh haaksk@10.0.0.44"' }
-        - { regexp: 'alias immich=', line: 'alias immich="ssh haaksk@10.0.0.42"' }
-        - { regexp: 'alias backupserver=', line: 'alias backupserver="ssh haaksk@10.0.0.36"' }
-        - { regexp: 'alias venv=', line: 'alias venv="source .venv/bin/activate"' }
+      become: no
+      tags: bashrc
+      
 
     - name: Ensure the SMB mount point directory exists
       ansible.builtin.file:
