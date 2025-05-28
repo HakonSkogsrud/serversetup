@@ -10,6 +10,10 @@
 
   tasks:
 
+    # setup github email and user
+    # install python package
+    
+
     - name: Import Microsoft GPG key
       rpm_key:
         state: present 
@@ -56,6 +60,7 @@
         - code
         - vlc 
         - uv
+        - git
 
     - name: update all
       ansible.builtin.dnf:
@@ -108,7 +113,7 @@
                 "window.menuBarVisibility": "toggle",
                 "workbench.colorTheme": "Night Owl Light",
                 "window.customTitleBarVisibility": "never",
-                "window.zoomLevel": 1.1,
+                "window.zoomLevel": 1.0,
                 "editor.fontSize": 13,
                 "window.autoDetectColorScheme": true,
                 "editor.scrollbar.verticalScrollbarSize": 6,
@@ -158,6 +163,7 @@
         create: yes          
 
     - name: Ensure necessary aliases are in .bashrc
+      tags: bashrc
       ansible.builtin.lineinfile:
         path: ~/.bashrc
         regexp: '^{{ item.regexp }}$' # Use regexp from the loop item
