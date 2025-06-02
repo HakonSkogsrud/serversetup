@@ -138,3 +138,38 @@ sudo firewall-cmd --reload
 sudo chcon --type=bin_t /usr/sbin/xrdp
 sudo chcon --type=bin_t /usr/sbin/xrdp-sesman
 ```
+
+### digikam remote database
+
+```sh
+sudo dnf install mariadb-server -y
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+sudo mysql_secure_installation
+sudo mysql -u root -p
+``` 
+
+```sql
+CREATE DATABASE digikam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digikam_thumbs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- You might also want databases for similarity and face recognition later
+CREATE DATABASE digikam_similarity CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digikam_faces CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+``` 
+
+```sql
+CREATE USER 'digikam_user'@'10.0.0.%' IDENTIFIED BY 'your_chosen_password';
+GRANT ALL PRIVILEGES ON digikam.* TO 'digikam_user'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_thumbs.* TO 'digikam_user'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_similarity.* TO 'digikam_user'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_faces.* TO 'digikam_user'@'10.0.0.%';
+FLUSH PRIVILEGES;
+``` 
+
+edit `/etc/my.cnf.d/mariadb-server.cnf` and set `bind-address = 10.0.0.44`
+
+```sh
+sudo systemctl restart mariadb
+sudo firewall-cmd --zone=public --add-service=mysql --permanent
+sudo firewall-cmd --reload
+``` 
