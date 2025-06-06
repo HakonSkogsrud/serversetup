@@ -158,11 +158,11 @@ CREATE DATABASE digikam_faces CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ``` 
 
 ```sql
-CREATE USER 'digikam_user'@'10.0.0.%' IDENTIFIED BY 'your_chosen_password';
-GRANT ALL PRIVILEGES ON digikam.* TO 'digikam_user'@'10.0.0.%';
-GRANT ALL PRIVILEGES ON digikam_thumbs.* TO 'digikam_user'@'10.0.0.%';
-GRANT ALL PRIVILEGES ON digikam_similarity.* TO 'digikam_user'@'10.0.0.%';
-GRANT ALL PRIVILEGES ON digikam_faces.* TO 'digikam_user'@'10.0.0.%';
+CREATE USER 'haaksk'@'10.0.0.%' IDENTIFIED BY 'your_chosen_password';
+GRANT ALL PRIVILEGES ON digikam.* TO 'haaksk'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_thumbs.* TO 'haaksk'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_similarity.* TO 'haaksk'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_faces.* TO 'haaksk'@'10.0.0.%';
 FLUSH PRIVILEGES;
 ``` 
 

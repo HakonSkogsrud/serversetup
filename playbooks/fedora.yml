@@ -61,6 +61,7 @@
         - vlc 
         - uv
         - git
+        - intel-media-driver
 
     - name: update all
       ansible.builtin.dnf:
@@ -215,3 +216,12 @@
         group: root                   
         mode: '0644'                  
         backup: yes                
+
+
+#git config --global user.name "John Doe"
+#git config --global user.email johndoe@example.com
+
+# sudo dnf4 group install multimedia
+#sudo dnf swap 'ffmpeg-free' 'ffmpeg' --allowerasing # Switch to full FFMPEG.
+#sudo dnf upgrade @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin # Installs gstreamer components. Required if you use Gnome Videos and other dependent applications.
+#sudo dnf group install -y sound-and-video # Installs useful Sound and Video complementary packages.
