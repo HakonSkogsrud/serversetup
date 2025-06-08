@@ -1,3 +1,4 @@
+*.swp
 .ansible/.lock
 .venv/
 .vault_pass

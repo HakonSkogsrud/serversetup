@@ -105,6 +105,13 @@
               }
           ]
 
+    - name: set vim settings
+      ancible.builtin.copy:
+        dest: /home/haaksk/.vimrc
+        content: |
+          set splitright
+
+
     - name: set vscode settings
       ansible.builtin.copy:
         dest: /home/haaksk/.config/Code/User/settings.json
