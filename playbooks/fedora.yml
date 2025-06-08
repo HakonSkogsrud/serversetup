@@ -9,10 +9,10 @@
     - cron_updates
 
   tasks:
-
-    # setup github email and user
-    # install python package
     
+    - name: install required python package for ansible.dnf
+      ansible.builtin.shell: dnf install python3-libdnf5
+      become: true
 
     - name: Import Microsoft GPG key
       rpm_key:
@@ -62,11 +62,35 @@
         - uv
         - git
         - intel-media-driver
+        - gh
 
     - name: update all
       ansible.builtin.dnf:
         name: '*'
         state: latest
+
+    - name: install multimedia group
+      ansible.builtin.dnf:
+        name: "@multimedia"
+        state: present
+
+    - name: swap ffmpeg free
+      ansible.builtin.dnf: 
+        name: "ffmpeg"
+        state: latest
+        allowerasing: true
+
+    - name: upgrade multimedia
+      ansible.builtin.dnf:
+        name: "@multimedia"
+        state: latest
+        exclude: "PackageKit-gstreaer-plugin"
+        install_weak_deps: false
+
+    - name: install sound and video group
+      ansible.builtin.dnf:
+        name: "@sound-and-video"
+        state: present
       
 
     - name: Ensure VS Code user config directory exists
@@ -106,7 +130,7 @@
           ]
 
     - name: set vim settings
-      ancible.builtin.copy:
+      ansible.builtin.copy:
         dest: /home/haaksk/.vimrc
         content: |
           set splitright
@@ -121,8 +145,8 @@
                 "window.menuBarVisibility": "toggle",
                 "workbench.colorTheme": "Night Owl Light",
                 "window.customTitleBarVisibility": "never",
-                "window.zoomLevel": 1.0,
-                "chat.editor.fontSize": 12,
+                "window.zoomLevel": 0.5,
+                "chat.editor.fontSize": 13,
                 "editor.fontSize": 13,
                 "window.autoDetectColorScheme": true,
                 "editor.scrollbar.verticalScrollbarSize": 6,
@@ -136,7 +160,10 @@
                 "git.confirmSync": false,
                 "git.autofetch": true,
                 "explorer.confirmDelete": false,
-            }       
+                "editor.fontFamily": "Luxi Mono Regular",
+                "terminal.integrated.fontFamily": "courier" 
+            }
+        backup: yes       
 
     - name: Download Brave browser repository file
       ansible.builtin.get_url:
@@ -224,11 +251,30 @@
         mode: '0644'                  
         backup: yes                
 
+    - name: get git name
+      ansible.builtin.command: git config --global user.name
+      register: current_username
+      changed_when: false
+      ignore_errors: true
+      tags:
+        - git
 
-#git config --global user.name "John Doe"
-#git config --global user.email johndoe@example.com
+    - name: set name
+      ansible.builtin.command: git config --global user.name "Håkon Skogsrud"
+      when: current_username.rc != 0 or current_username.stdout.strip() != "Håkon Skogsrud"
+      tags: 
+        - git
 
-# sudo dnf4 group install multimedia
-#sudo dnf swap 'ffmpeg-free' 'ffmpeg' --allowerasing # Switch to full FFMPEG.
-#sudo dnf upgrade @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin # Installs gstreamer components. Required if you use Gnome Videos and other dependent applications.
-#sudo dnf group install -y sound-and-video # Installs useful Sound and Video complementary packages.
+    - name: configure git mail
+      ansible.builtin.command: git config --global user.mail
+      register: current_mail
+      changed_when: false
+      ignore_errors: true
+      tags:
+        - git
+
+    - name: set mail
+      ansible.builtin.command: git config --global user.mail "haaksk@gmail.com"
+      when: current_mail.rc != 0 or current_mail.stdout.strip() != "haaksk@gmail.com"      
+      tags:
+        - git
