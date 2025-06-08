@@ -161,7 +161,8 @@
                 "git.autofetch": true,
                 "explorer.confirmDelete": false,
                 "editor.fontFamily": "Luxi Mono Regular",
-                "terminal.integrated.fontFamily": "courier" 
+                "terminal.integrated.fontFamily": "courier", 
+                "git.enableSmartCommit": true
             }
         backup: yes       
 
