@@ -6,7 +6,7 @@ REMOTE_HOST="10.0.0.36"
 POSSIBLE_POOLS=("wdred" "sgblack")
 PROXMOX_DATASET="storage"
 BACKUP_DATASET="backup"
-DATASETS_TO_BACKUP=("immich" "smb")
+DATASETS_TO_BACKUP=("smb")
 
 ZFS="/usr/sbin/zfs"
 ZPOOL="/usr/sbin/zpool"
