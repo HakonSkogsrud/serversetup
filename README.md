@@ -139,6 +139,16 @@ sudo chcon --type=bin_t /usr/sbin/xrdp
 sudo chcon --type=bin_t /usr/sbin/xrdp-sesman
 ```
 
+debian:
+
+```sh
+sudo apt update
+sudo apt install xrdp -y
+sudo systemctl enable xrdp
+sudo systemctl start xrdp
+sudo ufw allow 3389/tcp
+```
+
 ### digikam remote database
 
 ```sh
