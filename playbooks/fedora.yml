@@ -142,7 +142,7 @@
         content: |
             {
                 "window.titleBarStyle": "native",
-                "window.menuBarVisibility": "toggle",
+                "window.menuBarVisibility": "classic",
                 "workbench.colorTheme": "Night Owl Light",
                 "window.customTitleBarVisibility": "never",
                 "window.zoomLevel": 0.5,
@@ -161,8 +161,9 @@
                 "git.autofetch": true,
                 "explorer.confirmDelete": false,
                 "editor.fontFamily": "Luxi Mono Regular",
-                "terminal.integrated.fontFamily": "courier", 
-                "git.enableSmartCommit": true
+                "terminal.integrated.fontFamily": "courier",
+                "git.enableSmartCommit": true,
+                "workbench.preferredLightColorTheme": "Night Owl"
             }
         backup: yes       
 
