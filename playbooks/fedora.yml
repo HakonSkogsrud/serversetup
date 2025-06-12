@@ -253,30 +253,9 @@
         mode: '0644'                  
         backup: yes                
 
-    - name: get git name
-      ansible.builtin.command: git config --global user.name
-      register: current_username
-      changed_when: false
-      ignore_errors: true
-      tags:
-        - git
-
-    - name: set name
+    - name: set git name
       ansible.builtin.command: git config --global user.name "Håkon Skogsrud"
-      when: current_username.rc != 0 or current_username.stdout.strip() != "Håkon Skogsrud"
-      tags: 
-        - git
 
-    - name: configure git mail
-      ansible.builtin.command: git config --global user.mail
-      register: current_mail
-      changed_when: false
-      ignore_errors: true
-      tags:
-        - git
+    - name: set git mail
+      ansible.builtin.command: git config --global user.email "haaksk@gmail.com"
 
-    - name: set mail
-      ansible.builtin.command: git config --global user.mail "haaksk@gmail.com"
-      when: current_mail.rc != 0 or current_mail.stdout.strip() != "haaksk@gmail.com"      
-      tags:
-        - git
