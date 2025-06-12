@@ -22,10 +22,6 @@
     mode: "0644" # Standard config file permissions
     marker: "# {mark} ANSIBLE MANAGED BLOCK FOR SANOID"
     block: |
-      [storage/immich]
-          use_template = production
-          recursive = yes
-
       [storage/smb]
           use_template = production
           recursive = yes

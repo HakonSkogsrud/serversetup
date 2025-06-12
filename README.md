@@ -90,7 +90,7 @@ zpool create \
     -o ashift=12 \
     -o autotrim=on \
     -O encryption=on \
-    -O keyformat=passphrase \
+    -O keylocation=file:///root/key.key \
     -O keylocation=prompt \
     -O compression=lz4 \
     -O acltype=posixacl \
@@ -98,8 +98,25 @@ zpool create \
     -O dnodesize=auto \
     -O normalization=formD \
     -O relatime=on \
-    -O mountpoint=/wdred \
-    wdred /dev/sda1
+    -O mountpoint=/MOUNTPOINT \
+    NAMEOFPOOL /path/to/disc
+```
+
+for spinning discs
+```sh
+zpool create \
+-o ashift=12 \
+-O encryption=on \
+-O keyformat=raw \
+-O keylocation=file:///root/key.key \
+-O compression=lz4 \
+-O acltype=posixacl \
+-O xattr=sa \
+-O dnodesize=auto \
+-O normalization=formD \
+-O relatime=on \
+-O mountpoint=/MOUNTPOUNT \
+NAMEOFPOOL /path/to/disc
 ```
 
 mount external zpool
