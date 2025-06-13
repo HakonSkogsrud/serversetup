@@ -9,6 +9,7 @@
     target_vm_host: services
   roles:
     - role: create_vm
+      tags: create_vm
       vars:
         # Global Proxmox and template variables
         node: "{{ proxmox.node }}"
