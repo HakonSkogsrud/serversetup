@@ -200,3 +200,6 @@ sudo systemctl restart mariadb
 sudo firewall-cmd --zone=public --add-service=mysql --permanent
 sudo firewall-cmd --reload
 ``` 
+
+Turn off harddrive
+hdparm -y /dev/sda
