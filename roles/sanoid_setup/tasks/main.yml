@@ -29,9 +29,9 @@
       [template_production]
           frequently = 0
           hourly = 0
-          daily = 7
-          weekly = 8
-          monthly = 6
+          daily = 2
+          weekly = 3
+          monthly = 2
           yearly = 0
           autosnap = yes
           autoprune = yes
