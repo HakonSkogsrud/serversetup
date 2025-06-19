@@ -184,7 +184,7 @@ CREATE DATABASE digikam_faces CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ``` 
 
 ```sql
-CREATE USER 'haaksk'@'10.0.0.%' IDENTIFIED BY 'your_chosen_password';
+CREATE USER 'haaksk'@'10.0.0.%' IDENTIFIED BY 'PASSORDHER';
 GRANT ALL PRIVILEGES ON digikam.* TO 'haaksk'@'10.0.0.%';
 GRANT ALL PRIVILEGES ON digikam_thumbs.* TO 'haaksk'@'10.0.0.%';
 GRANT ALL PRIVILEGES ON digikam_similarity.* TO 'haaksk'@'10.0.0.%';
@@ -207,4 +207,43 @@ hdparm -y /dev/sda
 
 ```sh
 rsync -aAXHv --info=progress2 /Volumes/WD4TBHS/Lightroom/ root@10.0.0.41:/storage/smb/Pictures
+```
+
+fix permissions
+```sh
+find /storage/smb/Pictures/ -type f -exec chmod 0664 {} \;
+find /storage/smb/Pictures/ -type d -exec chmod 755 {} \;
+chown -R immich_docker_usr:immich_docker_grp /storage/smb/Pictures/
+```
+
+
+
+```sh
+
+DROP DATABASE IF EXISTS digikam;
+DROP DATABASE IF EXISTS digikam_thumbs;
+DROP DATABASE IF EXISTS digikam_similarity;
+DROP DATABASE IF EXISTS digikam_faces;
+
+-- Recreate databases
+CREATE DATABASE digikam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digikam_thumbs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digikam_similarity CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE digikam_faces CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+DROP USER IF EXISTS 'haaksk'@'10.0.0.%';
+CREATE USER 'haaksk'@'10.0.0.%' IDENTIFIED BY 'jeg!hater!Fedora';
+
+-- Grant all privileges on the new databases
+GRANT ALL PRIVILEGES ON digikam.* TO 'haaksk'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_thumbs.* TO 'haaksk'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_similarity.* TO 'haaksk'@'10.0.0.%';
+GRANT ALL PRIVILEGES ON digikam_faces.* TO 'haaksk'@'10.0.0.%';
+
+-- Apply the privilege changes
+FLUSH PRIVILEGES;
+
+-- Exit the MariaDB prompt
+EXIT;
 ```

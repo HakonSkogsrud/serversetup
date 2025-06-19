@@ -44,4 +44,4 @@
 - name: Start sanoid timer service immediately
   ansible.builtin.systemd:
     name: sanoid.timer
-    state: restarted
+    state: stopped
