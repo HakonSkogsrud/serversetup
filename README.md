@@ -6,12 +6,11 @@ WORK IN PROGRESS 🔨🧱🏗️
 
 ## VMs
 
-| Server       | IP          | User       | Services/ports  | os  |
-|--------------|-------------|------------|-----------------|-----------|
-| Services     | 10.0.0.44   | haaksk     | samba           | Alma 9.5  |
-| Immich       | 10.0.0.42   | haaksk     | Immich:2283     | Alma 9.5  |
-| Proxmox      | 10.0.0.41   | root       | Hypervisor:8006 | Debian    |
-| Workmachine2 | 10.0.0.21   | haaksk     |                 |Fedora 42  |
+| Server       | IP          | User       | Services/ports.              | os  |
+|--------------|-------------|------------|------------------------------|-----------|
+| Services     | 10.0.0.44   | haaksk     | samba, immich,2283           | Alma 9.5  |
+| Proxmox      | 10.0.0.41   | root       | Hypervisor:8006.             | Debian    |
+| Workmachine2 | 10.0.0.21   | haaksk     |                              |Fedora 42  |
 
 ## Setup
 
@@ -202,4 +201,10 @@ sudo firewall-cmd --reload
 ``` 
 
 Turn off harddrive
+```sh
 hdparm -y /dev/sda
+```
+
+```sh
+rsync -aAXHv --info=progress2 /Volumes/WD4TBHS/Lightroom/ root@10.0.0.41:/storage/smb/Pictures
+```
