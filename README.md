@@ -233,7 +233,7 @@ CREATE DATABASE digikam_faces CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
 DROP USER IF EXISTS 'haaksk'@'10.0.0.%';
-CREATE USER 'haaksk'@'10.0.0.%' IDENTIFIED BY 'jeg!hater!Fedora';
+CREATE USER 'haaksk'@'10.0.0.%' IDENTIFIED BY 'PASSORD';
 
 -- Grant all privileges on the new databases
 GRANT ALL PRIVILEGES ON digikam.* TO 'haaksk'@'10.0.0.%';
