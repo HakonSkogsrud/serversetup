@@ -4,7 +4,7 @@ vm_name: services
 vmid: 4000
 balloon_mb: 12024
 cores: 3
-memory_mb: 30000
+memory_mb: 42000
 sockets: 1
 primary_disk_size: 200G
 virtiofs_tag_ref: "{{ virtiofs_tags.smb }}" 
