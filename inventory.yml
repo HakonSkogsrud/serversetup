@@ -11,6 +11,10 @@ all:
           #ansible_connection: local
           ansible_user: haaksk
           ansible_host: 10.0.0.66
+        debian: 
+          ansible_connection: local
+          ansible_user: haaksk
+          ansible_host: 10.0.0.33
     proxmox_servers: 
       hosts:
         proxmox: 

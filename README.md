@@ -247,3 +247,11 @@ FLUSH PRIVILEGES;
 -- Exit the MariaDB prompt
 EXIT;
 ```
+
+
+## Pictures stuff
+
+rename existing pictures:
+```sh
+exiftool -r -d '%Y-%m-%d_%H-%M-%S' '-filename<${FileModifyDate}_${FileName}' '-filename<${CreateDate}_${FileName}' '-filename<${DateTimeOriginal}_${FileName}'  TARGET_DIR
+```

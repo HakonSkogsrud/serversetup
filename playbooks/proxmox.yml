@@ -15,6 +15,4 @@
       
     - role: cron_updates
       tags: cron_updates
-    
-    - role: takeout_metadata_cleanup
-      tags: takeout_metadata_cleanup
+

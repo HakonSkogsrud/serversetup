@@ -60,7 +60,7 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
             fi
 
             log "Successfully processed pool '$current_pool'. Exiting."
-            exit 0
+            #exit 0
 
         else
             log "Failed to load ZFS key for '$current_pool'. Skipping backups for this pool."
