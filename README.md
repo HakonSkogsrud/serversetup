@@ -158,6 +158,12 @@ sudo chcon --type=bin_t /usr/sbin/xrdp-sesman
 debian:
 
 ```sh
+sudo apt install ufw openssh-server
+sudo systemctl ufw enable --now
+sudo ufw allow ssh
+```
+
+```sh
 sudo apt update
 sudo apt install xrdp -y
 sudo systemctl enable xrdp
