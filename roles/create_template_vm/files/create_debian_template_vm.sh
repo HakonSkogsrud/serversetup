@@ -1,12 +1,12 @@
 #! /bin/bash
 
-VMID=9000
+VMID=9001
 STORAGE=local-lvm
 USER=haaksk # Or keep your custom user and ensure cloud-init creates it
 VM_PASSWORD=$VM_PASSWORD
-URL=https://raw.repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
-FILE=AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
-IMAGE_NAME=alma-96-cloud-template-automated
+URL=https://cdimage.debian.org/images/cloud/trixie/daily/latest/debian-13-generic-amd64-daily.qcow2
+FILE=debian-13-generic-amd64-daily.qcow2
+IMAGE_NAME=debian-trixie-cloud-image
 
 set -x
 
