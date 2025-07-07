@@ -1,10 +1,10 @@
 ansible_host: 10.0.0.44
 ansible_user: haaksk 
 vm_name: services  
-vmid: 4000
+vmid: 4001
 balloon_mb: 12024
 cores: 3
 memory_mb: 42000
 sockets: 1
-primary_disk_size: 200G
+primary_disk_size: 350G
 virtiofs_tag_ref: "{{ virtiofs_tags.smb }}" 
