@@ -2,7 +2,7 @@
 
 LOG_FILE="/var/log/syncoid-backup.log"
 REMOTE_USER="root"
-REMOTE_HOST="10.0.0.36"
+REMOTE_HOST="100.104.43.26"
 POSSIBLE_POOLS=("wdred" "sgblack")
 PROXMOX_DATASET="storage"
 BACKUP_DATASET="backup"
