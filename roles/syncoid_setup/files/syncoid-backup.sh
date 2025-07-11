@@ -1,8 +1,9 @@
 #!/bin/bash
 
 LOG_FILE="/var/log/syncoid-backup.log"
+LOCK_FILE="/var/run/syncoid-backup.lock"
 REMOTE_USER="root"
-REMOTE_HOST="10.0.0.36"
+REMOTE_HOST="100.104.43.26"
 POSSIBLE_POOLS=("wdred" "sgblack")
 PROXMOX_DATASET="storage"
 BACKUP_DATASET="backup"
@@ -14,6 +15,46 @@ ZPOOL="/usr/sbin/zpool"
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
+
+# Function to acquire lock
+acquire_lock() {
+    if [ -f "$LOCK_FILE" ]; then
+        local lock_pid=$(cat "$LOCK_FILE")
+        if kill -0 "$lock_pid" 2>/dev/null; then
+            log "Another instance of syncoid-backup is already running (PID: $lock_pid). Exiting."
+            exit 1
+        else
+            log "Found stale lock file. Removing it."
+            rm -f "$LOCK_FILE"
+        fi
+    fi
+    
+    echo $$ > "$LOCK_FILE"
+    log "Lock acquired (PID: $$)."
+}
+
+# Function to release lock
+release_lock() {
+    if [ -f "$LOCK_FILE" ]; then
+        rm -f "$LOCK_FILE"
+        log "Lock released."
+    fi
+}
+
+# Check if remote host is available
+log "Checking if remote host $REMOTE_HOST is available..."
+if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_USER@$REMOTE_HOST" "echo 'Host is reachable'" >> "$LOG_FILE" 2>&1; then
+    log "Remote host $REMOTE_HOST is not available or SSH connection failed. Exiting."
+    exit 1
+fi
+log "Remote host $REMOTE_HOST is available."
+
+
+# Acquire lock at the start
+acquire_lock
+
+# Trap to ensure lock is released on exit
+trap release_lock EXIT
 
 log "Starting Syncoid backup script."
 log "Checking for ZFS pools on $REMOTE_HOST from list: ${POSSIBLE_POOLS[*]}..."
@@ -59,8 +100,7 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
                 log "Failed to export pool '$current_pool'. It might be busy. Check on $REMOTE_HOST."
             fi
 
-            log "Successfully processed pool '$current_pool'. Exiting."
-            #exit 0
+            log "Successfully processed pool '$current_pool'."
 
         else
             log "Failed to load ZFS key for '$current_pool'. Skipping backups for this pool."
@@ -72,5 +112,5 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
     fi
 done
 
-log "No suitable ZFS pools (${POSSIBLE_POOLS[*]}) found to process."
-exit 1
+log "All backup operations completed successfully. Shutting down the system."
+shutdown -h now
