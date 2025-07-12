@@ -1,0 +1,30 @@
+---
+- name: Create services VM
+  hosts: proxmox 
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      tags: create_vm
+      vars:
+        node: proxmox
+        api_user: root@pam
+        clone: debian-trixie-cloud-image
+        source_vmid_for_clone: 9001 
+
+        name: services2
+        newid: 4001
+        ipaddr: 10.0.0.45
+        balloon: 12000
+        cores: 3
+        memory: 30000
+        sockets: 1
+        primary_disk_size: 300G
+        virtiofs_tag: smb
+
+- name: Configure services vm
+  hosts: services2
+  become: true
+  tasks:
+    - name mount_virtiofs

@@ -1,19 +1,12 @@
 ---
 - name: Ensure necessary packages are installed
-  ansible.builtin.dnf:
+  ansible.builtin.apt:
     name:
       - samba
-      - samba-client
-      - policycoreutils-python-utils
-      - firewalld
+      - smbclient
     state: present
     update_cache: true
 
-- name: Ensure firewalld service is started and enabled
-  ansible.builtin.systemd:
-    name: firewalld.service
-    state: started
-    enabled: true
 
 - name: Create the Samba group
   ansible.builtin.group:
@@ -47,33 +40,12 @@
     group: "{{ smb_group }}"
     recurse: true # Apply recursively to existing contents
 
-- name: Set SELinux context for Samba share directory
-  community.general.sefcontext:
-    target: "{{ mount_path }}(/.*)?" # Matches the directory and all its contents
-    setype: samba_share_t
-    state: present
-  notify: Apply SELinux contexts
-
-- name: Enable necessary Samba SELinux booleans
-  ansible.posix.seboolean:
-    name: "{{ item }}"
-    state: true
-    persistent: true
-  loop:
-    - samba_enable_home_dirs
-    - samba_export_all_rw
-
-- name: Get current state of Samba SELinux booleans (for verification)
-  ansible.builtin.command: getsebool samba_enable_home_dirs samba_export_all_rw
-  register: sebool_status
-  changed_when: false # This command doesn't change state
 
 - name: Allow Samba service through the firewall
-  ansible.posix.firewalld:
-    service: samba
-    permanent: true
+  community.general.ufw:
+    rule: allow
+    name: Samba
     state: enabled
-    immediate: true # Apply the rule to the running configuration immediately
 
 - name: Configure Samba share in smb.conf
   ansible.builtin.blockinfile:
@@ -113,5 +85,5 @@
     state: started
     enabled: true
   loop:
-    - smb.service
-    - nmb.service
+    - smbd.service
+    - nmbd.service

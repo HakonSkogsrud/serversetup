@@ -33,4 +33,5 @@ qm set $VMID --nameserver 148.122.164.253
 qm set $VMID --searchdomain telenor.net
 qm set $VMID --sshkeys /root/.ssh/authorized_keys # This will be applied to the ciuser
 qm set $VMID --ipconfig0 ip=dhcp
+qm set $VMID --keyboard no
 qm template $VMID

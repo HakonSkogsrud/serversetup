@@ -3,8 +3,8 @@
 gateway: 10.0.0.138
 
 template: # template for cloning
-  name: alma-96-cloud-template-automated
-  vmid: 9000
+  name: debian-trixie-cloud-image
+  vmid: 9001
   user: haaksk
 
 proxmox:

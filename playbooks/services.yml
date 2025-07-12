@@ -40,6 +40,9 @@
         virtiofs_tag: "{{ virtiofs_tag_ref }}"
         mount_path: "/mnt/storage/smb"
 
+    - role: firewall_setup
+      tags: firewall_setup
+
     - role: samba_setup
       tags: samba_setup
       vars:
@@ -49,8 +52,6 @@
     
     - role: docker_setup
       tags: docker_setup
-
-    - role: add_third_party_repos
 
     - role: uhd_passthrough
       tags: uhd_passthrough

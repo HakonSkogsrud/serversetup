@@ -1,7 +1,8 @@
 - name: install stuff
-  ansible.builtin.dnf:
+  ansible.builtin.apt:
     name: "{{ item }}"
     state: present
+    update_cache: yes
   loop:
-    - intel-media-driver 
-    - libva-utils
+    - intel-media-va-driver
+    - vainfo

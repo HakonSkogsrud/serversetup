@@ -1,6 +1,6 @@
-ansible_host: 10.0.0.44
+ansible_host: 10.0.0.45
 ansible_user: haaksk 
-vm_name: services  
+vm_name: services-debian  
 vmid: 4001
 balloon_mb: 12024
 cores: 3
