@@ -112,5 +112,5 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
     fi
 done
 
-log "All backup operations completed successfully. Shutting down the system."
-ssh "$REMOTE_USER@$REMOTE_HOST" "shutdown -h +1" 2>/dev/nullnow"
+#log "All backup operations completed successfully. Shutting down the system."
+#ssh "$REMOTE_USER@$REMOTE_HOST" "shutdown -h +1" 2>/dev/nullnow"
