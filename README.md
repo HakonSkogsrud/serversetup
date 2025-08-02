@@ -10,7 +10,6 @@ WORK IN PROGRESS 🔨🧱🏗️
 |--------------|-------------|------------|------------------------------|-----------|
 | Services     | 10.0.0.44   | haaksk     | samba, immich,2283           | Alma 9.5  |
 | Proxmox      | 10.0.0.41   | root       | Hypervisor:8006.             | Debian    |
-| Workmachine2 | 10.0.0.21   | haaksk     |                              |Fedora 42  |
 
 ## Setup
 
