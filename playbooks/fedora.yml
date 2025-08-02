@@ -245,7 +245,7 @@
       ansible.builtin.lineinfile:
         path: /etc/fstab              
         regexp: '^//10\.0\.0\.44/share /mnt/smbshare ' 
-        line: '//10.0.0.44/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,_netdev 0 0' 
+        line: '//10.0.0.44/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0' 
         state: present               
         create: yes                   
         owner: root                   
