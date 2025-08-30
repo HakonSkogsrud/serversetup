@@ -65,4 +65,8 @@
     - role: cron_updates
       tags: cron_updates
 
+    -role: services_cron_jobs
+     tags: services_cron_jobs
+
+
 -- 

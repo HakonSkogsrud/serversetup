@@ -1,0 +1,12 @@
+---
+- name: Create Immich backup cron job
+  ansible.builtin.cron:
+    name: "Immich backup to SMB share"
+    minute: "0"
+    hour: "1"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "rsync -avh --delete /home/haaksk/immich-app/library/backups/ /mnt/storage/smb/immich_backup_dumps/"
+    user: haaksk # or the user you want the cron job to run as
+
