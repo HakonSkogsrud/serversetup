@@ -1,0 +1,22 @@
+---
+- name: Create Immich backup cron job
+  ansible.builtin.cron:
+    name: "Immich backup to SMB share"
+    minute: "0"
+    hour: "1"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "rsync -avh --delete /home/haaksk/immich-app/library/backups/ /mnt/storage/smb/immich_backup_dumps/"
+    user: haaksk # or the user you want the cron job to run as
+
+- name: Reboot server every Sunday at 08:00 AM
+  ansible.builtin.cron:
+    name: "Weekly server reboot"
+    minute: "0"
+    hour: "8"
+    day: "*"
+    month: "*"
+    weekday: "0" # 0 for Sunday, 1 for Monday, etc.
+    job: "/sbin/reboot"
+    user: root # It's best to run a reboot as root
