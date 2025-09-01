@@ -1,7 +1,2 @@
 - name: install stuff
-  ansible.builtin.dnf:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - intel-media-driver 
-    - libva-utils
+  import_tasks: uhd_passthrough.yml

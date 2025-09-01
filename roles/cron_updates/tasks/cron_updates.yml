@@ -1,0 +1,33 @@
+---
+- name: Ensure the update script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Create the update script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/update_packages.sh
+    content: |
+      #!/bin/bash
+      if command -v sudo >/dev/null 2>&1; then
+        SUDO="sudo"
+      else
+        SUDO=""
+      fi
+
+      if command -v apt-get >/dev/null 2>&1; then
+        $SUDO apt-get update -y && $SUDO apt-get upgrade -y
+      elif command -v yum >/dev/null 2>&1; then
+        $SUDO yum update -y
+      fi
+    mode: "0755"
+
+- name: Add a cron job to run the update script weekly as root
+  ansible.builtin.cron:
+    name: "Weekly package updates"
+    job: "/usr/local/bin/update_packages.sh"
+    user: root
+    weekday: "0" # Sunday
+    hour: "3" # 3 AM
+    minute: "0"

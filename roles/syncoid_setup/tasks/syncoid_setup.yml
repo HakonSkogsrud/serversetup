@@ -1,0 +1,21 @@
+---
+- name: Copy syncoid backup script to VM
+  ansible.builtin.copy:
+    src: syncoid-backup.sh
+    dest: /usr/bin/syncoid-backup.sh
+    mode: "0775"
+
+- name: Add syncoid backup script to crontab
+  ansible.builtin.cron:
+    name: "Run syncoid backup script"
+    minute: "0"
+    hour: "10"
+    weekday: "6"
+    job: "/usr/bin/syncoid-backup.sh >> /var/log/syncoid_wdred_cron.log 2>&1"
+    state: present
+
+- name: Restart cron service
+  ansible.builtin.service:
+    name: cron
+    state: restarted
+    enabled: true

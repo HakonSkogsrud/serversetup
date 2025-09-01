@@ -1,12 +1,4 @@
 ---
-- name: Copy script to VM
-  ansible.builtin.copy:
-    src: create_alma_template_vm.sh
-    dest: /usr/local/bin/alma_template.sh
-    mode: "0775"
-
-- name: Execute the script
-  ansible.builtin.command:
-    cmd: /usr/local/bin/alma_template.sh
-  environment:
+- name: Create template vm
+  import_tasks: create_template_vm.yml
     VM_PASSWORD: "{{ vm_password }}"
