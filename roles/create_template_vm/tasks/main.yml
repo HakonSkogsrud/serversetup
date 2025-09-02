@@ -1,4 +1,3 @@
 ---
 - name: Create template vm
   import_tasks: create_template_vm.yml
-    VM_PASSWORD: "{{ vm_password }}"

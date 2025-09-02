@@ -1,0 +1,17 @@
+---
+- name: Configre backupserver
+  hosts: backupserver
+  become: true
+
+  tasks:
+
+    - name: Weekly rebooot
+      ansible.builtin.cron:
+        name: "Weekly server reboot"
+        minute: "0"
+        hour: "1"
+        day: "*"
+        month: "*"
+        weekday: "1" # 0 for Sunday, 1 for Monday, etc.
+        job: "/sbin/reboot"
+        user: root # It's best to run a reboot as root
