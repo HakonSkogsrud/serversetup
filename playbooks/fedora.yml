@@ -6,7 +6,7 @@
     - ../secrets.yml
 
   roles:
-    - cron_updates
+    - weekly_update
 
   tasks:
     

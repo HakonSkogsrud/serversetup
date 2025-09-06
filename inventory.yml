@@ -5,13 +5,12 @@ all:
     vms:
       hosts:
         services:
+        pihole: 
+          ansible_user: haaksk
+          ansible_host: 10.0.0.27
         backupserver:
           ansible_host: 100.104.43.26
           ansible_user: haaksk
-        fedora: 
-          #ansible_connection: local
-          ansible_user: haaksk
-          ansible_host: 10.0.0.66
         debian: 
           ansible_connection: local
           ansible_user: haaksk

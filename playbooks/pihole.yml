@@ -1,6 +1,6 @@
 ---
-- name: Configre backupserver
-  hosts: backupserver
+- name: pihole setup
+  hosts: pihole
   become: true
 
   roles:

@@ -1,3 +1,0 @@
----
-- name: Run syncoid setup
-  import_tasks: syncoid_setup.yml

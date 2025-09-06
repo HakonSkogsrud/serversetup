@@ -18,8 +18,8 @@
 
       if command -v apt-get >/dev/null 2>&1; then
         $SUDO apt-get update -y && $SUDO apt-get upgrade -y
-      elif command -v yum >/dev/null 2>&1; then
-        $SUDO yum update -y
+      elif command -v dnf >/dev/null 2>&1; then
+        $SUDO dnf upgrade -y
       fi
     mode: "0755"
 
@@ -28,6 +28,13 @@
     name: "Weekly package updates"
     job: "/usr/local/bin/update_packages.sh"
     user: root
-    weekday: "0" # Sunday
-    hour: "3" # 3 AM
+    weekday: "5" 
+    hour: "12" 
     minute: "0"
+
+
+- name: Restart cron service
+  ansible.builtin.service:
+    name: cron
+    state: restarted
+    enabled: true

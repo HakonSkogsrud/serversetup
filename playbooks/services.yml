@@ -62,8 +62,9 @@
       tags: tailscale_setup
       vars:
         tailscale_hostname: "{{ vm_name }}"
-    - role: cron_updates
-      tags: cron_updates
 
     - role: services_cron_jobs
       tags: services_cron_jobs
+
+    - role: weekly_update
+      tags: weekly_update
