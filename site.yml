@@ -1,4 +1,3 @@
 ---
-- import_playbook: playbooks/immich.yml
 - import_playbook: playbooks/services.yml
 - import_playbook: playbooks/proxmox.yml
