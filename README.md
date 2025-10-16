@@ -2,7 +2,7 @@
 
 WORK IN PROGRESS 🔨🧱🏗️
 
-![setup](setup.png)
+![setup](server-architecture.png)
 
 ## VMs
 
