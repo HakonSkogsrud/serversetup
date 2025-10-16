@@ -13,27 +13,12 @@ WORK IN PROGRESS 🔨🧱🏗️
 
 ## Setup
 
-Install ansible with extensions on machine you run ansible on.
-```sh
-brew install ansible ansible-lint
 
-ansible-galaxy collection install ansible.posix --force
-ansible-galaxy collection install community.general --force
-ansible-galaxy collection install community.docker --force
-```
-
-Playbooks require passwordless ssh to server. I configure this automatically in the template I clone.
+Playbooks require passwordless ssh to server. Setup environment.
 
 ```sh
 uv venv
 uv pip install -r requirements.txt
-pre-commit install
-```
-
-Before commit run
-
-```sh
-pre-commit run --all-files
 ```
 
 Add a file `.vault_pass` with vault password
