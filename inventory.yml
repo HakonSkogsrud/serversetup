@@ -1,4 +1,3 @@
-# filepath: /home/haaksk/Git/serversetup/inventory.yml
 ---
 all:
   children:

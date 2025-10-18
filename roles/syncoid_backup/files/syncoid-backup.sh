@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# --- Configuration Variables ---
+source /usr/local/lib/send_pushover.sh
+
 LOG_FILE="/var/log/syncoid-backup.log"
 LOCK_FILE="/var/run/syncoid-backup.lock"
 REMOTE_USER="root"
@@ -13,41 +14,11 @@ DATASETS_TO_BACKUP=("smb")
 ZFS="/usr/sbin/zfs"
 ZPOOL="/usr/sbin/zpool"
 
-# --- Pushover Configuration ---
-# Expecting PUSHOVER_TOKEN and PUSHOVER_USER to be set via Ansible environment.
 pushover_token_backup="${pushover_token_backup:-}"
-pushover_user="${pushover_user:-}"
-# --- End Pushover Configuration ---
-
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
-
-# Function to send a Pushover notification
-send_pushover() {
-    local message="$1"
-    local title="$2"
-    local priority="${3:-0}" # Default priority is 0 (normal)
-
-    if [ -z "$pushover_token_backup" ] || [ -z "$pushover_user" ]; then
-        log "Pushover keys not set in environment. Skipping notification."
-        return 1
-    fi
-
-    log "Sending Pushover notification: '$title'."
-
-    # Use curl to send the message
-    # -s: Silent mode
-    curl -s \
-         --form-string "token=$pushover_token_backup" \
-         --form-string "user=$pushover_user" \
-         --form-string "message=$message" \
-         --form-string "title=$title" \
-         --form-string "priority=$priority" \
-         https://api.pushover.net/1/messages.json >> "$LOG_FILE" 2>&1
-}
-
 
 # Function to acquire lock
 acquire_lock() {
@@ -56,7 +27,7 @@ acquire_lock() {
         if kill -0 "$lock_pid" 2>/dev/null; then
             log "Another instance of syncoid-backup is already running (PID: $lock_pid). Exiting."
             # Send high-priority failure notification before exiting
-            send_pushover "Syncoid backup FAILED on $(hostname). Another instance is running (PID: $lock_pid)." "Syncoid Backup FAILURE (Lock)" 1
+            send_pushover "$pushover_token_backup" "Syncoid backup FAILED on $(hostname). Another instance is running (PID: $lock_pid)." "Syncoid Backup FAILURE (Lock)" 1
             exit 1
         else
             log "Found stale lock file. Removing it."
@@ -84,17 +55,18 @@ cleanup_and_notify() {
     # 1. Handle Notification
     if [ "$exit_code" -eq 0 ]; then
         log "Script finished successfully."
-        send_pushover "Syncoid backup script completed successfully on $script_hostname." "Syncoid Backup SUCCESS"
+        send_pushover "$pushover_token_backup" "Syncoid backup script completed successfully on $script_hostname." "Syncoid Backup SUCCESS"
     else
         log "Script finished with FAILURE exit code $exit_code."
         # The specific failure notifications are now sent where they occur.
         # This final one is a catch-all in case of an unexpected exit.
-        send_pushover "Syncoid backup script FAILED on $script_hostname with exit code $exit_code. Check log file $LOG_FILE for details." "Syncoid Backup FAILURE" 1
+        send_pushover "$pushover_token_backup" "Syncoid backup script FAILED on $script_hostname with exit code $exit_code. Check log file $LOG_FILE for details." "Syncoid Backup FAILURE" 1
     fi
 
     # 2. Release Lock
     release_lock
 }
+
 
 # Acquire lock at the start
 acquire_lock
@@ -102,11 +74,12 @@ acquire_lock
 # Trap to ensure lock is released AND notification is sent on any exit
 trap cleanup_and_notify EXIT
 
+
 # Check if remote host is available
 log "Checking if remote host $REMOTE_HOST is available..."
 if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_USER@$REMOTE_HOST" "echo 'Host is reachable'" >> "$LOG_FILE" 2>&1; then
     log "Remote host $REMOTE_HOST is not available or SSH connection failed. Exiting."
-    send_pushover "Syncoid backup FAILED on $(hostname). Could not connect to remote host $REMOTE_HOST." "Syncoid Backup FAILURE (Host)" 1
+    send_pushover "$pushover_token_backup" "Syncoid backup FAILED on $(hostname). Could not connect to remote host $REMOTE_HOST." "Syncoid Backup FAILURE (Host)" 1
     exit 1
 fi
 log "Remote host $REMOTE_HOST is available."
@@ -124,7 +97,7 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
             log "Successfully imported pool '$current_pool'."
         else
             log "Failed to import pool '$current_pool'. It may not be available. Skipping."
-            send_pushover "Syncoid backup WARNING on $(hostname). Failed to import pool '$current_pool' on $REMOTE_HOST. Skipping." "Syncoid Backup WARNING (Import)" 0
+            send_pushover "$pushover_token_backup" "Syncoid backup WARNING on $(hostname). Failed to import pool '$current_pool' on $REMOTE_HOST. Skipping." "Syncoid Backup WARNING (Import)" 0
             continue
         fi
     fi
@@ -144,7 +117,7 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
                     log "Backup for dataset '$current_dataset' to '$current_pool' completed successfully."
                 else
                     log "Backup for dataset '$current_dataset' to '$current_pool' failed. Check syncoid output in log file on Proxmox."
-                    send_pushover "Syncoid backup FAILED on $(hostname). Backup of '$current_dataset' to '$current_pool' failed." "Syncoid Backup FAILURE (Sync)" 1
+                    send_pushover "$pushover_token_backup" "Syncoid backup FAILED on $(hostname). Backup of '$current_dataset' to '$current_pool' failed." "Syncoid Backup FAILURE (Sync)" 1
                     exit 1
                 fi
             done
@@ -155,19 +128,19 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
                 log "Pool '$current_pool' exported successfully."
             else
                 log "Failed to export pool '$current_pool'. It might be busy. Check on $REMOTE_HOST."
-                send_pushover "Syncoid backup WARNING on $(hostname). Failed to export pool '$current_pool' on $REMOTE_HOST." "Syncoid Backup WARNING (Export)" 0
+                send_pushover "$pushover_token_backup" "Syncoid backup WARNING on $(hostname). Failed to export pool '$current_pool' on $REMOTE_HOST." "Syncoid Backup WARNING (Export)" 0
             fi
 
             log "Successfully processed pool '$current_pool'."
 
         else
             log "Failed to load ZFS key for '$current_pool'. Skipping backups for this pool."
-            send_pushover "Syncoid backup FAILED on $(hostname). Failed to load ZFS key for pool '$current_pool'. Backups for this pool are skipped." "Syncoid Backup FAILURE (Key)" 1
+            send_pushover "$pushover_token_backup" "Syncoid backup FAILED on $(hostname). Failed to load ZFS key for pool '$current_pool'. Backups for this pool are skipped." "Syncoid Backup FAILURE (Key)" 1
             exit 1
         fi
     else
         log "Pool '$current_pool' is found but not in ONLINE state. Skipping."
-        send_pushover "Syncoid backup WARNING on $(hostname). Pool '$current_pool' is not ONLINE on $REMOTE_HOST. Skipping." "Syncoid Backup WARNING (State)" 0
+        send_pushover "$pushover_token_backup" "Syncoid backup WARNING on $(hostname). Pool '$current_pool' is not ONLINE on $REMOTE_HOST. Skipping." "Syncoid Backup WARNING (State)" 0
     fi
 done
 

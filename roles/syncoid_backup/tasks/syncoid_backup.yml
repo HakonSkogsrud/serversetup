@@ -4,17 +4,6 @@
     dest: /usr/bin/syncoid-backup.sh
     mode: "0775"
 
-- name: Add Pushover tokens to /etc/environment
-  ansible.builtin.lineinfile:
-    path: /etc/environment
-    line: "{{ item.key }}='{{ item.value }}'"
-    regexp: "^{{ item.key }}="
-    state: present
-  loop:
-    - { key: 'pushover_token_backup', value: '{{ pushover_token_backup }}' }
-    - { key: 'pushover_user', value: '{{ pushover_user }}' }
-  no_log: true 
-
 
 - name: Add syncoid backup script to crontab with Pushover tokens
   ansible.builtin.cron:

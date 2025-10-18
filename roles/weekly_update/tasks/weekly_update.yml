@@ -10,6 +10,8 @@
     dest: /usr/local/bin/update_packages.sh
     content: |
       #!/bin/bash
+      source /usr/local/lib/send_pushover.sh
+
       if command -v sudo >/dev/null 2>&1; then
         SUDO="sudo"
       else
@@ -21,12 +23,13 @@
       elif command -v dnf >/dev/null 2>&1; then
         $SUDO dnf upgrade -y
       fi
+      send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) successful" "System update" 0
     mode: "0755"
 
 - name: Add a cron job to run the update script weekly as root
   ansible.builtin.cron:
     name: "Weekly package updates"
-    job: "/usr/local/bin/update_packages.sh"
+    job: "pushover_token_update='{{ pushover_token_update }}' pushover_user='{{ pushover_user }}' /usr/local/bin/update_packages.sh >> /var/log/weekly_update-cron.log 2>&1"
     user: root
     weekday: "5" 
     hour: "12" 
@@ -35,6 +38,6 @@
 
 - name: Restart cron service
   ansible.builtin.service:
-    name: cron
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
     state: restarted
     enabled: true
