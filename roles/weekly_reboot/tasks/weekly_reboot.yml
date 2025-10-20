@@ -10,6 +10,6 @@
 
 - name: Restart cron service
   ansible.builtin.service:
-    name: cron
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
     state: restarted
     enabled: true

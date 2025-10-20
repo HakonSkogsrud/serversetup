@@ -7,8 +7,8 @@
     - role: create_template_vm
       tags: create_template_vm
 
-    - role: proxmox_config
-      tags: proxmox_config
+    - role: pushover_config
+      tags: pushover_config
 
     - role: sanoid_setup
       tags: sanoid_setup

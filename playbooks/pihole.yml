@@ -2,7 +2,10 @@
 - name: pihole setup
   hosts: pihole
   become: true
+  vars_files:
+    - ../secrets.yml
 
   roles:
+    - pushover_config
     - weekly_update
     - weekly_reboot

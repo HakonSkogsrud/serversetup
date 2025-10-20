@@ -23,6 +23,9 @@ uv pip install -r requirements.txt
 
 Add a file `.vault_pass` with vault password
 
+# Pushover
+`send_pushover` function is copied to server along with pushover_user token as environment variable.
+
 # Proxmox
 
 ## First setup

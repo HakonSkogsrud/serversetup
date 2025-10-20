@@ -10,8 +10,12 @@
     name: "Run syncoid backup script"
     minute: "0"
     hour: "3"
-    weekday: "1"
-    job: "pushover_token_backup='{{ pushover_token_backup }}' pushover_user='{{ pushover_user }}' /usr/bin/syncoid-backup.sh >> /var/log/syncoid-backup-cron.log 2>&1"
+    weekday: "1" # 0 for Sunday, 1 for Monday, etc.
+    job: >
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      pushover_token_backup='{{ pushover_token_backup }}'
+      pushover_user='{{ pushover_user }}'
+      /usr/bin/syncoid-backup.sh >> /var/log/syncoid-backup-cron.log 2>&1
     state: present
 
 - name: Restart cron service

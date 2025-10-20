@@ -2,6 +2,8 @@
 - name: Configre backupserver
   hosts: backupserver
   become: true
+  vars_files:
+    - ../secrets.yml
 
   roles:
     - weekly_update
