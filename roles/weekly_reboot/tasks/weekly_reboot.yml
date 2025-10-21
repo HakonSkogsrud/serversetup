@@ -4,7 +4,7 @@
     minute: "0"
     hour: "5"
     month: "*"
-    weekday: "7" # 0 for Sunday, 1 for Monday, etc.
+    weekday: "4" # 0 for Sunday, 1 for Monday, etc.
     job: "/sbin/reboot"
     user: root # It's best to run a reboot as root
 
