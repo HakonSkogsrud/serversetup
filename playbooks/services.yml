@@ -63,8 +63,8 @@
       vars:
         tailscale_hostname: "{{ vm_name }}"
 
-    - role: services_cron_jobs
-      tags: services_cron_jobs
+    - role: immich_backup
+      tags: immich_backup
 
     - role: weekly_update
       tags: weekly_update

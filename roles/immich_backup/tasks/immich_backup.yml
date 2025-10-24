@@ -1,0 +1,75 @@
+---
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Create and set permissions for the Immich backup log file
+  ansible.builtin.file:
+    path: /var/log/immich_backup.log
+    state: touch
+    owner: haaksk
+    group: haaksk # Or another appropriate group
+    mode: "0644"
+
+- name: Create the Immich backup and notification script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/immich_backup_notice.sh
+    content: |
+      #!/bin/bash
+      LOG_FILE="/var/log/immich_backup.log"
+
+      # No need for the touch command here anymore, Ansible handles file creation.
+
+      log() {
+          echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+      }
+
+      log "Starting Immich daily dump backup."
+
+      # Perform the backup
+      rsync -avhO --no-perms --delete /home/haaksk/immich-app/library/backups/ /mnt/storage/smb/immich_backup_dumps/
+      RSYNC_EXIT_CODE=$?
+
+      if [ $RSYNC_EXIT_CODE -eq 0 ]; then
+          log "Immich backup completed successfully."
+          MESSAGE="Immich backup for $(hostname) completed successfully."
+          TITLE="Immich Backup Success"
+          PRIORITY=0
+      else
+          log "Error during Immich backup. rsync exit code: $RSYNC_EXIT_CODE"
+          MESSAGE="Error during Immich backup on $(hostname). rsync exit code: $RSYNC_EXIT_CODE"
+          TITLE="Immich Backup Failed"
+          PRIORITY=1
+      fi
+
+      # Source the Pushover script if it exists
+      if [ -f /usr/local/lib/send_pushover.sh ]; then
+          source /usr/local/lib/send_pushover.sh
+          log "Pushover script sourced."
+          send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY
+          log "Pushover notification sent."
+      else
+          log "Pushover script not found at /usr/local/lib/send_pushover.sh. Skipping notification."
+      fi
+
+      log "Immich backup script finished."
+    mode: "0755"
+
+- name: Create Immich backup cron job
+  ansible.builtin.cron:
+    name: "Immich backup to SMB share"
+    minute: "0"
+    hour: "1"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "pushover_token_immich_dump='{{ pushover_token_immich_dump }}' pushover_user='{{ pushover_user }}' /usr/local/bin/immich_backup_notice.sh"
+    user: haaksk
+
+- name: Restart cron service to apply changes
+  ansible.builtin.service:
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
+    state: restarted
+    enabled: true

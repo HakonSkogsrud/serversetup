@@ -6,5 +6,6 @@
     - ../secrets.yml
 
   roles:
+    - pushover_config
     - weekly_update
     - weekly_reboot

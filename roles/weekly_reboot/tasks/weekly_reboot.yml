@@ -1,14 +1,56 @@
-- name: Rebooting
+---
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Create the reboot notification script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/reboot_notice.sh
+    content: |
+      #!/bin/bash
+      LOG_FILE="/var/log/weekly_reboot.log"
+      
+      log() {
+          echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+      }
+      
+      # Ensure the log file is accessible
+      touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Logging may fail." >&2; }
+      
+      log "System has been rebooted."
+      
+      # Source the Pushover script if it exists
+      if [ -f /usr/local/lib/send_pushover.sh ]; then
+          source /usr/local/lib/send_pushover.sh
+          log "Pushover script sourced."
+          send_pushover "${pushover_reboot:-}" "System $(hostname) has successfully rebooted." "System Reboot" 0
+          log "Pushover notification sent."
+      else
+          log "Pushover script not found at /usr/local/lib/send_pushover.sh. Skipping notification."
+      fi
+      
+      log "Reboot notification script finished."
+    mode: "0755"
+
+- name: Add a cron job to run the reboot notification script at startup
+  ansible.builtin.cron:
+    name: "Notify on reboot"
+    special_time: reboot
+    job: "pushover_reboot='{{ pushover_reboot }}' pushover_user='{{ pushover_user }}' /usr/local/bin/reboot_notice.sh"
+    user: root
+
+- name: Schedule a weekly reboot
   ansible.builtin.cron:
     name: "Weekly reboot"
     minute: "0"
     hour: "5"
-    month: "*"
-    weekday: "4" # 0 for Sunday, 1 for Monday, etc.
+    weekday: "4"  # Thursday
     job: "/sbin/reboot"
-    user: root # It's best to run a reboot as root
+    user: root
 
-- name: Restart cron service
+- name: Restart cron service to apply changes
   ansible.builtin.service:
     name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
     state: restarted

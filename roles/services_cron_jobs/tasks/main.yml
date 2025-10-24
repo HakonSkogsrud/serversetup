@@ -1,3 +1,0 @@
----
-- name: run services cron jobs
-  import_tasks: services_cron_jobs.yml
