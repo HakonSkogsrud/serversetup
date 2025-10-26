@@ -67,7 +67,6 @@
         state: present
       loop: 
         - vim
-        - nvim
         - vlc 
         - uv
         - git
@@ -238,7 +237,7 @@
           alias pihole="ssh haaksk@10.0.0.27"
           alias codemachine2="ssh haaksk@10.0.0.84"
           alias venv="source .venv/bin/activate.fish"
-          alias vim="nvim"
+          alias vim="vim"
           export EDITOR="vim"
           # overwrite greeting
           # potentially disabling fastfetch

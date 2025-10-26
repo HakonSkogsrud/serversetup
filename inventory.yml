@@ -4,6 +4,10 @@ all:
     vms:
       hosts:
         services:
+        fedora:
+          ansible_host: 127.0.0.1
+          ansible_connection: local 
+          ansible_user: haaksk 
         pihole: 
           ansible_user: haaksk
           ansible_host: 10.0.0.27
