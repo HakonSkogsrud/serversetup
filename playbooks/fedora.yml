@@ -303,25 +303,23 @@
     - name: set git mail
       ansible.builtin.command: git config --global user.email "haaksk@gmail.com"
 
-    - name: Create modprobe configuration file to disable HDA power saving
-      # This file ensures the settings (power_save=0 and power_save_controller=N) 
-      # are applied automatically every time the system starts.
-      ansible.builtin.copy:
-        content: |
-          # Disable power saving for HDA audio to prevent audio cutouts
-          options snd_hda_intel power_save=0 power_save_controller=N
-        dest: /etc/modprobe.d/disable-hda-powersave.conf
-        owner: root
-        group: root
-        mode: '0644'
-      
-    - name: Reload snd_hda_intel module (Apply immediately without reboot)
-      # This step unloads and reloads the module to force the new configuration
-      # to take effect *now*. The persistent file ensures it works on future reboots.
-      # WARNING: This can cause a brief sound disruption!
-      ansible.builtin.shell:
-        cmd: modprobe -r snd_hda_intel && modprobe snd_hda_intel
-      args:
-        warn: false # Suppress warning about using 'shell'
-      # Ignore potential failures if the module is currently busy or not loaded
-      failed_when: false
+    - name: Disable HDA audio power saving persistently
+      hosts: your_target_hosts
+      become: yes
+      tasks:
+        - name: Create modprobe configuration file
+          ansible.builtin.copy:
+            content: |
+              # Disable power saving for HDA audio to prevent audio cutouts
+              options snd_hda_intel power_save=0 power_save_controller=N
+            dest: /etc/modprobe.d/disable-hda-powersave.conf
+            owner: root
+            group: root
+            mode: '0644'
+          notify: Reload snd_hda_intel module
+
+      handlers:
+        - name: Reload snd_hda_intel module
+          community.general.modprobe:
+            name: snd_hda_intel
+            state: reloaded
