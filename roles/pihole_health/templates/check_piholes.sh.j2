@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Pi-hole servers to check
+PIHOLE_MAIN="{{ pihole_main_ip }}"
+PIHOLE_BACKUP="{{ pihole_backup_ip }}"
+
+# Domains for testing
+# A common public domain that should always resolve.
+PUBLIC_DOMAIN="google.com"
+# A common ad domain that should be blocked and resolve to 0.0.0.0.
+BLOCKED_DOMAIN="flurry.com"
+
+source /usr/local/lib/send_pushover.sh
+
+# Function to check a single Pi-hole instance
+check_pihole() {
+    local pihole_ip=$1
+    local pihole_name=$2
+    local status_message=""
+    local overall_status="HEALTHY"
+
+    # --- Check 1: Public Domain Resolution ---
+    # We expect a valid IP address. The '+short' option simplifies parsing.
+    public_ip=$(dig @"$pihole_ip" +short "$PUBLIC_DOMAIN")
+
+    if [ -z "$public_ip" ] || [ "$public_ip" == "0.0.0.0" ]; then
+        status_message+="Public DNS check FAILED. "
+        overall_status="UNHEALTHY"
+    else
+        status_message+="Public DNS check OK. "
+    fi
+
+    # --- Check 2: Blocked Domain Resolution ---
+    # We expect 0.0.0.0 for a correctly blocked domain.
+    blocked_ip=$(dig @"$pihole_ip" +short "$BLOCKED_DOMAIN")
+
+    if [ "$blocked_ip" != "0.0.0.0" ]; then
+        status_message+="Ad blocking check FAILED (got $blocked_ip). "
+        overall_status="UNHEALTHY"
+    else
+        status_message+="Ad blocking check OK. "
+    fi
+
+    # --- Send Notification ---
+    if [ "$overall_status" != "HEALTHY" ]; then
+        # Send a high-priority alert on failure
+        send_pushover "${pushover_pihole:-}" "Pi-hole Alert: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 1
+    else
+        # Optional: Uncomment the line below to receive a notification even on success
+        send_pushover "${pushover_pihole:-}" "Pi-hole Status: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0
+    fi
+}
+
+
+echo "Starting Pi-hole health checks..."
+check_pihole "$PIHOLE_MAIN" "Main Pi-hole"
+check_pihole "$PIHOLE_BACKUP" "Backup Pi-hole"
+echo "Health checks complete."

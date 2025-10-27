@@ -10,6 +10,7 @@
     - { key: 'pushover_token_update', value: '{{ pushover_token_update }}' }
     - { key: 'pushover_user', value: '{{ pushover_user }}' }
     - { key: 'pushover_reboot', value: '{{ pushover_reboot }}' }
+    - { key: 'pushover_pihole', value: '{{ pushover_pihole }}' }
   no_log: true 
 
 - name: Copy pushover function to proxmox

@@ -38,3 +38,12 @@
   roles:
     - role: pihole_setup
       tags: pihole_setup
+
+    - role: pushover_config
+      tags: pushover_config
+
+    - role: weekly_update
+      tags: weekly_update
+    
+    - role: weekly_reboot
+      tags: weekly_reboot

@@ -1,0 +1,28 @@
+---
+
+- name: Install DNS utilities (for dig command)
+  ansible.builtin.package:
+    name: "bind-utils" 
+    state: present
+  become: true
+
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Deploy the Pi-hole monitoring script
+  ansible.builtin.template:
+    src: check_piholes.sh.j2
+    dest: /usr/local/bin/check_piholes.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add cron job to run the Pi-hole check
+  ansible.builtin.cron:
+    name: "Check Pi-hole Status"
+    minute: "*/15"
+    job: "pushover_pihole='{{ pushover_pihole }}' pushover_user='{{ pushover_user }}' /usr/local/bin/check_piholes.sh"
+    user: root

@@ -74,3 +74,6 @@
     
     - role: weekly_reboot
       tags: weekly_reboot
+
+    - role: pihole_health
+      tags: pihole_health
