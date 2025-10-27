@@ -1,0 +1,26 @@
+---
+- name: Ensure immich-app directory exists
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}"
+    state: directory
+    owner: haaksk
+    group: docker
+    mode: "0755"
+
+- name: Create docker-compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ immich_project_dir }}/docker-compose.yml"
+    owner: haaksk
+    group: docker
+    mode: "0644"
+  become: true
+
+- name: Create .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ immich_project_dir }}/.env"
+    owner: haaksk
+    group: docker
+    mode: "0644"
+  become: true
