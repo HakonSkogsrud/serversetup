@@ -11,6 +11,7 @@
     - { key: 'pushover_user', value: '{{ pushover_user }}' }
     - { key: 'pushover_reboot', value: '{{ pushover_reboot }}' }
     - { key: 'pushover_pihole', value: '{{ pushover_pihole }}' }
+    - { key: 'pushover_nebula', value: '{{ pushover_nebula }}' }
   no_log: true 
 
 - name: Copy pushover function to proxmox

@@ -47,7 +47,7 @@ check_pihole() {
         send_pushover "${pushover_pihole:-}" "Pi-hole Alert: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 1
     else
         # Optional: Uncomment the line below to receive a notification even on success
-        send_pushover "${pushover_pihole:-}" "Pi-hole Status: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0
+        #send_pushover "${pushover_pihole:-}" "Pi-hole Status: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0
     fi
 }
 

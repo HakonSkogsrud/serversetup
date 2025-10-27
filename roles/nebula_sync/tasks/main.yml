@@ -1,0 +1,3 @@
+---
+- name: Setup nebula sync
+  import_tasks: nebula_sync.yml

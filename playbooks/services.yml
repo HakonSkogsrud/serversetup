@@ -77,3 +77,6 @@
 
     - role: pihole_health
       tags: pihole_health
+
+    - role: nebula_sync
+      tags: nebula_sync
