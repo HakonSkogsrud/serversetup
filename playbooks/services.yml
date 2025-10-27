@@ -18,15 +18,15 @@
         source_vmid_for_clone: "{{ template.vmid }}" 
 
         # VM-specific variables from hostvars/services.yml
-        name: "{{ hostvars[target_vm_host].vm_name }}"
-        newid: "{{ hostvars[target_vm_host].vmid }}"
-        ipaddr: "{{ hostvars[target_vm_host].ansible_host }}"
-        balloon: "{{ hostvars[target_vm_host].balloon_mb }}"
-        cores: "{{ hostvars[target_vm_host].cores }}"
-        memory: "{{ hostvars[target_vm_host].memory_mb }}"
-        sockets: "{{ hostvars[target_vm_host].sockets }}"
-        primary_disk_size: "{{ hostvars[target_vm_host].primary_disk_size }}"
-        virtiofs_tag: "{{ hostvars[target_vm_host].virtiofs_tag_ref }}"
+        name: services
+        newid: 4000
+        ipaddr: 10.0.0.44
+        balloon: 42000
+        cores: 3
+        memory: 12024
+        sockets: 1
+        primary_disk_size: 200G
+        virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Configure services
   hosts: services 

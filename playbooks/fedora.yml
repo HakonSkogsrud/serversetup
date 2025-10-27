@@ -234,7 +234,8 @@
           alias proxmox="ssh root@10.0.0.41"
           alias services="ssh haaksk@10.0.0.44"
           alias backupserver="ssh haaksk@100.104.43.26"
-          alias pihole="ssh haaksk@10.0.0.27"
+          alias pihole-macbook="ssh haaksk@10.0.0.27"
+          alias pihole="ssh haaksk@10.0.0.77"
           alias codemachine2="ssh haaksk@10.0.0.84"
           alias venv="source .venv/bin/activate.fish"
           alias vim="vim"
@@ -303,23 +304,19 @@
     - name: set git mail
       ansible.builtin.command: git config --global user.email "haaksk@gmail.com"
 
-    - name: Disable HDA audio power saving persistently
-      hosts: your_target_hosts
-      become: yes
-      tasks:
-        - name: Create modprobe configuration file
-          ansible.builtin.copy:
-            content: |
-              # Disable power saving for HDA audio to prevent audio cutouts
-              options snd_hda_intel power_save=0 power_save_controller=N
-            dest: /etc/modprobe.d/disable-hda-powersave.conf
-            owner: root
-            group: root
-            mode: '0644'
-          notify: Reload snd_hda_intel module
+    - name: Create modprobe configuration file
+      ansible.builtin.copy:
+        content: |
+          # Disable power saving for HDA audio to prevent audio cutouts
+          options snd_hda_intel power_save=0 power_save_controller=N
+        dest: /etc/modprobe.d/disable-hda-powersave.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload snd_hda_intel module
 
-      handlers:
-        - name: Reload snd_hda_intel module
-          community.general.modprobe:
-            name: snd_hda_intel
-            state: reloaded
+  handlers:
+    - name: Reload snd_hda_intel module
+      community.general.modprobe:
+        name: snd_hda_intel
+        state: reloaded

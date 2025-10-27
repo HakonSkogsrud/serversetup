@@ -1,11 +1,40 @@
 ---
-- name: pihole setup
-  hosts: pihole
-  become: true
+- name: Create pihole VM
+  hosts: proxmox
+  become: false
   vars_files:
     - ../secrets.yml
-
+  vars:
+    target_vm_host: pihole2
   roles:
-    - pushover_config
-    - weekly_update
-    - weekly_reboot
+    - role: create_vm
+      tags: create_vm
+      vars:
+        # Global Proxmox and template variables
+        node: "{{ proxmox.node }}"
+        api_user: "{{ proxmox.api_user }}"
+        clone: "{{ template.name }}" #
+        source_vmid_for_clone: "{{ template.vmid }}" 
+
+        # VM-specific variables from hostvars/services.yml
+        name: pihole
+        newid: 4002
+        ipaddr: 10.0.0.77
+        balloon: 2000
+        cores: 1
+        memory: 2000
+        sockets: 1
+        primary_disk_size: 10G
+        virtiofs_tag: "{{ virtiofs_tags.smb }}"
+
+
+- name: Setup pihole vm
+  hosts: pihole 
+  become: true
+  vars:
+    ansible_host_key_checking: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: pihole_setup
+      tags: pihole_setup

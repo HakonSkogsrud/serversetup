@@ -1,0 +1,14 @@
+---
+pihole_selinux_repo_url: "https://github.com/nkrgovic/PiHole_SELinux.git"
+pihole_selinux_repo_dest: "/opt/PiHole_SELinux"
+
+pihole_interface: "eth0" 
+pihole_ipv4_address: "{{ ansible_facts[pihole_interface]['ipv4']['address'] }}"
+
+pihole_ipv6_interface: "eth0"
+pihole_ipv6_ula_address: "fd00:abcd::28"
+
+pihole_upstream_dns_1: "9.9.9.9"
+pihole_upstream_dns_2: "149.112.112.112"
+pihole_upstream_dns_3: "2620:fe::fe"
+pihole_upstream_dns_4: "2620:fe::9"
