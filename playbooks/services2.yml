@@ -18,18 +18,18 @@
         source_vmid_for_clone: "{{ template.vmid }}" 
 
         # VM-specific variables from hostvars/services.yml
-        name: services
-        newid: 4000
-        ipaddr: 10.0.0.44
-        balloon: 42000
-        cores: 3
-        memory: 12024
+        name: services2
+        newid: 4200
+        ipaddr: 10.0.0.89
+        balloon: 12000
+        cores: 2
+        memory: 13000
         sockets: 1
-        primary_disk_size: 200G
+        primary_disk_size: 150G
         virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Configure services
-  hosts: services 
+  hosts: services2
   become: true
   vars_files:
     - ../secrets.yml
@@ -39,44 +39,9 @@
       vars:
         virtiofs_tag: "{{ virtiofs_tags.smb }}"
         mount_path: "/mnt/storage/smb"
-
-    - role: samba_setup
-      tags: samba_setup
-      vars:
-        mount_path: "/mnt/storage/smb"
-        smb_group: "sambausers"
-        mount_path_owner: "root"
     
     - role: docker_setup
       tags: docker_setup
 
-    - role: add_third_party_repos
-
-    - role: uhd_passthrough
-      tags: uhd_passthrough
-
-    - role: jellyfin_setup
-      tags: jellyfin_setup
-
-    - role: tailscale_setup
-      tags: tailscale_setup
-      vars:
-        tailscale_hostname: "{{ vm_name }}"
-
-    - role: immich_backup
-      tags: immich_backup
-
-    - role: weekly_update
-      tags: weekly_update
-
-    - role: pushover_config
-      tags: pushover_config
-    
-    - role: weekly_reboot
-      tags: weekly_reboot
-
-    - role: pihole_health
-      tags: pihole_health
-
-    - role: nebula_sync
-      tags: nebula_sync
+    - role: immich_restore
+      tags: immich_restore

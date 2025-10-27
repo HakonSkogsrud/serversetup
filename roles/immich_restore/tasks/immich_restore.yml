@@ -24,3 +24,110 @@
     group: docker
     mode: "0644"
   become: true
+
+# ----------------------------------------------------------
+# Create Immich library storage structure
+# ----------------------------------------------------------
+- name: Ensure Immich library subdirectories exist
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}/library/{{ item }}"
+    state: directory
+    owner: haaksk
+    group: docker
+    mode: "0755"
+  become: true
+  loop:
+    - "upload"
+    - "library"
+    - "thumbs"
+    - "encoded-video"
+    - "profile"
+    - "backups"
+
+- name: Create .immich marker files for storage integrity checks
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}/library/{{ item }}/.immich"
+    state: touch
+    owner: haaksk
+    group: docker
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+  become: true
+  loop:
+    - "upload"
+    - "library"
+    - "thumbs"
+    - "encoded-video"
+    - "profile"
+    - "backups"
+
+- name: Ensure firewalld is installed
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+  become: true
+
+- name: Ensure firewalld is enabled and running
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+  become: true
+
+- name: Configure firewalld for Immich
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+  loop:
+    - "2283/tcp"  # Immich web interface (default port)
+  notify: reload firewalld
+
+- name: Stop existing Immich services (if any)
+  community.docker.docker_compose_v2:
+    project_src: "{{ immich_project_dir }}"
+    state: absent
+  ignore_errors: true
+
+- name: Pull latest Docker images
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ immich_project_dir }}"
+
+- name: Check if Immich DB directory exists
+  ansible.builtin.stat:
+    path: "{{ immich_project_dir }}/postgres"
+  register: immich_db_dir
+
+# ----------------------------------------------------------
+# Restore database if directory missing
+# ----------------------------------------------------------
+- name: Restore Immich backup if DB directory missing
+  ansible.builtin.shell: |
+    set -e
+    docker compose down -v
+    docker compose pull
+    docker compose create
+    docker start immich_postgres
+    sleep 10
+    LATEST_BACKUP="$(ls -1 /mnt/storage/smb/immich_backup_dumps/immich-db-backup-*.sql.gz | sort -V | tail -n 1)"
+    gunzip --stdout "$LATEST_BACKUP" \
+      | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" \
+      | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
+    docker compose up -d
+  args:
+    chdir: "{{ immich_project_dir }}"
+  become: true
+  when: not immich_db_dir.stat.exists
+
+# ----------------------------------------------------------
+# Otherwise, just start the existing stack
+# ----------------------------------------------------------
+- name: Start existing Immich stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ immich_project_dir }}"
+    state: present
+  become: true
+  when: immich_db_dir.stat.exists

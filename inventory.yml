@@ -4,6 +4,9 @@ all:
     vms:
       hosts:
         services:
+        services2:
+          ansible_host: 10.0.0.89
+          ansible_user: haaksk
         fedora:
           ansible_host: 127.0.0.1
           ansible_connection: local 
