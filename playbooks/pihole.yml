@@ -20,7 +20,7 @@
         name: pihole
         newid: 4002
         ipaddr: 10.0.0.77
-        balloon: 2000
+        balloon: 1500
         cores: 1
         memory: 2000
         sockets: 1
@@ -42,8 +42,16 @@
     - role: pushover_config
       tags: pushover_config
 
+    - role: tailnet_healthcheck
+      tags: tailnet_healthcheck
+
     - role: weekly_update
       tags: weekly_update
     
     - role: weekly_reboot
       tags: weekly_reboot
+
+    - role: tailscale_setup
+      tags: tailscale_setup
+      vars:
+        tailscale_hostname: "{{ inventory_hostname }}"

@@ -1,0 +1,5 @@
+---
+tailnet_hosts:
+  - { name: 'backupserver', ip: '100.104.43.26' }
+  - { name: 'proxmox', ip: '100.71.144.26' }
+  - { name: 'services', ip: '100.72.44.27' }
