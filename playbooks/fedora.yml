@@ -142,7 +142,7 @@
 
     - name: set vscodium settings
       ansible.builtin.copy:
-        dest: /home/haaksk/.config/Code/User/settings.json
+        dest: /home/haaksk/.config/VSCodium/User/settings.json
         content: |
           {
               "window.titleBarStyle": "native",
