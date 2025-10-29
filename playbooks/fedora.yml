@@ -10,12 +10,6 @@
 
   tasks:
 
-    - name: Install required python package for ansible.dnf
-      ansible.builtin.shell: dnf install -y python3-libdnf5
-      args:
-        warn: false # Suppress warnings about using shell for package management
-      changed_when: false # This command only prepares the system, does not represent a config change
-
     # --- VSCodium Installation ---
     - name: Import VSCodium GPG key
       ansible.builtin.rpm_key:
@@ -78,6 +72,7 @@
           - git
           - intel-media-driver
           - gh
+          - samba
           - fish
         state: present
         update_cache: true # Good practice after adding new repos
@@ -179,44 +174,6 @@
               "workbench.preferredLightColorTheme": "Night Owl Light",
               "terminal.integrated.defaultProfile.linux": "fish",
               "terminal.integrated.sendKeybindingsToShell": true,
-              "workbench.colorCustomizations": {
-                  "[Night Owl Light]": {
-                      "titleBar.activeBackground": "#f5f5f5",
-                      "activityBar.background": "#f5f5f5",
-                      "sideBar.background": "#f5f5f5",
-                      "editorGroupHeader.tabsBackground": "#f5f5f5",
-                      "tab.activeBackground": "#fbfbfb",
-                      "tab.activeBorder": "#fbfbfb",
-                      "tab.inactiveBackground": "#f5f5f5",
-                      "sideBarSectionHeader.background": "#f5f5f5",
-                      "panel.background": "#f5f5f5",
-                      "list.activeSelectionBackground": "#fbfbfb",
-                      "list.inactiveSelectionBackground": "#fbfbfb",
-                      "sideBar.border": "#fbfbfb",
-                      "titleBar.inactiveBackground": "#eff0f1",
-                      "activityBar.border": "#f5f5f5",
-                      "statusBar.border": "#f5f5f5",
-                      "statusBar.background": "#f5f5f5"
-                  },
-                  "[Default Dark Modern]": {
-                      "titleBar.activeBackground": "#292c30",
-                      "activityBar.background": "#292c30",
-                      "sideBar.background": "#292c30",
-                      "editorGroupHeader.tabsBackground": "#292c30",
-                      "tab.activeBackground": "#1f1f1f",
-                      "tab.activeBorder": "#1f1f1f",
-                      "tab.inactiveBackground": "#292c30",
-                      "sideBarSectionHeader.background": "#292c30",
-                      "panel.background": "#292c30",
-                      "list.activeSelectionBackground": "#1f1f1f",
-                      "list.inactiveSelectionBackground": "#1f1f1f",
-                      "sideBar.border": "#1f1f1f",
-                      "titleBar.inactiveBackground": "#eff0f1",
-                      "activityBar.border": "#292c30",
-                      "statusBar.border": "#292c30",
-                      "statusBar.background": "#292c30"
-                  }
-              },
               "symbols.hidesExplorerArrows": false,
               "workbench.iconTheme": "symbols",
               "workbench.startupEditor": "none",
@@ -290,17 +247,6 @@
               echo -n ' ❯ '
           end
 
-    # --- SMB Share Mount ---
-    - name: Ensure SMB mount point and Samba config directory exist
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        mode: '0755'
-        owner: "{{ item | regex_replace('/mnt.*', 'haaksk', 'root') }}" # owner is haaksk for /mnt, root for /etc
-        group: "{{ item | regex_replace('/mnt.*', 'haaksk', 'root') }}"
-      loop:
-        - /mnt/smbshare
-        - /etc/samba
 
     - name: Create Samba credentials file
       ansible.builtin.template:
@@ -348,19 +294,3 @@
         value: "haaksk@gmail.com"
       become_user: haaksk
 
-    - name: Ensure Code directory exists
-      ansible.builtin.file:
-        path: /home/haaksk/Code
-        state: directory
-        owner: haaksk
-        group: haaksk
-        mode: '0755'
-
-    - name: Clone serversetup repository
-      ansible.builtin.git:
-        repo: 'https://github.com/HakonSkogsrud/serversetup.git'
-        dest: /home/haaksk/Code/serversetup
-        version: main
-        accept_hostkey: true
-        force: yes
-      become_user: haaksk
