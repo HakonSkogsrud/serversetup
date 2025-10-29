@@ -152,7 +152,6 @@
               "window.zoomLevel": 0.5,
               "chat.editor.fontSize": 13,
               "editor.fontSize": 13,
-              "window.autoDetectColorScheme": true,
               "editor.scrollbar.verticalScrollbarSize": 6,
               "editor.scrollbar.horizontalScrollbarSize": 6,
               "terminal.integrated.fontSize": 13, 
@@ -166,36 +165,68 @@
               "workbench.preferredLightColorTheme": "Night Owl Light",
               "terminal.integrated.defaultProfile.linux": "fish",
               "terminal.integrated.sendKeybindingsToShell": true,
+              
+              // The correct way to apply customizations ONLY for "Night Owl Light"
               "workbench.colorCustomizations": {
-                  // --- FOCUSED UI BACKGROUND COLOR ---
-                  "titleBar.activeBackground": "#f5f5f5",
-                  "activityBar.background": "#f5f5f5",
-                  "sideBar.background": "#f5f5f5",
-                  "editorGroupHeader.tabsBackground": "#f5f5f5",
-                  "tab.activeBackground": "#fbfbfb",
-                  "tab.activeBorder": "#fbfbfb",
-                  "tab.inactiveBackground": "#f5f5f5",
+                  "[Night Owl Light]": {
+                      // --- FOCUSED UI BACKGROUND COLOR ---
+                      "titleBar.activeBackground": "#f5f5f5",
+                      "activityBar.background": "#f5f5f5",
+                      "sideBar.background": "#f5f5f5",
+                      "editorGroupHeader.tabsBackground": "#f5f5f5",
+                      "tab.activeBackground": "#fbfbfb",
+                      "tab.activeBorder": "#fbfbfb",
+                      "tab.inactiveBackground": "#f5f5f5",
 
-                  "sideBarSectionHeader.background": "#f5f5f5",
-                  "panel.background": "#f5f5f5",
-                  "list.activeSelectionBackground": "#fbfbfb",
-                  "list.inactiveSelectionBackground": "#fbfbfb",
-                  "sideBar.border": "#fbfbfb", 
+                      "sideBarSectionHeader.background": "#f5f5f5",
+                      "panel.background": "#f5f5f5",
+                      "list.activeSelectionBackground": "#fbfbfb",
+                      "list.inactiveSelectionBackground": "#fbfbfb",
+                      "sideBar.border": "#fbfbfb", 
 
-                  // --- INACTIVE UI BACKGROUND COLOR ---
-                  "titleBar.inactiveBackground": "#eff0f1",
+                      // --- INACTIVE UI BACKGROUND COLOR ---
+                      "titleBar.inactiveBackground": "#eff0f1",
 
-                  // 1. Removes border between Activity Bar and Sidebar
-                  "activityBar.border": "#f5f5f5",
+                      // 1. Removes border between Activity Bar and Sidebar
+                      "activityBar.border": "#f5f5f5",
 
-                  // statusbar
-                  "statusBar.border": "#f5f5f5",
-                  "statusBar.background": "#f5f5f5",
+                      // statusbar
+                      "statusBar.border": "#f5f5f5",
+                      "statusBar.background": "#f5f5f5"
+                  },
+                  // Customizations for other themes would go here:
+                  "[Default Dark Modern]": {
+                      "titleBar.activeBackground": "#292c30",
+                      "activityBar.background": "#292c30",
+                      "sideBar.background": "#292c30",
+                      "editorGroupHeader.tabsBackground": "#292c30",
+                      "tab.activeBackground": "#1f1f1f",
+                      "tab.activeBorder": "#1f1f1f",
+                      "tab.inactiveBackground": "#292c30",
+
+                      "sideBarSectionHeader.background": "#292c30",
+                      "panel.background": "#292c30",
+                      "list.activeSelectionBackground": "#1f1f1f",
+                      "list.inactiveSelectionBackground": "#1f1f1f",
+                      "sideBar.border": "#1f1f1f",
+
+                      // --- INACTIVE UI BACKGROUND COLOR ---
+                      "titleBar.inactiveBackground": "#eff0f1",
+
+                      // 1. Removes border between Activity Bar and Sidebar
+                      "activityBar.border": "#292c30",
+
+                      // statusbar
+                      "statusBar.border": "#292c30",
+                      "statusBar.background": "#292c30"
+                  }
               },
+              
               "symbols.hidesExplorerArrows": false,
               "workbench.iconTheme": "symbols",
-              "workbench.startupEditor": "none"
-          }
+              "workbench.startupEditor": "none",
+              "window.autoDetectColorScheme": true
+          } 
         backup: yes       
 
     - name: Download Brave browser repository file
@@ -252,8 +283,64 @@
 
         create: yes
       become: no
-      tags: bashrc
       
+    - name: Add aliases block to . config
+      ansible.builtin.blockinfile:
+        path: "/home/haaksk/.config/fish/functions/fish_prompt.fish"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - ALIASES"
+        block: |
+          function fish_prompt
+              # Current Working Directory (CWD)
+              # Icon: 📁 (Folder)
+              # Color: Blue for the icon, Cyan for the path
+              set_color blue
+              set_color cyan
+              echo -n (prompt_pwd) # Displays the current working directory
+
+              # Virtual Environment (Venv)
+              # Icon: 🐍 (Snake)
+              # Color: Green for the entire venv segment
+              # Checks if a virtual environment is active using the VIRTUAL_ENV variable
+              if set -q VIRTUAL_ENV
+                  set_color green
+                  echo -n ' (🐍 '
+                  # Extracts the name of the virtual environment from its path
+                  echo -n (basename "$VIRTUAL_ENV")
+                  echo -n ')'
+              end
+
+              # Git Branch (and status)
+              # Icon:  (Nerd Font for Git Branch) - requires a Nerd Font to display correctly
+              # Color: Magenta for clean branch, Red for dirty status
+              # First, get the status of being in a git repository.
+              # We capture this into a variable to prevent 'test' from failing if no output.
+              set -l is_git_repo (git rev-parse --is-inside-work-tree 2>/dev/null)
+
+              if test "$is_git_repo" = 'true'
+                  set_color magenta
+                  echo -n ' ( '
+                  # Ensure that git rev-parse also has its errors suppressed, just in case.
+                  echo -n (git rev-parse --abbrev-ref HEAD 2>/dev/null) # Displays the current branch name
+
+                  # Optional: Add an indicator for a dirty (modified) Git repository
+                  # Check if there are any uncommitted changes or untracked files
+                  if not git diff --quiet HEAD 2>/dev/null; or not git diff --cached --quiet 2>/dev/null
+                      set_color red # Color for dirty indicator
+                      echo -n '✗' # Dirty icon
+                  end
+                  echo -n ')'
+              end
+
+              # Final Prompt Separator
+              # Icon: ❯ (Heavy Right Arrow)
+              # Color: Default (normal)
+              set_color normal
+              echo -n ' ❯ ' # The final prompt character
+          end
+
+        create: yes
+      become: no
+
 
     - name: Ensure the SMB mount point directory exists
       ansible.builtin.file:
@@ -298,25 +385,30 @@
         mode: '0644'                  
         backup: yes                
 
-    - name: set git name
-      ansible.builtin.command: git config --global user.name "Håkon Skogsrud"
+    - name: Configure Git user details
+      hosts: all
+      tasks:
+        - name: Set Git user name
+          community.general.git_config:
+            name: user.name
+            scope: global
+            value: "Håkon Skogsrud"
+          become: true
+          become_user: haaksk
 
-    - name: set git mail
-      ansible.builtin.command: git config --global user.email "haaksk@gmail.com"
+        - name: Set Git user mail
+          community.general.git_config:
+            name: user.email
+            scope: global
+            value: "haaksk@gmail.com"
+          become: true
+          become_user: haaksk
 
-    - name: Create modprobe configuration file
-      ansible.builtin.copy:
-        content: |
-          # Disable power saving for HDA audio to prevent audio cutouts
-          options snd_hda_intel power_save=0 power_save_controller=N
-        dest: /etc/modprobe.d/disable-hda-powersave.conf
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Reload snd_hda_intel module
-
-  handlers:
-    - name: Reload snd_hda_intel module
-      community.general.modprobe:
-        name: snd_hda_intel
-        state: reloaded
+    - name: Ensure /home/haaksk/Code directory exists and is owned by haaksk
+      ansible.builtin.file:
+        path: /home/haaksk/Code
+        state: directory
+        owner: haaksk
+        group: haaksk
+        mode: '0700'
+      become: yes
