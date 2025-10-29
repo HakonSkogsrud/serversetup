@@ -1,5 +1,5 @@
 ---
-- name: Setup installations of fedora 
+- name: Setup installations of fedora
   hosts: fedora
   become: true
   vars_files:
@@ -9,20 +9,20 @@
     - weekly_update
 
   tasks:
-    
-    - name: install required python package for ansible.dnf
-      ansible.builtin.shell: dnf install python3-libdnf5
-      become: true
 
+    - name: Install required python package for ansible.dnf
+      ansible.builtin.shell: dnf install -y python3-libdnf5
+      args:
+        warn: false # Suppress warnings about using shell for package management
+      changed_when: false # This command only prepares the system, does not represent a config change
+
+    # --- VSCodium Installation ---
     - name: Import VSCodium GPG key
-      # The rpm_key module handles the equivalent of 'rpmkeys --import'
       ansible.builtin.rpm_key:
         state: present
         key: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
 
     - name: Add VSCodium DNF repository
-      # The yum_repository module is the structured way to manage .repo files
-      # on RHEL-like systems (including Fedora, which uses DNF)
       ansible.builtin.yum_repository:
         name: gitlab.com_paulcarroty_vscodium_repo
         description: download.vscodium.com
@@ -32,90 +32,101 @@
         repo_gpgcheck: true
         gpgkey: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
         metadata_expire: 1h
-        # Ensure the file is created in /etc/yum.repos.d/vscodium.repo
         file: vscodium
 
-    - name: Install Codium package
-      # The dnf module is preferred on Fedora and modern RHEL/CentOS/Rocky Linux
-      ansible.builtin.dnf:
-        name: codium
-        state: present
-        # This is optional, but forces a refresh of the repository cache 
-        # which might be necessary after adding a new repo
-        update_cache: true
-
-
-    - name: "Add rpmfustion repo gpg keys"
+    # --- RPM Fusion Installation ---
+    - name: Add RPM Fusion repo gpg keys
       ansible.builtin.rpm_key:
         key: "{{ item }}"
         state: present
-      with_items: 
+      with_items:
         - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-2020"
         - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-2020"
 
-    - name: install the rpmfusion repo packages
-      dnf:
-        name: "{{ item }}"
-        state: present
-      with_items:
-        - http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm
-        - http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm
-
-    - name: install packages
+    - name: Install the RPM Fusion repo packages
       ansible.builtin.dnf:
-        name: "{{ item }}"
+        name:
+          - "http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+          - "http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
         state: present
-      loop: 
-        - vim
-        - vlc 
-        - uv
-        - git
-        - intel-media-driver
-        - gh
-        - fish
+        disable_gpg_check: true # GPG keys are imported separately, but the packages themselves aren't signed in the same way
 
-    - name: update all
+    # --- Brave Browser Installation ---
+    - name: Add Brave browser GPG key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+
+    - name: Add Brave browser repository
+      ansible.builtin.yum_repository:
+        name: brave-browser
+        description: Brave Browser
+        baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+
+    # --- Consolidated Package Installation ---
+    - name: Install core packages, browsers, and tools
+      ansible.builtin.dnf:
+        name:
+          - codium
+          - brave-browser
+          - vim
+          - vlc
+          - uv
+          - git
+          - intel-media-driver
+          - gh
+          - fish
+        state: present
+        update_cache: true # Good practice after adding new repos
+
+    - name: Update all system packages
       ansible.builtin.dnf:
         name: '*'
         state: latest
 
-    - name: install multimedia group
+    # --- Multimedia Setup ---
+    - name: Install multimedia group
       ansible.builtin.dnf:
         name: "@multimedia"
         state: present
+        update_cache: true
 
-    - name: swap ffmpeg free
-      ansible.builtin.dnf: 
-        name: "ffmpeg"
-        state: latest
+    - name: Swap ffmpeg-free for full ffmpeg from RPM Fusion
+      ansible.builtin.dnf:
+        name: ffmpeg
+        state: present
         allowerasing: true
 
-    - name: upgrade multimedia
+    - name: Upgrade multimedia packages
       ansible.builtin.dnf:
         name: "@multimedia"
         state: latest
-        exclude: "PackageKit-gstreaer-plugin"
+        exclude: "PackageKit-gstreamer-plugin"
         install_weak_deps: false
 
-    - name: install sound and video group
+    - name: Install sound and video group
       ansible.builtin.dnf:
         name: "@sound-and-video"
         state: present
-      
 
+    # --- VSCodium Configuration ---
     - name: Ensure VSCodium user config directory exists
       ansible.builtin.file:
         path: "/home/haaksk/.config/VSCodium/User"
         state: directory
         owner: haaksk
         group: haaksk
-        mode: '0755' 
-      become: true 
-          
+        mode: '0755'
 
-    - name: set vscodium keyboard bindings
-      ansible.builtin.copy: 
+    - name: Set VSCodium keyboard bindings
+      ansible.builtin.copy:
         dest: /home/haaksk/.config/VSCodium/User/keybindings.json
+        owner: haaksk
+        group: haaksk
+        mode: '0644'
         content: |
           [
               {
@@ -139,10 +150,13 @@
               }
           ]
 
-
-    - name: set vscodium settings
+    - name: Set VSCodium settings
       ansible.builtin.copy:
         dest: /home/haaksk/.config/VSCodium/User/settings.json
+        owner: haaksk
+        group: haaksk
+        mode: '0644'
+        backup: yes
         content: |
           {
               "window.titleBarStyle": "native",
@@ -154,7 +168,7 @@
               "editor.fontSize": 13,
               "editor.scrollbar.verticalScrollbarSize": 6,
               "editor.scrollbar.horizontalScrollbarSize": 6,
-              "terminal.integrated.fontSize": 13, 
+              "terminal.integrated.fontSize": 13,
               "editor.minimap.enabled": false,
               "git.confirmSync": false,
               "git.autofetch": true,
@@ -165,11 +179,8 @@
               "workbench.preferredLightColorTheme": "Night Owl Light",
               "terminal.integrated.defaultProfile.linux": "fish",
               "terminal.integrated.sendKeybindingsToShell": true,
-              
-              // The correct way to apply customizations ONLY for "Night Owl Light"
               "workbench.colorCustomizations": {
                   "[Night Owl Light]": {
-                      // --- FOCUSED UI BACKGROUND COLOR ---
                       "titleBar.activeBackground": "#f5f5f5",
                       "activityBar.background": "#f5f5f5",
                       "sideBar.background": "#f5f5f5",
@@ -177,24 +188,16 @@
                       "tab.activeBackground": "#fbfbfb",
                       "tab.activeBorder": "#fbfbfb",
                       "tab.inactiveBackground": "#f5f5f5",
-
                       "sideBarSectionHeader.background": "#f5f5f5",
                       "panel.background": "#f5f5f5",
                       "list.activeSelectionBackground": "#fbfbfb",
                       "list.inactiveSelectionBackground": "#fbfbfb",
-                      "sideBar.border": "#fbfbfb", 
-
-                      // --- INACTIVE UI BACKGROUND COLOR ---
+                      "sideBar.border": "#fbfbfb",
                       "titleBar.inactiveBackground": "#eff0f1",
-
-                      // 1. Removes border between Activity Bar and Sidebar
                       "activityBar.border": "#f5f5f5",
-
-                      // statusbar
                       "statusBar.border": "#f5f5f5",
                       "statusBar.background": "#f5f5f5"
                   },
-                  // Customizations for other themes would go here:
                   "[Default Dark Modern]": {
                       "titleBar.activeBackground": "#292c30",
                       "activityBar.background": "#292c30",
@@ -203,63 +206,40 @@
                       "tab.activeBackground": "#1f1f1f",
                       "tab.activeBorder": "#1f1f1f",
                       "tab.inactiveBackground": "#292c30",
-
                       "sideBarSectionHeader.background": "#292c30",
                       "panel.background": "#292c30",
                       "list.activeSelectionBackground": "#1f1f1f",
                       "list.inactiveSelectionBackground": "#1f1f1f",
                       "sideBar.border": "#1f1f1f",
-
-                      // --- INACTIVE UI BACKGROUND COLOR ---
                       "titleBar.inactiveBackground": "#eff0f1",
-
-                      // 1. Removes border between Activity Bar and Sidebar
                       "activityBar.border": "#292c30",
-
-                      // statusbar
                       "statusBar.border": "#292c30",
                       "statusBar.background": "#292c30"
                   }
               },
-              
               "symbols.hidesExplorerArrows": false,
               "workbench.iconTheme": "symbols",
               "workbench.startupEditor": "none",
               "window.autoDetectColorScheme": true
-          } 
-        backup: yes       
+          }
 
-    - name: Download Brave browser repository file
-      ansible.builtin.get_url:
-        url: https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-        dest: /tmp/brave-browser.repo # Download to a temporary location
-        mode: '0644' # Set standard file permissions
-
-    - name: Copy Brave browser repository file to dnf configuration directory
-      ansible.builtin.copy:
-        src: /tmp/brave-browser.repo
-        dest: /etc/yum.repos.d/brave-browser.repo # Place the file in the dnf repo directory
-        remote_src: yes # Indicate that the source file is on the remote host
-        mode: '0644'
-        owner: root
-        group: root
-
-    - name: Clean up downloaded repository file
+    # --- Fish Shell Configuration ---
+    - name: Ensure fish config directories exist
       ansible.builtin.file:
-        path: /tmp/brave-browser.repo
-        state: absent # Remove the temporary file
+        path: /home/haaksk/.config/fish/functions
+        state: directory
+        mode: '0755'
+        owner: haaksk
+        group: haaksk
 
-    - name: Install Brave browser package
-      ansible.builtin.dnf:
-        name: brave-browser
-        state: present 
-        update_cache: true
-    
-
-    - name: Add aliases block to .fish config
+    - name: Add aliases block to fish config
       ansible.builtin.blockinfile:
         path: "/home/haaksk/.config/fish/config.fish"
         marker: "# {mark} ANSIBLE MANAGED BLOCK - ALIASES"
+        create: yes
+        owner: haaksk
+        group: haaksk
+        mode: '0644'
         block: |
           alias restart="source ~/.config/fish/config.fish"
           alias proxmox="ssh root@10.0.0.41"
@@ -271,144 +251,116 @@
           alias venv="source .venv/bin/activate.fish"
           alias vim="vim"
           export EDITOR="vim"
-          # overwrite greeting
-          # potentially disabling fastfetch
-          function fish_greeting
-              # smth smth
-          end
 
-          function fish_prompt
-                  printf '%s > ' (prompt_pwd)
-          end
-
-        create: yes
-      become: no
-      
-    - name: Add aliases block to . config
+    - name: Create custom fish prompt
       ansible.builtin.blockinfile:
         path: "/home/haaksk/.config/fish/functions/fish_prompt.fish"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK - ALIASES"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - PROMPT"
+        create: yes
+        owner: haaksk
+        group: haaksk
+        mode: '0644'
         block: |
           function fish_prompt
-              # Current Working Directory (CWD)
-              # Icon: 📁 (Folder)
-              # Color: Blue for the icon, Cyan for the path
+              # Current Working Directory (CWD) - Blue icon, Cyan path
               set_color blue
               set_color cyan
-              echo -n (prompt_pwd) # Displays the current working directory
+              echo -n (prompt_pwd)
 
-              # Virtual Environment (Venv)
-              # Icon: 🐍 (Snake)
-              # Color: Green for the entire venv segment
-              # Checks if a virtual environment is active using the VIRTUAL_ENV variable
+              # Virtual Environment (Venv) - Green
               if set -q VIRTUAL_ENV
                   set_color green
-                  echo -n ' (🐍 '
-                  # Extracts the name of the virtual environment from its path
-                  echo -n (basename "$VIRTUAL_ENV")
-                  echo -n ')'
+                  echo -n ' (🐍 '(basename "$VIRTUAL_ENV")')'
               end
 
-              # Git Branch (and status)
-              # Icon:  (Nerd Font for Git Branch) - requires a Nerd Font to display correctly
-              # Color: Magenta for clean branch, Red for dirty status
-              # First, get the status of being in a git repository.
-              # We capture this into a variable to prevent 'test' from failing if no output.
+              # Git Branch (and status) - Magenta for clean, Red for dirty
               set -l is_git_repo (git rev-parse --is-inside-work-tree 2>/dev/null)
-
               if test "$is_git_repo" = 'true'
                   set_color magenta
-                  echo -n ' ( '
-                  # Ensure that git rev-parse also has its errors suppressed, just in case.
-                  echo -n (git rev-parse --abbrev-ref HEAD 2>/dev/null) # Displays the current branch name
-
-                  # Optional: Add an indicator for a dirty (modified) Git repository
-                  # Check if there are any uncommitted changes or untracked files
+                  echo -n ' (🏷️ '(git rev-parse --abbrev-ref HEAD 2>/dev/null)
                   if not git diff --quiet HEAD 2>/dev/null; or not git diff --cached --quiet 2>/dev/null
-                      set_color red # Color for dirty indicator
+                      set_color red
                       echo -n '✗' # Dirty icon
                   end
                   echo -n ')'
               end
 
               # Final Prompt Separator
-              # Icon: ❯ (Heavy Right Arrow)
-              # Color: Default (normal)
               set_color normal
-              echo -n ' ❯ ' # The final prompt character
+              echo -n ' ❯ '
           end
 
-        create: yes
-      become: no
-
-
-    - name: Ensure the SMB mount point directory exists
+    # --- SMB Share Mount ---
+    - name: Ensure SMB mount point and Samba config directory exist
       ansible.builtin.file:
-        path: /mnt/smbshare        
-        state: directory           
-        mode: '0755'             
-        owner: haaksk                
-        group: haaksk                
-
-    - name: Ensure /etc/samba directory exists
-      ansible.builtin.file:
-        path: /etc/samba
+        path: "{{ item }}"
         state: directory
-        mode: '0755' # Standard directory permissions
+        mode: '0755'
+        owner: "{{ item | regex_replace('/mnt.*', 'haaksk', 'root') }}" # owner is haaksk for /mnt, root for /etc
+        group: "{{ item | regex_replace('/mnt.*', 'haaksk', 'root') }}"
+      loop:
+        - /mnt/smbshare
+        - /etc/samba
+
+    - name: Create Samba credentials file
+      ansible.builtin.template:
+        dest: /etc/samba/credentials
+        src: /dev/null # Create an empty file first with correct permissions
         owner: root
         group: root
+        mode: '0600'
+        force: no # Do not overwrite if it exists
 
-    - name: Add username and password to /etc/samba/credentials
+    - name: Add username and password to Samba credentials file
       ansible.builtin.lineinfile:
         path: /etc/samba/credentials
-        regexp: '^{{ item.regexp }}$' 
-        line: '{{ item.line }}'    
-        state: present              
-        create: yes                 
-        owner: root                
-        group: root                
-        mode: '0600'                
-        backup: yes
+        regexp: '^{{ item.key }}='
+        line: '{{ item.key }}={{ item.value }}'
+        state: present
+        owner: root
+        group: root
+        mode: '0600'
       loop:
-        - { regexp: 'username=', line: 'username=haaksk' }
-        - { regexp: 'password=', line: 'password={{ smb_user_password }}' } 
+        - { key: 'username', value: 'haaksk' }
+        - { key: 'password', value: '{{ smb_user_password }}' }
+      no_log: true # Prevent password from being logged
 
-    - name: Add the SMB share line to /etc/fstab
+    - name: Add SMB share to fstab for automounting
       ansible.builtin.lineinfile:
-        path: /etc/fstab              
-        regexp: '^//10\.0\.0\.44/share /mnt/smbshare ' 
-        line: '//10.0.0.44/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0' 
-        state: present               
-        create: yes                   
-        owner: root                   
-        group: root                   
-        mode: '0644'                  
-        backup: yes                
+        path: /etc/fstab
+        regexp: '^//10\.0\.0\.44/share'
+        line: '//10.0.0.44/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0'
+        state: present
+        backup: yes
 
-    - name: Configure Git user details
-      hosts: all
-      tasks:
-        - name: Set Git user name
-          community.general.git_config:
-            name: user.name
-            scope: global
-            value: "Håkon Skogsrud"
-          become: true
-          become_user: haaksk
+    # --- Git Configuration and Code Repositories ---
+    - name: Configure Git global user name for haaksk
+      community.general.git_config:
+        name: user.name
+        scope: global
+        value: "Håkon Skogsrud"
+      become_user: haaksk
 
-        - name: Set Git user mail
-          community.general.git_config:
-            name: user.email
-            scope: global
-            value: "haaksk@gmail.com"
-          become: true
-          become_user: haaksk
+    - name: Configure Git global user email for haaksk
+      community.general.git_config:
+        name: user.email
+        scope: global
+        value: "haaksk@gmail.com"
+      become_user: haaksk
 
-    - name: Ensure /home/haaksk/Code directory exists and is owned by haaksk
+    - name: Ensure Code directory exists
       ansible.builtin.file:
         path: /home/haaksk/Code
         state: directory
         owner: haaksk
         group: haaksk
-        mode: '0700'
-      become: yes
+        mode: '0755'
+
+    - name: Clone serversetup repository
+      ansible.builtin.git:
+        repo: 'https://github.com/HakonSkogsrud/serversetup.git'
+        dest: /home/haaksk/Code/serversetup
+        version: main
+        accept_hostkey: true
+        force: yes
+      become_user: haaksk
