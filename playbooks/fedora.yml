@@ -198,6 +198,7 @@
         group: haaksk
         mode: '0644'
         block: |
+          set -g VIRTUAL_ENV_DISABLE_PROMPT 1
           alias restart="source ~/.config/fish/config.fish"
           alias proxmox="ssh root@10.0.0.41"
           alias services="ssh haaksk@10.0.0.44"
@@ -219,27 +220,20 @@
         mode: '0644'
         block: |
           function fish_prompt
-              # Current Working Directory (CWD) - Blue icon, Cyan path
-              set_color blue
+              # Current Working Directory (CWD)
               set_color cyan
               echo -n (prompt_pwd)
 
-              # Virtual Environment (Venv) - Green
+              # Virtual Environment (Venv)
               if set -q VIRTUAL_ENV
                   set_color green
                   echo -n ' (🐍 '(basename "$VIRTUAL_ENV")')'
               end
 
-              # Git Branch (and status) - Magenta for clean, Red for dirty
-              set -l is_git_repo (git rev-parse --is-inside-work-tree 2>/dev/null)
-              if test "$is_git_repo" = 'true'
+              # Git Branch
+              if git rev-parse --is-inside-work-tree >/dev/null 2>&1
                   set_color magenta
-                  echo -n ' (🏷️ '(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-                  if not git diff --quiet HEAD 2>/dev/null; or not git diff --cached --quiet 2>/dev/null
-                      set_color red
-                      echo -n '✗' # Dirty icon
-                  end
-                  echo -n ')'
+                  echo -n ' ('(git rev-parse --abbrev-ref HEAD 2>/dev/null)')'
               end
 
               # Final Prompt Separator
