@@ -1,0 +1,8 @@
+---
+# List of paths to docker-compose.yml files to update
+docker_compose_paths: []
+
+# Schedule for automatic Docker updates (default: Wednesday at 3:00 AM)
+update_schedule_weekday: "3"  # 0=Sunday, 1=Monday, etc.
+update_schedule_hour: "3"
+update_schedule_minute: "0"

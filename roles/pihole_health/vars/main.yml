@@ -1,0 +1,2 @@
+pihole_main_ip: "{{ vms.pihole.ip }}"
+pihole_backup_ip: "{{ vms['pihole-secondary'].ip }}"

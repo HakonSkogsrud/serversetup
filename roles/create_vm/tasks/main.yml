@@ -1,0 +1,3 @@
+---
+- name: Create vm
+  import_tasks: create_vm.yml

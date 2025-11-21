@@ -1,0 +1,47 @@
+---
+- name: Update apt cache (required before package installation)
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install sanoid package
+  ansible.builtin.apt:
+    name: sanoid
+    state: present
+
+- name: Ensure sanoid configuration directory exists
+  ansible.builtin.file:
+    path: /etc/sanoid
+    state: directory
+    mode: "0755" # Standard directory permissions
+
+- name: Create sanoid configuration file (/etc/sanoid/sanoid.conf) using blockinfile
+  ansible.builtin.blockinfile:
+    path: /etc/sanoid/sanoid.conf
+    owner: root
+    group: root
+    mode: "0644" # Standard config file permissions
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR SANOID"
+    block: |
+      [storage/smb]
+          use_template = production
+          recursive = yes
+
+      [template_production]
+          frequently = 0
+          hourly = 0
+          daily = 2
+          weekly = 3
+          monthly = 2
+          yearly = 1
+          autosnap = yes
+          autoprune = yes
+
+- name: Enable sanoid timer service (starts on boot)
+  ansible.builtin.systemd:
+    name: sanoid.timer
+    enabled: true
+
+- name: Start sanoid timer service immediately
+  ansible.builtin.systemd:
+    name: sanoid.timer
+    state: stopped

@@ -1,0 +1,10 @@
+---
+- name: Reboot VM
+  ansible.builtin.command:
+    cmd: "qm reboot {{ newid }}"
+  listen: "reboot vm"
+
+- name: Wait for VM to reboot
+  ansible.builtin.pause:
+    seconds: 30
+  listen: "reboot vm"

@@ -1,0 +1,3 @@
+---
+- name: Setup proxmox specific stuff
+  import_tasks: pushover_config.yml

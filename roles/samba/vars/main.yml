@@ -1,0 +1,8 @@
+---
+smb_group: sambausers
+smb_user: "{{ template.user }}"
+sudo_group: wheel
+share_path: /mnt/storage/smb
+owner: root
+mount_path: "/mnt/storage/smb"
+mount_path_owner: "root"

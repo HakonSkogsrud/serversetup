@@ -1,0 +1,70 @@
+- name: Configure firewalld for Immich
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+  loop:
+    - "2283/tcp"
+  notify: reload firewalld
+
+- name: Copy backup data files to project directory
+  ansible.posix.synchronize:
+    src: "{{ backup_data_dir }}"
+    dest: "{{ immich_project_dir }}"
+    archive: true
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Ensure Immich library subdirectories exist
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}/library/{{ item }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: docker
+    mode: "0755"
+  become: true
+  loop:
+    - "upload"
+    - "library"
+    - "thumbs"
+    - "encoded-video"
+    - "profile"
+    - "backups"
+
+- name: Create .immich marker files for storage integrity checks
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}/library/{{ item }}/.immich"
+    state: touch
+    owner: "{{ template.user }}"
+    group: docker
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+  become: true
+  loop:
+    - "upload"
+    - "library"
+    - "thumbs"
+    - "encoded-video"
+    - "profile"
+    - "backups"
+
+- name: Pull latest Docker images
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ immich_project_dir }}"
+
+- name: Restore Immich backup if DB directory missing
+  ansible.builtin.shell: |
+    set -e
+    docker compose create
+    docker start immich_postgres
+    sleep 10
+    gunzip --stdout {{ backup_database_dump}} \
+      | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" \
+      | docker exec -i immich_postgres psql --dbname=postgres --username=postgres 
+    docker compose up -d
+  args:
+    chdir: "{{ immich_project_dir }}"
+  become: true
+  when: not immich_db_dir.stat.exists

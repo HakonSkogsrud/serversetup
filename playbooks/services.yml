@@ -1,0 +1,72 @@
+- name: Create services VM
+  hosts: proxmox 
+  become: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    name: services
+    newid: 4001
+    ipaddr: "{{ vms.services.ip }}"
+    balloon: 2000
+    cores: 1
+    memory: 10000
+    sockets: 1
+    primary_disk_size: 20G
+    virtiofs_tag: "{{ virtiofs_tags.smb }}"
+
+  roles:
+    - role: create_vm
+
+  post_tasks:
+    - name: Get current VM config for PCI check
+      ansible.builtin.command:
+        cmd: "/usr/bin/pvesh get /nodes/{{ inventory_hostname }}/qemu/{{ newid }}/config --output-format json"
+      register: post_vm_config
+      changed_when: false
+      become: true
+
+    - name: Add UHD Graphics PCI Passthrough
+      ansible.builtin.command:
+        cmd: "qm set {{ newid }} --hostpci0 mapping=uhdgraphics"
+      when: 
+        - "'mapping=uhdgraphics' not in (post_vm_config.stdout | from_json).hostpci0 | default('')"
+      register: pci_passthrough_added
+      become: true
+
+    - name: Cold Boot VM to apply PCI Passthrough
+      ansible.builtin.shell: |
+        qm stop {{ newid }} && sleep 5 && qm start {{ newid }}
+      when: pci_passthrough_added.changed
+      become: true
+
+    - name: Wait for VM to come back up after PCI reboot
+      ansible.builtin.wait_for:
+        host: "{{ ipaddr }}"
+        port: 22
+        state: started
+        search_regex: OpenSSH
+        delay: 10
+        timeout: 300
+      delegate_to: localhost
+      when: pci_passthrough_added.changed
+
+
+
+- name: Configure services
+  hosts: services
+  become: true
+  vars_files:
+    - ../secrets.yml
+  vars:
+    docker_compose_paths:
+      - "/home/{{ template.user }}/jellyfin/docker-compose.yml"
+      - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
+  roles:
+    - scheduled_update
+    - scheduled_reboot
+    - firewall
+    - pihole_health
+    - nebula_sync
+    - syncthing
+    - jellyfin
+    - docker_auto_update

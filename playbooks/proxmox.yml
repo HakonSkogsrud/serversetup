@@ -1,0 +1,13 @@
+---
+- name: Configure primary Proxmox
+  hosts: proxmox
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - create_template_vm
+    - sanoid
+    - syncoid
+    - scheduled_update
+    - proxmox_config  
+    - tailscale_static_route
+

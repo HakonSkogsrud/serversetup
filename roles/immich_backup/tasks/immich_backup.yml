@@ -1,0 +1,37 @@
+---
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Create and set permissions for the Immich backup log file
+  ansible.builtin.file:
+    path: /var/log/immich_backup.log
+    state: touch
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+
+- name: Create the Immich backup and notification script 
+  ansible.builtin.template:
+    src: immich_backup_notice.sh.j2
+    dest: /usr/local/bin/immich_backup_notice.sh
+    mode: "0755"
+
+- name: Create Immich backup cron job
+  ansible.builtin.cron:
+    name: "Immich backup to SMB share"
+    minute: "0"
+    hour: "1"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "pushover_token_immich_dump='{{ pushover_token_immich_dump }}' pushover_user='{{ pushover_user }}' /usr/local/bin/immich_backup_notice.sh"
+    user: "{{ template.user }}"
+
+- name: Restart cron service to apply changes
+  ansible.builtin.service:
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
+    state: restarted
+    enabled: true

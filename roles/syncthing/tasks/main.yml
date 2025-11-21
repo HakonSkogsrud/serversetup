@@ -1,0 +1,3 @@
+---
+- name: Setup syncthing
+  import_tasks: syncthing.yml

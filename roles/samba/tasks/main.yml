@@ -1,0 +1,3 @@
+---
+- name: Samba setup
+  import_tasks: samba.yml

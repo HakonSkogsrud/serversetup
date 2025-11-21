@@ -1,0 +1,2 @@
+virtiofs_tag: "{{ virtiofs_tags.smb }}"
+mount_path: "/mnt/storage/smb"

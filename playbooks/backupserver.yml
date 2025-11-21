@@ -1,0 +1,13 @@
+---
+- name: Configre backupserver
+  hosts: backupserver
+  become: true
+  vars_files:
+    - ../secrets.yml
+
+  roles:
+    - scheduled_update
+    - scheduled_reboot
+    - role: tailscale_node
+      vars:
+        tailscale_hostname: backupserver

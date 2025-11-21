@@ -1,0 +1,108 @@
+#!/bin/bash
+LOG_FILE="/var/log/docker_auto_update.log"
+
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Logging may fail." >&2; }
+
+log "Starting Docker auto-update script."
+
+if [ -f /usr/local/lib/send_pushover.sh ]; then
+    source /usr/local/lib/send_pushover.sh
+    log "Pushover script sourced."
+else
+    log "Warning: Pushover script not found at /usr/local/lib/send_pushover.sh."
+fi
+
+DOCKER_COMPOSE_PATHS=(
+{% for path in docker_compose_paths -%}
+  "{{ path }}"
+{% endfor -%}
+)
+
+SUCCESS_COUNT=0
+FAILURE_COUNT=0
+FAILED_APPS=""
+UPDATED_APPS=""
+
+if [ "${{ '{#' }}DOCKER_COMPOSE_PATHS[@]}" -eq 0 ]; then
+    log "No Docker Compose paths configured. Exiting."
+    send_pushover "${pushover_docker:-}" "Docker auto-update on $(hostname): No compose paths configured" "Docker Update - Configuration Error" 0 "siren"
+    exit 1
+fi
+
+for compose_path in "${DOCKER_COMPOSE_PATHS[@]}"; do
+    if [ ! -f "$compose_path" ]; then
+        log "ERROR: Docker Compose file not found: $compose_path"
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        FAILED_APPS="${FAILED_APPS}
+- $compose_path (file not found)"
+        continue
+    fi
+    
+    compose_dir=$(dirname "$compose_path")
+    app_name=$(basename "$compose_dir")
+    
+    log "Processing: $app_name at $compose_path"
+    
+    cd "$compose_dir" || {
+        log "ERROR: Could not change to directory: $compose_dir"
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        FAILED_APPS="${FAILED_APPS}
+- $app_name (directory access failed)"
+        continue
+    }
+    
+    log "Running docker compose pull for $app_name..."
+    if docker compose pull >> "$LOG_FILE" 2>&1; then
+        log "Pull successful for $app_name"
+        
+        log "Running docker compose up -d for $app_name..."
+        if docker compose up -d >> "$LOG_FILE" 2>&1; then
+            log "Update successful for $app_name"
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            UPDATED_APPS="${UPDATED_APPS}
+- $app_name"
+        else
+            log "ERROR: docker compose up -d failed for $app_name"
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+            FAILED_APPS="${FAILED_APPS}
+- $app_name (compose up failed)"
+        fi
+    else
+        log "ERROR: docker compose pull failed for $app_name"
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        FAILED_APPS="${FAILED_APPS}
+- $app_name (pull failed)"
+    fi
+done
+
+log "Docker auto-update completed. Success: $SUCCESS_COUNT, Failures: $FAILURE_COUNT"
+
+if [ "$FAILURE_COUNT" -eq 0 ]; then
+    MESSAGE="Docker auto-update on $(hostname) completed successfully.
+
+Updated apps ($SUCCESS_COUNT):${UPDATED_APPS}"
+    send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - Success" 0 "bike"
+    log "Success notification sent."
+else
+    MESSAGE="Docker auto-update on $(hostname) completed with errors.
+
+Successful: $SUCCESS_COUNT
+Failed: $FAILURE_COUNT
+
+Failed apps:${FAILED_APPS}"
+    if [ "$SUCCESS_COUNT" -gt 0 ]; then
+        MESSAGE="${MESSAGE}
+
+Successful apps:${UPDATED_APPS}"
+    fi
+    send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - PARTIAL FAILURE" 0 "siren"
+    log "Failure notification sent."
+fi
+
+log "Script finished."
+
+exit "$FAILURE_COUNT"

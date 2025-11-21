@@ -1,0 +1,54 @@
+---
+- name: Install dependencies (iputils for ping)
+  ansible.builtin.package:
+    name: "iputils"
+    state: present
+  become: true
+
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Deploy the Tailnet monitoring script
+  ansible.builtin.template:
+    src: check_tailnet_health.sh.j2
+    dest: /usr/local/bin/check_tailnet_health.sh
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Ensure log file exists and has secure base permissions
+  ansible.builtin.file:
+    path: /var/log/tailnet_monitor.log
+    state: touch # Creates the file if it doesn't exist
+    owner: root
+    group: root
+    mode: "0640" # Owner can read/write, group can read, others have no access
+  become: true
+
+- name: Install acl package for setting extended file permissions
+  ansible.builtin.package:
+    name: acl
+    state: present
+  become: true
+
+- name: Grant read access to the log file for user
+  ansible.posix.acl:
+    path: /var/log/tailnet_monitor.log
+    entity: "{{ template.user }}"
+    etype: user
+    permissions: rw
+    state: present
+  become: true
+
+- name: Add cron job to run the Tailnet check
+  ansible.builtin.cron:
+    name: "Check Tailnet Device Status"
+    minute: "{{ tailnet_health_cron_minute }}"
+    user: root
+    job: "pushover_tailscale='{{ pushover_tailscale }}' pushover_user='{{ pushover_user }}' /usr/local/bin/check_tailnet_health.sh"
+  become: true

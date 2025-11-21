@@ -1,0 +1,35 @@
+---
+- name: Create services VM
+  hosts: proxmox 
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        name: immich
+        newid: 4005
+        ipaddr: "{{ vms.immich.ip }}"
+        balloon: 8000
+        cores: 3
+        memory: 32000
+        sockets: 1
+        primary_disk_size: 200G
+        virtiofs_tag: "{{ virtiofs_tags.smb }}"
+
+- name: Configure samba vm
+  hosts: immich
+  become: true
+  vars_files:
+    - ../secrets.yml
+  vars:
+    send_reboot_pushover_notification: false
+    docker_compose_paths:
+          - "/home/{{ template.user }}/immich-app/docker-compose.yml"
+  roles:
+    - scheduled_reboot
+    - scheduled_update
+    - immich_backup
+    - immich
+    - docker_auto_update
+

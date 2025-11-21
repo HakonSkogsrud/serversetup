@@ -1,0 +1,210 @@
+---
+# --- 0. PRE-REQ: RESTORE MACHINE IDENTITY ---
+- name: Ensure Tailscale service is stopped before restoring identity
+  ansible.builtin.service:
+    name: tailscaled
+    state: stopped
+
+# NEW: Backup and restore machine-id
+- name: Check for local machine-id backup
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
+  register: local_machine_id
+  become: no
+
+- name: Restore machine-id from local backup
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
+    dest: /etc/machine-id
+    mode: '0444'
+  when: local_machine_id.stat.exists
+
+# Restore Tailscale state
+- name: Check for local Tailscale state file
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ role_path }}/files/{{ inventory_hostname }}.state"
+  register: local_state_file
+  become: no
+
+- name: Ensure Tailscale directory exists
+  ansible.builtin.file:
+    path: /var/lib/tailscale
+    state: directory
+    mode: '0700'
+
+- name: Restore Tailscale state from local backup
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/{{ inventory_hostname }}.state"
+    dest: /var/lib/tailscale/tailscaled.state
+    mode: '0600'
+  when: local_state_file.stat.exists
+
+- name: Ensure Tailscale is started
+  ansible.builtin.service:
+    name: tailscaled
+    state: started
+    enabled: true
+
+- name: Wait for Tailscale daemon to initialize
+  ansible.builtin.command: tailscale status
+  register: ts_ready
+  retries: 10
+  delay: 2
+  until: ts_ready.rc == 0
+  changed_when: false
+  failed_when: false
+  when: local_state_file.stat.exists
+
+# --- 1. KERNEL SETTINGS (Docs: Enable IP Forwarding) ---
+- name: Configure Kernel Parameters for Subnet Routing
+  ansible.builtin.copy:
+    dest: "/etc/sysctl.d/99-tailscale.conf"
+    content: |
+      net.ipv4.ip_forward = 1
+      net.ipv6.conf.all.forwarding = 1
+      # Critical for routing on the same subnet (prevents loops)
+      net.ipv4.conf.all.rp_filter = 2
+      net.ipv4.conf.default.rp_filter = 2
+    mode: '0644'
+  notify: Apply sysctl changes
+
+# --- 2. FIREWALL CONFIG (Docs: Port 41641 & Masquerade) ---
+- name: Ensure firewalld is running
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Allow SSH on LAN zone
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_lan_zone }}"
+    service: ssh
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+- name: Allow Tailscale UDP Port (Direct Connections)
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_lan_zone }}"
+    port: 41641/udp
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+- name: Enable Masquerade on LAN (Required for NAT)
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_lan_zone }}"
+    masquerade: yes
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+- name: Create tailscale zone
+  ansible.posix.firewalld:
+    zone: tailscale
+    state: present
+    permanent: yes
+  register: create_zone
+
+- name: Reload firewalld (Activating Zone)
+  ansible.builtin.service:
+    name: firewalld
+    state: reloaded
+  when: create_zone.changed
+
+- name: Set tailscale zone target to ACCEPT
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --zone=tailscale --set-target=ACCEPT
+  when: create_zone.changed
+  register: set_target
+
+- name: Reload firewalld after setting target
+  ansible.builtin.service:
+    name: firewalld
+    state: reloaded
+  when: set_target.changed
+
+- name: Bind tailscale0 interface to zone
+  ansible.posix.firewalld:
+    zone: tailscale
+    interface: tailscale0
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+- name: Allow Masquerade on Tailscale Zone
+  ansible.posix.firewalld:
+    zone: tailscale
+    masquerade: yes
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+- name: Add tailscale zone as trusted source for LAN zone
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_lan_zone }}"
+    source: 100.64.0.0/10
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+- name: Add LAN zone as trusted source for tailscale zone
+  ansible.posix.firewalld:
+    zone: tailscale
+    source: 10.0.0.0/24
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+# --- 3. REGISTRATION ---
+- name: Check if tailscale is logged in
+  ansible.builtin.command: "tailscale status --json"
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Parse status
+  set_fact:
+    ts_state: "{{ (tailscale_status.stdout | from_json).BackendState | default('NeedsLogin') }}"
+    ts_routes: "{{ (tailscale_status.stdout | from_json).Self.AdvertisedRoutes | default([]) }}"
+  when: tailscale_status.rc == 0
+
+# Only run 'tailscale up' if we DON'T have a restored state file
+- name: Register Subnet Router (New Installation Only)
+  ansible.builtin.command: >
+    tailscale up
+    --authkey={{ tailscale_auth_key }}
+    --hostname={{ tailscale_hostname }}
+    --advertise-routes={{ tailscale_advertise_routes }}
+    --accept-risk=lose-ssh
+    --snat-subnet-routes=true
+  when: 
+    - not local_state_file.stat.exists
+    - ts_state | default('NeedsLogin') != 'Running'
+
+# For machines with restored state, only update routes if needed
+- name: Update routes for existing machine
+  ansible.builtin.command: >
+    tailscale set
+    --advertise-routes={{ tailscale_advertise_routes }}
+  when:
+    - local_state_file.stat.exists
+    - ts_state | default('NeedsLogin') == 'Running'
+    - (tailscale_advertise_routes | string) not in (ts_routes | default([]) | map(attribute='CIDR') | join(','))
+
+# --- 4. BACKUP STATE (Persistence) ---
+- name: Backup machine-id to local controller
+  ansible.builtin.fetch:
+    src: /etc/machine-id
+    dest: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
+    flat: yes
+  when: not local_machine_id.stat.exists
+
+- name: Backup Tailscale state to local controller
+  ansible.builtin.fetch:
+    src: /var/lib/tailscale/tailscaled.state
+    dest: "{{ role_path }}/files/{{ inventory_hostname }}.state"
+    flat: yes
+  when: not local_state_file.stat.exists

@@ -1,0 +1,44 @@
+---
+
+gateway: 10.0.0.138
+
+# VM and Server IP Addresses
+vms:
+  github_runner:
+    ip: 10.0.0.81
+  immich:
+    ip: 10.0.0.80
+  samba:
+    ip: 10.0.0.79
+  subnet_router:
+    ip: 10.0.0.78
+  services:
+    ip: 10.0.0.44
+  pihole:
+    ip: 10.0.0.77
+  pihole-secondary:
+    ip: 10.0.0.82
+  pihole_macbook:
+    ip: 10.0.0.27
+  backupserver:
+    ip: 100.104.43.26
+
+template:
+  name: alma-96-cloud-template-automated
+  vmid: 9000
+  user: haaksk
+
+proxmox:
+  ip: 10.0.0.41
+  api_user: root@pam
+  user: root
+  node: proxmox
+
+proxmox2:
+  ip: 10.0.0.33
+  api_user: root@pam
+  user: root
+  node: proxmox2
+
+virtiofs_tags:
+  smb: smb

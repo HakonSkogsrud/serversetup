@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# --- Configuration ---
+BACKUP_DEST_DIR="/mnt/storage/smb/immich_backup"
+IMMICH_APP_DIR="/home/{{ template.user }}/immich-app"
+LOG_FILE="/var/log/immich_backup.log"
+POSTGRES_CONTAINER="immich_postgres"
+PUSHOVER_SCRIPT="/usr/local/lib/send_pushover.sh"
+
+# FIX: Adjusted to your detected services. Only DB needs to be running for dump.
+# But we will use full UP/DOWN for consistency and to ensure DB is available.
+
+# --- Full Paths for Cron Environment ---
+DOCKER_BIN="/usr/bin/docker"
+RSYNC_BIN="/usr/bin/rsync"
+GZIP_BIN="/usr/bin/gzip"
+MKDIR_BIN="/usr/bin/mkdir"
+
+# A function to handle logging to both stdout and the log file.
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+
+log "====== Starting Immich Backup Script ======"
+
+# Change working directory at the start of the script
+log "Changing working directory to $IMMICH_APP_DIR..."
+cd "$IMMICH_APP_DIR" || {
+    ERROR_MESSAGE="Could not change to Immich directory: $IMMICH_APP_DIR. Aborting."
+    BACKUP_SUCCESSFUL=false
+    log "ERROR: $ERROR_MESSAGE"
+}
+
+# Variable to track the overall success of the backup process.
+BACKUP_SUCCESSFUL=true
+ERROR_MESSAGE=""
+
+# Flag to track if we started the services for the dump
+SERVICES_STARTED=false
+
+if $BACKUP_SUCCESSFUL; then
+    # Ensure the backup destination exists
+    $MKDIR_BIN -p "$BACKUP_DEST_DIR/data"
+
+    log "Starting all services (if not running) to ensure DB is available for dump..."
+    # FIX: Use 'up -d' to start all services, ensuring the DB is online.
+    $DOCKER_BIN compose up -d
+    if [ $? -ne 0 ]; then
+        ERROR_MESSAGE="Failed to ensure all services are up for DB dump."
+        BACKUP_SUCCESSFUL=false
+    else
+        SERVICES_STARTED=true
+    fi
+fi
+
+
+if $BACKUP_SUCCESSFUL; then
+    log "Dumping and compressing database..."
+    sleep 5 # Give services a moment to fully initialize
+    
+    # The database container is now running from the 'up -d' command.
+    $DOCKER_BIN exec -t "$POSTGRES_CONTAINER" pg_dumpall --clean --if-exists --username=postgres | $GZIP_BIN > "$BACKUP_DEST_DIR/immich_db.sql.gz"
+    
+    if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+        ERROR_MESSAGE="Database dump (pg_dumpall) failed."
+        BACKUP_SUCCESSFUL=false
+    fi
+fi
+
+# Always attempt to stop services before rsyncing data directories for integrity
+if $SERVICES_STARTED; then
+    log "Stopping all services for consistent data sync..."
+    $DOCKER_BIN compose down
+    # Only set failure if the down failed and the up was successful
+    if [ $? -ne 0 ] && $BACKUP_SUCCESSFUL; then
+        ERROR_MESSAGE="CRITICAL: Backup was successful, but failed to stop services before rsync."
+        BACKUP_SUCCESSFUL=false
+    fi
+    SERVICES_STARTED=false # Mark as stopped
+fi
+
+
+if $BACKUP_SUCCESSFUL; then
+    log "Syncing Immich data folders with exclusions..."
+    $RSYNC_BIN -avh --delete \
+          --exclude 'postgres' \
+          --exclude 'library/backups' \
+          "$IMMICH_APP_DIR/" "$BACKUP_DEST_DIR/data/"
+    if [ $? -ne 0 ]; then
+        ERROR_MESSAGE="rsync of Immich data folders failed."
+        BACKUP_SUCCESSFUL=false
+    fi
+fi
+
+log "Attempting to restart Immich services..."
+# Restart all services with a clean 'up -d'
+$DOCKER_BIN compose up -d
+if [ $? -ne 0 ]; then
+    log "CRITICAL: Failed to restart Immich services. Please check manually."
+    if [ -n "$ERROR_MESSAGE" ]; then
+        ERROR_MESSAGE="$ERROR_MESSAGE | CRITICAL: Failed to restart Immich services."
+    else
+        ERROR_MESSAGE="CRITICAL: Backup was successful, but failed to restart Immich services."
+        BACKUP_SUCCESSFUL=false
+    fi
+fi
+
+# The rest of the script (notification and exit) remains the same.
+
+if $BACKUP_SUCCESSFUL; then
+    log "Immich backup completed successfully."
+    MESSAGE="Immich backup for $(hostname) completed successfully."
+    TITLE="Immich Backup Success"
+    PRIORITY=0
+else
+    log "ERROR during Immich backup: $ERROR_MESSAGE"
+    MESSAGE="Error during Immich backup on $(hostname): $ERROR_MESSAGE"
+    TITLE="Immich Backup FAILED"
+    PRIORITY=1
+fi
+
+# --- Send Pushover Notification ---
+if [ -f "$PUSHOVER_SCRIPT" ]; then
+    log "Pushover script found, sending notification..."
+    source "$PUSHOVER_SCRIPT"
+    send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY
+else
+    log "Pushover script not found at $PUSHOVER_SCRIPT. Skipping notification."
+fi
+
+log "====== Immich Backup Script Finished ======"
+
+# Exit with a status code reflecting the outcome
+if $BACKUP_SUCCESSFUL; then
+    exit 0
+else
+    exit 1
+fi

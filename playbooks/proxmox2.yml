@@ -1,0 +1,8 @@
+---
+- name: Configure secondary Proxmox
+  hosts: proxmox2
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - create_template_vm
+    - scheduled_update

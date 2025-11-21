@@ -1,0 +1,215 @@
+- name: Install Python and pip for Ansible workflows
+  ansible.builtin.package:
+    name:
+      - python3.12
+      - python3.12-pip
+      - python3.12-devel 
+      - git
+    state: present
+
+- name: Generate registration token from GitHub API
+  ansible.builtin.uri:
+    url: "{{ github_api_url }}/actions/runners/registration-token"
+    method: POST
+    headers:
+      Accept: "application/vnd.github+json"
+      Authorization: "Bearer {{ github_pat }}"
+    status_code: 201
+  register: token_response
+  delegate_to: localhost
+  become: false
+
+- name: Set registration token fact
+  ansible.builtin.set_fact:
+    github_registration_token: "{{ token_response.json.token }}"
+
+- name: Install Python and pip for Ansible workflows
+  ansible.builtin.package:
+    name:
+      - python3
+      - python3-pip
+      - git
+    state: present
+
+- name: Install Ansible in runner environment
+  ansible.builtin.pip:
+    name:
+      - ansible
+      - ansible-core
+    state: present
+    executable: pip3
+
+- name: Create runner user
+  ansible.builtin.user:
+    name: "{{ github_runner_user }}"
+    system: true
+    create_home: true
+    shell: /bin/bash
+
+- name: Create runner directory
+  ansible.builtin.file:
+    path: "{{ github_runner_dir }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+    mode: '0755'
+
+- name: Ensure .ssh directory exists for runner user
+  ansible.builtin.file:
+    path: "/home/{{ github_runner_user }}/.ssh"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+    mode: '0700'
+
+- name: Copy ssh config
+  ansible.builtin.template:
+    src: config.j2
+    dest: "/home/{{ github_runner_user }}/.ssh/config"
+    mode: '0600'
+  notify: Reload systemd
+
+- name: Check if runner is installed
+  ansible.builtin.stat:
+    path: "{{ github_runner_dir }}/bin/Runner.Listener"
+  register: runner_binary
+
+- name: Get current runner version
+  ansible.builtin.command:
+    cmd: "{{ github_runner_dir }}/bin/Runner.Listener --version"
+  register: runner_version
+  changed_when: false
+  when: runner_binary.stat.exists
+
+- name: Set current version fact
+  ansible.builtin.set_fact:
+    current_runner_version: "{{ runner_version.stdout | default('') }}"
+
+- name: Debug - Show version information
+  ansible.builtin.debug:
+    msg:
+      - "Runner installed: {{ runner_binary.stat.exists }}"
+      - "Current version: {{ current_runner_version | default('not installed') }}"
+      - "Target version: {{ github_runner_version }}"
+
+- name: Compare versions and set update flag
+  ansible.builtin.set_fact:
+    needs_install: "{{ not runner_binary.stat.exists }}"
+    needs_update: "{{ runner_binary.stat.exists and current_runner_version != github_runner_version }}"
+
+- name: Debug - Show action plan
+  ansible.builtin.debug:
+    msg:
+      - "Needs install: {{ needs_install }}"
+      - "Needs update: {{ needs_update }}"
+      - "SELinux enabled: {{ ansible_selinux.status | default('unknown') }}"
+
+- name: Check if runner is configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_dir }}/.runner"
+  register: runner_config
+
+- name: Stop runner service if updating
+  ansible.builtin.systemd:
+    name: github-runner
+    state: stopped
+  when: needs_update and runner_config.stat.exists
+  ignore_errors: true
+
+- name: Remove runner registration if updating
+  ansible.builtin.command:
+    cmd: "./config.sh remove --token {{ github_registration_token }}"
+    chdir: "{{ github_runner_dir }}"
+  become: true
+  become_user: "{{ github_runner_user }}"
+  when: needs_update and runner_config.stat.exists
+  ignore_errors: true
+
+- name: Remove old runner files if updating
+  ansible.builtin.file:
+    path: "{{ github_runner_dir }}"
+    state: absent
+  when: needs_update
+
+- name: Recreate runner directory after removal
+  ansible.builtin.file:
+    path: "{{ github_runner_dir }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+    mode: '0755'
+  when: needs_update
+
+- name: Download runner
+  ansible.builtin.get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+    dest: "{{ github_runner_dir }}/runner.tar.gz"
+    mode: '0644'
+  when: needs_install or needs_update
+
+- name: Extract runner
+  ansible.builtin.unarchive:
+    src: "{{ github_runner_dir }}/runner.tar.gz"
+    dest: "{{ github_runner_dir }}"
+    remote_src: true
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+  when: needs_install or needs_update
+
+- name: Remove runner tarball
+  ansible.builtin.file:
+    path: "{{ github_runner_dir }}/runner.tar.gz"
+    state: absent
+  when: needs_install or needs_update
+
+- name: Install runner dependencies
+  ansible.builtin.command:
+    cmd: "./bin/installdependencies.sh"
+    chdir: "{{ github_runner_dir }}"
+  become: true
+  when: needs_install or needs_update
+
+- name: Install SELinux python bindings
+  ansible.builtin.package:
+    name: python3-policycoreutils
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Configure SELinux for Runner
+  when: ansible_selinux.status == "enabled"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3  # Override to system python for SELinux tools
+  block:
+    - name: Allow runner service to execute files (Persistent)
+      community.general.sefcontext:
+        target: "{{ github_runner_dir }}(/.*)?"
+        setype: bin_t
+        state: present
+    - name: Apply SELinux context to filesystem (Immediate)
+      ansible.builtin.command:
+        cmd: "restorecon -Rv {{ github_runner_dir }}"
+      # Check if restorecon actually did anything to report 'changed' status correctly
+      register: restorecon_out
+      changed_when: restorecon_out.stdout | length > 0
+
+- name: Register runner
+  ansible.builtin.command:
+    cmd: "./config.sh --url {{ github_web_url }} --token {{ github_registration_token }} --name {{ github_runner_name }} --labels {{ github_runner_labels }} --unattended --replace"
+    chdir: "{{ github_runner_dir }}"
+  become: true
+  become_user: "{{ github_runner_user }}"
+  when: (needs_install or needs_update) or not runner_config.stat.exists
+
+- name: Deploy systemd service file
+  ansible.builtin.template:
+    src: runner.service.j2
+    dest: /etc/systemd/system/github-runner.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable and start runner service
+  ansible.builtin.systemd:
+    name: github-runner
+    state: started
+    enabled: true
+    daemon_reload: true

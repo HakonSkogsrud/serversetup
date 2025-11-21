@@ -1,0 +1,3 @@
+---
+- name: Zfs load key service
+  import_tasks: zfs-load-key-service.yml

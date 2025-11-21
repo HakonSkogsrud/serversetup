@@ -1,0 +1,35 @@
+---
+- name: Ensure the update script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Ensure log file exists with proper permissions
+  ansible.builtin.file:
+    path: /var/log/scheduled_update-script.log
+    state: touch
+    mode: "0666"
+    owner: root
+    group: root
+
+- name: Create the update script with logging
+  ansible.builtin.template:
+    src: update_packages.sh.j2
+    dest: /usr/local/bin/update_packages.sh
+    mode: "0755"
+
+- name: Add a cron job to run the update script weekly as root
+  ansible.builtin.cron:
+    name: "Weekly package updates"
+    job: "pushover_token_update='{{ pushover_token_update }}' pushover_user='{{ pushover_user }}' /usr/local/bin/update_packages.sh"
+    user: root
+    weekday: "4"  # 0 for Sunday, 1 for Monday, etc.
+    hour: "12" 
+    minute: "0"
+
+- name: Restart cron service
+  ansible.builtin.service:
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
+    state: restarted
+    enabled: true

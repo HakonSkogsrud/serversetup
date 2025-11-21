@@ -1,0 +1,3 @@
+immich_project_dir: "/home/{{ template.user }}/immich-app"
+backup_data_dir: /mnt/storage/smb/immich_backup/data/
+backup_database_dump: /mnt/storage/smb/immich_backup/immich_db.sql.gz

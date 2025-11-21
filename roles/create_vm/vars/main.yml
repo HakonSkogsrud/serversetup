@@ -1,0 +1,14 @@
+---
+api_token_id: ansible-automation
+description: "Fileserver VM created and configured with Ansible"
+vm_public_ssh_keys: |
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHxHU6pGUY9bMfmNfPyfH1F2xnLMTLmU8MvFeZYoa4pN root@proxmox
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII8kEQMrmGBI6z5a0uaKfAiAtWaiA/3iotmGr7syaSi6 haaksk@fedora
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEl/EZSop83OjUbk0d0smTnvJngKXUv50fbi5Ag7Ekzw hakonskogsrud@Hakons-MacBook-Pro
+primary_disk_name: scsi0
+target_node: "{{ node | default(proxmox.node) }}"
+target_api_user: "{{ api_user | default(proxmox.api_user) }}"
+clone: "{{ template.name }}"
+source_vmid_for_clone: "{{ template.vmid }}"
+
+primary_disk_size: 10G

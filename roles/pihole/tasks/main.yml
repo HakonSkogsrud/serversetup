@@ -1,0 +1,3 @@
+---
+- name: install pihole
+  import_tasks: pihole.yml

@@ -1,0 +1,37 @@
+---
+- name: Create samba VM
+  hosts: proxmox
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        name: github-runner
+        newid: 4006
+        ipaddr: "{{ vms.github_runner.ip }}"
+        balloon: 3000
+        cores: 2
+        memory: 12000
+        sockets: 1
+        primary_disk_size: 20G
+
+
+- name: Configure GitHub Runner
+  hosts: github-runner
+  become: true
+  vars_files:
+    - ../secrets.yml
+  vars:
+    gitlab_runner_url: "http://{{ vms.github_runner.ip }}"
+    gitlab_runner_executor: "docker"
+    gitlab_runner_tags:
+      - docker
+      - linux
+      - ansible
+  roles:
+    - firewall
+    - github_runner
+    - scheduled_reboot
+    - scheduled_update
+    - tailscale_static_route

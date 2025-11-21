@@ -1,0 +1,12 @@
+---
+- name: Restart Samba Services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - smb.service
+    - nmb.service
+
+- name: Apply SELinux contexts
+  ansible.builtin.command: restorecon -Rv "{{ mount_path }}"
+  changed_when: true # Assume change if handler is notified

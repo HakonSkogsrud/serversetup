@@ -1,0 +1,31 @@
+#!/bin/bash
+LOG_FILE="/var/log/weekly_reboot.log"
+
+# Pushover Credentials injected by Ansible
+PUSHOVER_REBOOT_TOKEN="{{ pushover_reboot }}"
+
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+# Ensure the log file is accessible
+touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Logging may fail." >&2; }
+
+log "System has been rebooted."
+
+{% if send_reboot_pushover_notification | default(true) %}
+# Source the Pushover script if it exists
+if [ -f /usr/local/lib/send_pushover.sh ]; then
+    source /usr/local/lib/send_pushover.sh
+    log "Pushover script sourced."
+    # Pass the injected token variable
+    send_pushover "${PUSHOVER_REBOOT_TOKEN}" "System $(hostname) has successfully rebooted." "System Reboot" 0 "bike"
+    log "Pushover notification sent."
+else
+    log "Pushover script not found at /usr/local/lib/send_pushover.sh. Skipping notification."
+fi
+{% else %}
+log "Pushover notifications disabled."
+{% endif %}
+
+log "Reboot notification script finished."

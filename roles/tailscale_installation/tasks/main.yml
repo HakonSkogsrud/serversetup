@@ -1,0 +1,3 @@
+---
+- name: Run tailscale setup
+  import_tasks: tailscale_installation.yml

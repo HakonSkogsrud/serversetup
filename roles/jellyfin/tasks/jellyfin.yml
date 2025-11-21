@@ -1,0 +1,121 @@
+---
+# --- 1. Repositories ---
+- name: Enable CodeReady Builder (CRB)
+  ansible.builtin.command: dnf config-manager --set-enabled crb
+  register: crb_result
+  changed_when: "'Nothing to do' not in crb_result.stdout"
+  become: true
+
+- name: Install EPEL & RPM Fusion
+  ansible.builtin.dnf:
+    name:
+      - epel-release
+      - https://download1.rpmfusion.org/free/el/rpmfusion-free-release-9.noarch.rpm
+      - https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-9.noarch.rpm
+    state: present
+    disable_gpg_check: true
+  become: true
+
+# --- 2. Install Drivers & Utils ---
+# We do this EARLY so the system creates the device groups (video/render)
+- name: Install Intel Drivers and CIFS Utils
+  ansible.builtin.dnf:
+    name:
+      - intel-media-driver
+      - libva-utils
+      - cifs-utils  # Required if your /mnt/storage/smb mounts use cifs
+    state: present
+  become: true
+
+# --- 3. User & Group Management ---
+- name: Ensure media group exists (GID 1001)
+  ansible.builtin.group:
+    name: media
+    gid: 1001
+    state: present
+  become: true
+
+- name: Add user to media, render, and video groups
+  ansible.builtin.user:
+    name: "{{ template.user }}"
+    # 'render' and 'video' allow access to /dev/dri/* on AlmaLinux
+    groups: media, render, video
+    append: yes
+  become: true
+
+- name: Create Jellyfin base directory
+  ansible.builtin.file:
+    path: "/home/{{ template.user }}/jellyfin"
+    state: directory
+    mode: '0755'
+    owner: "{{ template.user }}"
+    group: media
+  become: true
+
+# --- 5. Restore Config (Nuke & Pave Magic) ---
+- name: Restore Jellyfin Configuration
+  ansible.builtin.unarchive:
+    src: jellyfin_config.tar.gz # Decrypts automatically if vaulted
+    dest: "/home/{{ template.user }}/jellyfin/"
+    owner: "{{ template.user }}"
+    group: media # Maps to 1001
+  become: true
+
+- name: Remove conflicting .jellyfin-config marker
+  ansible.builtin.file:
+    path: "/home/{{ template.user }}/jellyfin/config/.jellyfin-config"
+    state: absent
+  become: true
+
+- name: Create cache directory
+  ansible.builtin.file:
+    path: "/home/{{ template.user }}/jellyfin/cache"
+    state: directory
+    mode: '0755'
+    owner: "{{ template.user }}"
+    group: media
+  become: true
+
+# --- 6. Deploy Container ---
+- name: Copy docker-compose.yml
+  ansible.builtin.copy:
+    dest: "/home/{{ template.user }}/jellyfin/docker-compose.yml"
+    content: |
+      services:
+        jellyfin:
+          image: jellyfin/jellyfin
+          container_name: jellyfin
+          user: "1000:1001"
+          network_mode: 'host'
+          devices:
+            - /dev/dri:/dev/dri
+          volumes:
+            # Map the entire jellyfin directory structure into container's /config
+            - ./config:/config/config:Z
+            - ./data:/config/data:Z
+            - ./plugins:/config/plugins:Z
+            - ./cache:/cache:Z
+            # Ensure /mnt/storage/smb is mounted on the HOST before this starts!
+            - type: bind
+              source: /mnt/storage/smb/gcn+
+              target: /media/gcn
+            - type: bind
+              source: /mnt/storage/smb/Movies
+              target: /media/movies
+          restart: 'unless-stopped'
+    owner: "{{ template.user }}"
+    group: media
+
+- name: Start Jellyfin
+  community.docker.docker_compose_v2:
+    project_src: "/home/{{ template.user }}/jellyfin"
+    state: present # 'present' = 'up -d'
+  become: true
+
+- name: Open Firewall
+  ansible.builtin.firewalld:
+    port: 8096/tcp
+    state: enabled
+    permanent: true
+    immediate: true
+  become: true

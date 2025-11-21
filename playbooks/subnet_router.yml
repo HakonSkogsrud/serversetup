@@ -1,0 +1,44 @@
+---
+- name: Create tailscale subnet router VM
+  hosts: proxmox
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        name: subnet-router
+        newid: 4003
+        ipaddr: "{{ vms.subnet_router.ip }}"
+        balloon: 1500
+        cores: 1
+        memory: 3000
+        sockets: 1
+        primary_disk_size: 10G
+
+  
+- name: Setup subnet router
+  hosts: subnet-router
+  become: true
+  gather_facts: no 
+  pre_tasks:
+    # 2. Wait until we can actually log in via SSH
+    - name: Wait for target to be reachable via SSH
+      ansible.builtin.wait_for_connection:
+        delay: 5     
+        timeout: 300  
+        connect_timeout: 5
+        sleep: 5
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  vars:
+    ansible_host_key_checking: false
+    send_reboot_pushover_notification: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - tailscale_subnet_router
+    - scheduled_reboot
+    - scheduled_update

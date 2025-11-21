@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Pi-hole servers to check
+PIHOLE_MAIN="{{ pihole_main_ip }}"
+PIHOLE_BACKUP="{{ pihole_backup_ip }}"
+
+# Domains for testing
+PUBLIC_DOMAIN="google.com"  # A common public domain that should always resolve.
+BLOCKED_DOMAIN="flurry.com" # A common ad domain that should be blocked.
+
+# Log file location
+LOG_FILE="/var/log/pihole_health_check.log"
+
+# --- Absolute Command Paths (Updated with your system's paths) ---
+DIG_CMD="/usr/bin/dig"
+TEE_CMD="/usr/bin/tee"
+TOUCH_CMD="/usr/bin/touch"
+ECHO_CMD="/usr/bin/echo"
+DATE_CMD="/usr/bin/date"
+# --- End of Command Paths ---
+
+
+# --- Dependencies ---
+# Ensure the send_pushover script is available.
+if [ -f /usr/local/lib/send_pushover.sh ]; then
+    source /usr/local/lib/send_pushover.sh
+else
+    # Use absolute paths here as well, in case script fails early
+    $ECHO_CMD "Error: Pushover script not found at /usr/local/lib/send_pushover.sh" >&2
+    exit 1
+fi
+
+# --- Logging Setup ---
+# Function to log messages to both stdout and the log file.
+log() {
+    $ECHO_CMD "$($DATE_CMD '+%Y-%m-%d %H:%M:%S') - $1" | $TEE_CMD -a "$LOG_FILE"
+}
+
+# Ensure the log file is writable.
+$TOUCH_CMD "$LOG_FILE" 2>/dev/null || {
+    $ECHO_CMD "$($DATE_CMD '+%Y-%m-%d %H:%M:%S') - Warning: Could not write to $LOG_FILE. Logging only to standard output."
+    # Redefine log to only echo if file is not accessible
+    log() {
+        $ECHO_CMD "$($DATE_CMD '+%Y-%m-%d %H:%M:%S') - $1"
+    }
+}
+
+# --- Health Check Function ---
+# Checks a single Pi-hole instance for public and blocked domain resolution.
+check_pihole() {
+    local pihole_ip=$1
+    local pihole_name=$2
+    local status_message=""
+    local overall_status="HEALTHY"
+
+    log "Starting health check for $pihole_name ($pihole_ip)..."
+
+    # --- Check 1: Public Domain Resolution ---
+    log "Checking public domain resolution for '$PUBLIC_DOMAIN'..."
+    public_ip=$($DIG_CMD @"$pihole_ip" +short "$PUBLIC_DOMAIN")
+
+    if [ -z "$public_ip" ] || [ "$public_ip" == "0.0.0.0" ]; then
+        status_message+="Public DNS check FAILED. "
+        overall_status="UNHEALTHY"
+        log "FAIL: Public DNS check for $pihole_name failed. Expected a valid IP, but got nothing or 0.0.0.0."
+    else
+        status_message+="Public DNS check OK. "
+        log "OK: Public DNS check for $pihole_name passed. Resolved to $public_ip."
+    fi
+
+    # --- Check 2: Blocked Domain Resolution ---
+    log "Checking blocked domain resolution for '$BLOCKED_DOMAIN'..."
+    blocked_ip=$($DIG_CMD @"$pihole_ip" +short "$BLOCKED_DOMAIN")
+
+    if [ "$blocked_ip" != "0.0.0.0" ]; then
+        # Handle cases where the command might return an empty string or an actual IP
+        local got_ip=${blocked_ip:-"nothing"}
+        status_message+="Ad blocking check FAILED (got $got_ip). "
+        overall_status="UNHEALTHY"
+        log "FAIL: Ad blocking check for $pihole_name failed. Expected 0.0.0.0, but got $got_ip."
+    else
+        status_message+="Ad blocking check OK. "
+        log "OK: Ad blocking check for $pihole_name passed."
+    fi
+
+    # --- Send Notification ---
+    if [ "$overall_status" != "HEALTHY" ]; then
+        log "Overall status for $pihole_name is UNHEALTHY. Sending high-priority notification."
+        send_pushover "${pushover_pihole:-}" "Pi-hole Alert: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0 "siren"
+        log "Notification sent."
+    else
+        log "Overall status for $pihole_name is HEALTHY."
+        # Optional: Uncomment to receive a notification even on success
+        : #log "Sending low-priority success notification."
+        : #send_pushover "${pushover_pihole:-}" "Pi-hole Status: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0 "bike"
+    fi
+    log "Finished health check for $pihole_name."
+}
+
+
+# --- Main Execution ---
+log "Starting Pi-hole health checks script."
+check_pihole "$PIHOLE_MAIN" "Main Pi-hole"
+check_pihole "$PIHOLE_BACKUP" "Backup Pi-hole"
+log "All health checks complete. Script finished."

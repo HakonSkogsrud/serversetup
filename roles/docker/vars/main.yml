@@ -1,0 +1,3 @@
+---
+user: "{{ template.user }}"
+docker_group: docker

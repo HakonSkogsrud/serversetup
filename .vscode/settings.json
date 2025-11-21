@@ -1,0 +1,16 @@
+{
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook": [
+            "file:///Users/hakon.skogsrud/Workspace/serversetup/docker-install.yml",
+            "file:///Users/hakonskogsrud/git/serversetup/servers/fileserver/mount-fileserver-dataset.yml",
+            "file:///Users/hakonskogsrud/git/serversetup/servers/common/tailscale-setup.yml",
+            "file:///Users/hakonskogsrud/git/serversetup/servers/fileserver-44/mount-fileserver-dataset.yml",
+            "file:///Users/hakonskogsrud/git/serversetup/servers/proxmox-41/syncoid-backup.yml"
+        ],
+        "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/vars.json": [
+            "file:///Users/hakon.skogsrud/Workspace/serversetup/vars/common.yml",
+            "file:///Users/hakonskogsrud/git/serversetup/servers/fileserver/vars.yml"
+        ]
+    },
+    "ansible.python.interpreterPath": "/Users/hakonskogsrud/git/serversetup/.venv/bin/python",
+}

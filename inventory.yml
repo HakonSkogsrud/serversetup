@@ -1,0 +1,41 @@
+---
+all:
+  children:
+    vms:
+      hosts:
+        github-runner:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.github_runner.ip }}"
+        immich:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.immich.ip }}"
+        samba:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.samba.ip }}"
+        subnet-router:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.subnet_router.ip }}"
+        services:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.services.ip }}"
+        fedora:
+          ansible_host: 127.0.0.1
+          ansible_connection: local 
+          ansible_user: "{{ template.user }}"
+        pihole:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.pihole.ip }}"
+        pihole-secondary:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms['pihole-secondary'].ip }}"
+        backupserver:
+          ansible_host: "{{ vms.backupserver.ip }}"
+          ansible_user: "{{ template.user }}"
+    proxmox_servers: 
+      hosts:
+        proxmox: 
+          ansible_host: "{{ proxmox.ip }}" 
+          ansible_user: "{{ proxmox.user }}"
+        proxmox2: 
+          ansible_host: "{{ proxmox2.ip }}" 
+          ansible_user: "{{ proxmox2.user }}" 

@@ -1,0 +1,26 @@
+- name: Copy syncoid backup script to VM
+  ansible.builtin.copy:
+    src: syncoid-backup.sh
+    dest: /usr/bin/syncoid-backup.sh
+    mode: "0775"
+
+
+- name: Add syncoid backup script to crontab with Pushover tokens
+  ansible.builtin.cron:
+    name: "Run syncoid backup script"
+    minute: "0"
+    hour: "3"
+    weekday: "1" # 0 for Sunday, 1 for Monday, etc.
+    job: >
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      pushover_token_backup='{{ pushover_token_backup }}'
+      pushover_user='{{ pushover_user }}'
+      /usr/bin/syncoid-backup.sh >> /var/log/syncoid-backup-cron.log 2>&1
+    state: present
+
+- name: Restart cron service
+  ansible.builtin.service:
+    name: cron
+    state: restarted
+    enabled: true
+  

@@ -1,0 +1,3 @@
+---
+- name: Mount virtiofs
+  import_tasks: mount_virtiofs.yml

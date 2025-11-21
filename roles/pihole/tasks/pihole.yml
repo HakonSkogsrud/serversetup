@@ -1,0 +1,211 @@
+---
+- name: Ensure required packages are installed
+  ansible.builtin.package:
+    name:
+      - git
+      - python3-firewall
+      - firewalld
+      - policycoreutils-python-utils
+    state: present
+
+- name: Ensure firewalld service is started and enabled
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Step 0.1 Identify the active NetworkManager connection for the interface
+  ansible.builtin.command: "nmcli -g NAME,DEVICE connection show --active"
+  register: active_connections
+  changed_when: false
+  check_mode: no
+
+- name: Step 0.2 Set connection name as a fact
+  ansible.builtin.set_fact:
+    pihole_nm_connection_name: "{{ item.split(':')[0] }}"
+  loop: "{{ active_connections.stdout_lines }}"
+  when: "item.split(':')[1] == pihole_ipv6_interface"
+
+- name: Step 0.3 Configure a static Unique Local Address (ULA) for IPv6
+  community.general.nmcli:
+    conn_name: "{{ pihole_nm_connection_name }}"
+    ifname: "{{ pihole_ipv6_interface }}"
+    type: ethernet
+    ip6: "{{ pihole_ipv6_ula_address }}/64"
+    method6: manual
+    dns6:
+      - "{{ pihole_ipv6_ula_address }}"
+    gw6: "{{ pihole_ipv6_gateway | default(omit) }}"
+    state: present
+  notify: Restart network manager
+
+# Modifying the config file causes the reboot loop. This only changes the current runtime state.
+- name: Step 1 Set SELinux to permissive mode (Runtime only)
+  ansible.builtin.command: setenforce 0
+  changed_when: false
+  failed_when: false # Ignores failure if SELinux is disabled
+
+- name: Ensure /etc/pihole directory exists
+  ansible.builtin.file:
+    path: /etc/pihole
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create setupVars.conf
+  ansible.builtin.template:
+    src: setupVars.conf.j2
+    dest: /etc/pihole/setupVars.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Update all system packages
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    allowerasing: yes
+
+- name: Step 2.1 Check if Pi-hole is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/pihole
+  register: pihole_executable
+
+- name: Force DNS in resolv.conf to ensure installation success
+  copy:
+    dest: /etc/resolv.conf
+    content: |
+      nameserver 9.9.9.9
+      nameserver 1.1.1.1
+    mode: '0644'
+
+
+- name: Step 2.2 Install Pi-hole if not installed
+  ansible.builtin.shell:
+    cmd: "curl -sSL https://install.pi-hole.net | bash /dev/stdin --unattended"
+  environment:
+    PIHOLE_SKIP_OS_CHECK: "true"
+    PIHOLE_SELINUX: "true" 
+  when: not pihole_executable.stat.exists
+  args:
+    creates: /etc/pihole/pihole-FTL.conf
+
+- name: Step 2.3 Update Pi-hole if installed
+  ansible.builtin.command:
+    cmd: /usr/local/bin/pihole -up
+  when: pihole_executable.stat.exists
+  register: pihole_update
+  changed_when: "'Pi-hole is up to date!' not in pihole_update.stdout"
+
+- name: Check if Pi-hole gravity database exists
+  ansible.builtin.stat:
+    path: /etc/pihole/gravity.db
+  register: gravity_db
+
+- name: Import restore tasks if DB is small (indicating fresh default install)
+  ansible.builtin.import_tasks: restore.yml
+  # 15MB = 15728640 bytes. If it's smaller than 15MB, we assume it's the default list and needs restoring.
+  # Skip restore for secondary pihole installations
+  when: 
+    - gravity_db.stat.exists 
+    - gravity_db.stat.size < 15728640
+    - not (is_secondary_pihole | default(false))
+
+- name: Step 3 Check if directories for SELinux context restore exist
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /var/www/html
+    - /etc/pihole
+  register: selinux_dirs
+
+- name: Step 3 Restore SELinux file contexts
+  ansible.builtin.command: "restorecon -rv {{ item.item }}"
+  loop: "{{ selinux_dirs.results }}"
+  when: item.stat.exists and item.stat.isdir
+  changed_when: false
+
+- name: Step 4.1 Clone Pi-hole SELinux policy repository
+  ansible.builtin.git:
+    repo: "{{ pihole_selinux_repo_url }}"
+    dest: "{{ pihole_selinux_repo_dest }}"
+    version: master
+    force: yes
+  register: pihole_selinux_repo # Register this to know if we need to re-run the script
+
+- name: Step 4.2 Ensure selinux.sh script is executable
+  ansible.builtin.file:
+    path: "{{ pihole_selinux_repo_dest }}/selinux.sh"
+    mode: '0755'
+
+# REVISED Step 4.3: Only run if the git COMMIT ID changed. 
+# This prevents the task from running just because git reset some local files.
+- name: Step 4.3 Generate and load Pi-hole SELinux module
+  ansible.builtin.command:
+    cmd: ./selinux.sh
+    chdir: "{{ pihole_selinux_repo_dest }}"
+  when: pihole_selinux_repo.before != pihole_selinux_repo.after
+  notify: Restart pihole-FTL
+
+- name: Step 5 Create tmpfiles.d entry for pihole.log
+  ansible.builtin.copy:
+    dest: "/etc/tmpfiles.d/pihole.conf"
+    content: "d /run/log/pihole 0755 pihole pihole -"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create pihole log directory immediately
+  ansible.builtin.file:
+    path: /run/log/pihole
+    state: directory
+    owner: pihole
+    group: pihole
+    mode: '0755'
+  notify: Restart pihole-FTL
+
+- name: Step 6 Configure FirewallD for Pi-hole services
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - http
+    - dns
+    - dhcp
+  notify: reload firewalld
+
+    
+# REVISED Step 7: Handle SELinux state without triggering unnecessary reboots.
+
+# This task restores Enforcing mode.
+# It will report 'changed' because Step 1 set the runtime to Permissive.
+# We REMOVE 'notify: Reboot server' so we don't reboot just for a runtime switch.
+- name: Step 7 Ensure SELinux is Enforcing (Config + Runtime)
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+  register: selinux_config
+
+# We use an explicit task to reboot instead of a handler.
+# This respects the 'reboot_required' flag from the module above.
+# If the Config File didn't change, this flag is False, and no reboot occurs.
+- name: Reboot if SELinux config change requires it
+  ansible.builtin.reboot:
+    msg: "Rebooting to apply persistent SELinux configuration changes"
+  when: selinux_config.reboot_required | default(false)
+
+- name: Set Pi-hole admin password
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/pihole
+      - setpassword
+      - "{{ pihole_password }}"
+  become: yes
+  register: setpassword_result
+  changed_when: false
+  no_log: true
+
+  

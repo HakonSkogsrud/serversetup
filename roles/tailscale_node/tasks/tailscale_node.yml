@@ -1,0 +1,5 @@
+- name: Register node with Tailscale using auth key and force re-authentication
+  ansible.builtin.command: >
+    tailscale up --authkey={{ tailscale_auth_key }} --hostname={{ tailscale_hostname }} --reset
+  changed_when: true
+  notify: Restart tailscaled

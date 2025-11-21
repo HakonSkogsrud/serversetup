@@ -1,0 +1,30 @@
+---
+- name: Ensure download directory exists
+  ansible.builtin.file:
+    path: "{{ image_download_path }}"
+    state: directory
+
+- name: Download latest AlmaLinux Cloud Image
+  ansible.builtin.get_url:
+    url: "{{ alma_image_url }}"
+    dest: "{{ image_download_path }}/{{ alma_image_filename }}"
+    mode: '0644'
+    force: false  
+  register: image_download
+
+- name: Template the creation script
+  ansible.builtin.template:
+    src: create_alma_template_vm.sh.j2
+    dest: /usr/local/bin/alma_template.sh
+    mode: "0700"
+
+- name: Execute the creation script
+  ansible.builtin.command:
+    cmd: /usr/local/bin/alma_template.sh
+  # OPTIONAL optimization: Only run the script if the image changed OR the script changed
+  when: image_download.changed 
+
+- name: Cleanup the script
+  ansible.builtin.file:
+    path: /usr/local/bin/alma_template.sh
+    state: absent

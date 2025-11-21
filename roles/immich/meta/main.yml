@@ -1,0 +1,4 @@
+dependencies:
+  - { role: firewall }
+  - { role: docker }
+  - { role: mount_virtiofs }

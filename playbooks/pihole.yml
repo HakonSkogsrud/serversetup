@@ -1,0 +1,31 @@
+---
+- name: Create pihole VM
+  hosts: proxmox
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        name: pihole
+        newid: 4002
+        ipaddr: "{{ vms.pihole.ip }}"
+        balloon: 1500
+        cores: 1
+        memory: 2000
+        sockets: 1
+        primary_disk_size: 10G
+        
+- name: Setup pihole vm
+  hosts: pihole
+  become: true
+  vars:
+    ansible_host_key_checking: false
+    send_reboot_pushover_notification: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - scheduled_update
+    - scheduled_reboot
+    - pihole
+    - pihole_gravity_update

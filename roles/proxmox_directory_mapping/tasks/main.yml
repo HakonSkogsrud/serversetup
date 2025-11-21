@@ -1,0 +1,3 @@
+---
+- name: Proxmox directory mapping
+  import_tasks: proxmox_directory_mapping.yml

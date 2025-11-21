@@ -1,0 +1,46 @@
+---
+
+- name: Ensure EPEL repository is enabled
+  become: yes # Use become (sudo) for system-level tasks
+  dnf:
+    name: epel-release
+    state: present
+
+- name: Install Syncthing package
+  become: yes
+  dnf:
+    name: syncthing
+    state: present
+
+- name: Create Syncthing configuration directory for user 
+  become: yes
+  file:
+    path: "/home/{{ template.user }}/.config/syncthing"
+    state: directory
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: '0750'
+
+- name: Copy existing Syncthing configuration for 
+  become: yes
+  copy:
+    src: syncthing_config/
+    dest: "/home/{{ template.user }}/.config/syncthing/"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: '0600'
+
+- name: Enable and start the Syncthing service for user 
+  become: yes
+  systemd:
+    name: "syncthing@{{ template.user }}.service"
+    enabled: yes
+    state: started
+
+- name: Allow Syncthing GUI port through the firewall
+  become: yes
+  ansible.posix.firewalld:
+    port: 8384/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes

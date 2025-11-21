@@ -1,0 +1,3 @@
+---
+- name: Include pihole_gravity_update tasks
+  ansible.builtin.include_tasks: pihole_gravity_update.yml

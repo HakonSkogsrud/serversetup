@@ -1,0 +1,52 @@
+---
+
+- name: Install DNS utilities (for dig command)
+  ansible.builtin.package:
+    name: "bind-utils" 
+    state: present
+  become: true
+
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Ensure log file exists and has secure base permissions
+  ansible.builtin.file:
+    path: /var/log/pihole_health_check.log
+    state: touch # Creates the file if it doesn't exist
+    owner: root
+    group: root
+    mode: "0640" # Owner can read/write, group can read, others have no access
+  become: true
+
+- name: Install acl package for setting extended file permissions
+  ansible.builtin.package:
+    name: acl
+    state: present
+  become: true
+
+- name: Grant read access to the log file for user
+  ansible.posix.acl:
+    path: /var/log/pihole_health_check.log
+    entity: "{{ template.user }}"
+    etype: user
+    permissions: rw
+    state: present
+  become: true
+
+- name: Deploy the Pi-hole monitoring script
+  ansible.builtin.template:
+    src: check_piholes.sh.j2
+    dest: /usr/local/bin/check_piholes.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add cron job to run the Pi-hole check
+  ansible.builtin.cron:
+    name: "Check Pi-hole Status"
+    minute: "*/30"
+    job: "pushover_pihole='{{ pushover_pihole }}' pushover_user='{{ pushover_user }}' /usr/local/bin/check_piholes.sh"
+    user: root

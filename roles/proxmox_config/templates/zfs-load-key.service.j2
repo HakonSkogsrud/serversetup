@@ -1,0 +1,13 @@
+[Unit]
+Description=Load ZFS Encryption Keys
+After=zfs-import.target systemd-user-sessions.service
+Before=pve-guests.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 30
+ExecStart=/usr/sbin/zfs load-key -a
+RemainAfterExit=yes
+
+[Install]
+WantedBy=pve-guests.service

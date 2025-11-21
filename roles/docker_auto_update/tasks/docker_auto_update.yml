@@ -1,0 +1,35 @@
+---
+- name: Ensure the script directory exists
+  ansible.builtin.file:
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Ensure log file exists with proper permissions
+  ansible.builtin.file:
+    path: /var/log/docker_auto_update.log
+    state: touch
+    mode: "0666"
+    owner: root
+    group: root
+
+- name: Create the Docker auto-update script
+  ansible.builtin.template:
+    src: docker_auto_update.sh.j2
+    dest: /usr/local/bin/docker_auto_update.sh
+    mode: "0755"
+
+- name: Add a cron job to run the Docker auto-update script weekly
+  ansible.builtin.cron:
+    name: "Weekly Docker auto-update"
+    minute: "{{ update_schedule_minute }}"
+    hour: "{{ update_schedule_hour }}"
+    weekday: "{{ update_schedule_weekday }}"
+    job: "pushover_docker='{{ pushover_docker }}' pushover_user='{{ pushover_user }}' /usr/local/bin/docker_auto_update.sh"
+    user: root
+
+- name: Restart cron service to apply changes
+  ansible.builtin.service:
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
+    state: restarted
+    enabled: true

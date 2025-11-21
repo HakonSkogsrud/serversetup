@@ -1,0 +1,3 @@
+---
+- name: Scheduled update
+  import_tasks: scheduled_update.yml

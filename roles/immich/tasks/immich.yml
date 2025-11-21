@@ -1,0 +1,30 @@
+---
+- name: Ensure project directory exists
+  ansible.builtin.file:
+    path: "{{ immich_project_dir }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: docker
+    mode: "0755"
+
+- name: Check if Immich DB directory exists
+  ansible.builtin.stat:
+    path: "{{ immich_project_dir }}/postgres"
+  register: immich_db_dir
+
+# ----------------------------------------------------------
+# Restore from backup if db dir not exists
+# ----------------------------------------------------------
+- name: restore if db dir not exists
+  ansible.builtin.include_tasks: restore.yml
+  when: not immich_db_dir.stat.exists
+
+# ----------------------------------------------------------
+# Otherwise, just start the existing stack
+# ----------------------------------------------------------
+- name: Start existing Immich stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ immich_project_dir }}"
+    state: present
+  become: true
+  when: immich_db_dir.stat.exists
