@@ -1,9 +1,12 @@
-name: Run Ansible Playbooks
-
+name: CD - Deploy to Homelab
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    paths:
+      - '**.yml'
+      - '**.yaml'
+      - 'inventory/**'
+
   workflow_dispatch:
     inputs:
       playbook:
