@@ -32,10 +32,10 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: pip3.12 install -r requirements.txt
 
       - name: Install Ansible Collections
-        run: ansible-galaxy collection install community.docker community.general ansible.posix community.proxmox  --force
+        run: ansible-galaxy collection install community.docker community.general ansible.posix community.proxmox --force
 
       
       - name: Setup SSH Agent
