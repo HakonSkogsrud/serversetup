@@ -1,16 +1,49 @@
 ---
-- name: Download Tailscale install script
-  ansible.builtin.get_url:
-    url: https://tailscale.com/install.sh
-    dest: /tmp/install.sh
-    mode: "0755"
+- name: Add Tailscale repository (Debian/Ubuntu)
+  when: ansible_os_family == "Debian"
+  block:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
 
-- name: Run Tailscale install script
-  ansible.builtin.command: bash -o pipefail /tmp/install.sh
-  changed_when: true
+    - name: Add Tailscale GPG key
+      ansible.builtin.apt_key:
+        url: https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg
+        state: present
 
-- name: Ensure Tailscale is enabled and started (systemd)
-  ansible.builtin.systemd:
+    - name: Add Tailscale repository
+      ansible.builtin.apt_repository:
+        repo: "deb https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+        state: present
+        filename: tailscale
+        update_cache: true
+
+- name: Add Tailscale repository (AlmaLinux/RHEL)
+  when: ansible_os_family == "RedHat"
+  block:
+    - name: Add Tailscale repository
+      ansible.builtin.yum_repository:
+        name: tailscale-stable
+        description: Tailscale stable
+        baseurl: https://pkgs.tailscale.com/stable/rhel/$releasever/$basearch
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://pkgs.tailscale.com/stable/rhel/$releasever/repo.gpg
+        repo_gpgcheck: true
+
+- name: Install Tailscale using package manager
+  ansible.builtin.package:
+    name: tailscale
+    state: present
+
+- name: Ensure Tailscale is enabled and started
+  ansible.builtin.service:
     name: tailscaled
     enabled: true 
     state: started

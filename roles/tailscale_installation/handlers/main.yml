@@ -3,3 +3,8 @@
   ansible.builtin.systemd:
     name: tailscaled
     state: restarted
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: ansible_os_family == "Debian"
