@@ -1,4 +1,5 @@
 pre-commit
 passlib
 ansible
-ansible-core
+ansible-core>=2.20.0
+ansible-lint
