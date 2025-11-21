@@ -1,0 +1,12 @@
+---
+- name: Copy script to VM
+  ansible.builtin.copy:
+    src: create_debian_template_vm.sh
+    dest: /usr/local/bin/debian_template.sh
+    mode: "0775"
+
+- name: Execute the script
+  ansible.builtin.command:
+    cmd: /usr/local/bin/debian_template.sh
+  environment:
+    VM_PASSWORD: "{{ vm_password }}"

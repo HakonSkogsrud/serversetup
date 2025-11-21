@@ -1,0 +1,25 @@
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: yes
+
+- name: Start and enable ufw service
+  ansible.builtin.systemd:
+    name: ufw
+    state: started
+    enabled: yes
+
+- name: Allow SSH through firewall
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Allow SSH through firewall
+  community.general.ufw:
+    rule: allow
+    name: ssh
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled

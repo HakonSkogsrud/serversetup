@@ -1,0 +1,18 @@
+# filepath: /home/haaksk/Git/serversetup/inventory.yml
+---
+all:
+  children:
+    vms:
+      hosts:
+        services:
+        immich:   
+        mail:  
+        debian: 
+          ansible_connection: local
+          ansible_user: haaksk
+          ansible_host: 10.0.0.33
+    proxmox_servers: 
+      hosts:
+        proxmox: 
+          ansible_host: "{{ proxmox.ip }}" 
+          ansible_user: "{{ proxmox.user }}" 

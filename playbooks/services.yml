@@ -1,0 +1,67 @@
+# filepath: /home/haaksk/Git/serversetup/playbooks/services.yml
+---
+- name: Create services VM
+  hosts: proxmox # This play runs on the proxmox host
+  become: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    target_vm_host: services
+  roles:
+    - role: create_vm
+      tags: create_vm
+      vars:
+        # Global Proxmox and template variables
+        node: "{{ proxmox.node }}"
+        api_user: "{{ proxmox.api_user }}"
+        clone: "{{ template.name }}" #
+        source_vmid_for_clone: "{{ template.vmid }}" 
+
+        # VM-specific variables from hostvars/services.yml
+        name: "{{ hostvars[target_vm_host].vm_name }}"
+        newid: "{{ hostvars[target_vm_host].vmid }}"
+        ipaddr: "{{ hostvars[target_vm_host].ansible_host }}"
+        balloon: "{{ hostvars[target_vm_host].balloon_mb }}"
+        cores: "{{ hostvars[target_vm_host].cores }}"
+        memory: "{{ hostvars[target_vm_host].memory_mb }}"
+        sockets: "{{ hostvars[target_vm_host].sockets }}"
+        primary_disk_size: "{{ hostvars[target_vm_host].primary_disk_size }}"
+        virtiofs_tag: "{{ hostvars[target_vm_host].virtiofs_tag_ref }}"
+
+- name: Configure services
+  hosts: services 
+  become: true
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: mount_virtiofs
+      tags: mount_virtiofs
+      vars:
+        virtiofs_tag: "{{ virtiofs_tag_ref }}"
+        mount_path: "/mnt/storage/smb"
+
+    - role: firewall_setup
+      tags: firewall_setup
+
+    - role: samba_setup
+      tags: samba_setup
+      vars:
+        mount_path: "/mnt/storage/smb"
+        smb_group: "sambausers"
+        mount_path_owner: "root"
+    
+    - role: docker_setup
+      tags: docker_setup
+
+    - role: uhd_passthrough
+      tags: uhd_passthrough
+
+    - role: jellyfin_setup
+      tags: jellyfin_setup
+
+    - role: tailscale_setup
+      tags: tailscale_setup
+      vars:
+        tailscale_hostname: "{{ vm_name }}"
+    - role: cron_updates
+      tags: cron_updates

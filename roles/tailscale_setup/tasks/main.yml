@@ -1,0 +1,22 @@
+---
+- name: Download Tailscale install script
+  ansible.builtin.get_url:
+    url: https://tailscale.com/install.sh
+    dest: /tmp/install.sh
+    mode: "0755"
+
+- name: Run Tailscale install script
+  ansible.builtin.command: bash -o pipefail /tmp/install.sh
+  changed_when: true
+
+- name: Ensure Tailscale is enabled and started (systemd)
+  ansible.builtin.systemd:
+    name: tailscaled
+    enabled: true
+    state: started
+
+- name: Register node with Tailscale using auth key and force re-authentication
+  ansible.builtin.command: >
+    tailscale up --authkey={{ tailscale_auth_key }} --hostname={{ tailscale_hostname }} --force-reauth --accept-routes=false
+  changed_when: true
+  notify: Restart tailscaled

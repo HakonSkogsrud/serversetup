@@ -1,0 +1,18 @@
+---
+- name: Create services VM
+  hosts: proxmox
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_template_vm
+      tags: create_template_vm
+
+    - role: sanoid_setup
+      tags: sanoid_setup
+
+    - role: syncoid_setup
+      tags: syncoid_setup
+      
+    - role: cron_updates
+      tags: cron_updates
+

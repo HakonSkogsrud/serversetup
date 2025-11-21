@@ -1,0 +1,8 @@
+---
+- name: Restart Samba Services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - smbd.service
+    - nmbd.service

@@ -1,0 +1,98 @@
+---
+- name: Ensure Python 3 and venv are installed (if running on PVE node)
+  ansible.builtin.package:
+    name:
+      - python3
+      - python3-venv
+    state: present
+  become: true
+  when: inventory_hostname == "{{ node }}"
+
+- name: Create a Python virtual environment for Ansible (if running on PVE node)
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/ansible_venv
+    creates: /opt/ansible_venv
+  become: true
+  when: inventory_hostname == "{{ node }}"
+
+- name: Ensure proxmoxer and requests libraries are installed in the venv (if running on PVE node)
+  ansible.builtin.command:
+    cmd: /opt/ansible_venv/bin/pip install proxmoxer requests
+    creates: /opt/ansible_venv/lib/python3.*/site-packages/proxmoxer
+  become: true
+  when: inventory_hostname == "{{ node }}"
+
+- name: Set the Python interpreter (if running on PVE node)
+  set_fact:
+    ansible_python_interpreter: /opt/ansible_venv/bin/python3
+  when: inventory_hostname == "{{ node }}"
+
+- name: Clone VM (initial creation if needed)
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox.ip }}"
+    api_user: "{{ proxmox.api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ pve_api_token_secret }}"
+    node: "{{ proxmox.node }}"
+
+    # --- Clone Operation ---
+    clone: "{{ clone }}"
+    name: "{{ name }}"
+    newid: "{{ newid }}"
+    full: true
+    state: present
+
+- name: Ensure VM configuration is correct
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox.ip }}"
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ pve_api_token_secret }}"
+    node: "{{ node }}"
+
+    # --- Target VM --
+    vmid: "{{ newid }}"
+    state: present
+    update: true
+
+    # --- Desired Configuration ---
+    description: "{{ description }}"
+    balloon: "{{ balloon }}"
+    cores: "{{ cores }}"
+    memory: "{{ memory }}"
+    sockets: "{{ sockets }}"
+    onboot: true
+    sshkeys: "{{ vm_public_ssh_keys }}"
+
+- name: Resize the primary disk of the VM
+  ansible.builtin.command:
+    cmd: "qm resize {{ newid }} {{ primary_disk_name }} {{ primary_disk_size }}"
+  changed_when: true
+
+- name: Set virtiofs0 configuration
+  ansible.builtin.command:
+    cmd: "qm set '{{ newid }}' --virtiofs0 '{{ virtiofs_tag }},expose-xattr=1'"
+  changed_when: true
+
+- name: Change IP configuration
+  ansible.builtin.command:
+    cmd: "qm set {{ newid }} --ipconfig0 ip='{{ ipaddr }}'/24,gw='{{ gateway }}'"
+  changed_when: true
+
+- name: Check VM status
+  ansible.builtin.command:
+    cmd: "qm status {{ newid }}"
+  register: vm_status
+  changed_when: false
+  ignore_errors: true
+
+- name: Start the VM if not running
+  ansible.builtin.command:
+    cmd: "qm start {{ newid }}"
+  when: vm_status.rc != 0 or vm_status.stdout | default('') is search("stopped", ignorecase=True)
+  changed_when: true
+
+- name: Wait for VM to start
+  ansible.builtin.pause:
+    seconds: 10
+  when: vm_status.rc != 0 or vm_status.stdout | default('') is search("stopped", ignorecase=True)

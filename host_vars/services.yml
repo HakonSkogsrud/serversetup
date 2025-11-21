@@ -1,0 +1,10 @@
+ansible_host: 10.0.0.45
+ansible_user: haaksk 
+vm_name: services-debian  
+vmid: 4001
+balloon_mb: 12024
+cores: 3
+memory_mb: 42000
+sockets: 1
+primary_disk_size: 350G
+virtiofs_tag_ref: "{{ virtiofs_tags.smb }}" 

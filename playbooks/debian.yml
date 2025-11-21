@@ -1,0 +1,75 @@
+---
+- name: Setup installations of fedora 
+  hosts: debian
+  become: true
+  vars_files:
+    - ../secrets.yml
+
+  tasks:
+    
+    - name: Add aliases block to .bashrc
+      ansible.builtin.blockinfile:
+        path: "/home/haaksk/.bashrc"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - ALIASES"
+        block: |
+          alias restart="source ~/.bashrc"
+          alias proxmox="ssh root@10.0.0.41"
+          alias services="ssh haaksk@10.0.0.44"
+          alias immich="ssh haaksk@10.0.0.42"
+          alias backupserver="ssh haaksk@10.0.0.36"
+          alias venv="source .venv/bin/activate"
+          export EDITOR="vim"
+        create: yes
+      become: no
+      tags: bashrc
+      
+
+    - name: Ensure the SMB mount point directory exists
+      ansible.builtin.file:
+        path: /mnt/smbshare        
+        state: directory           
+        mode: '0755'             
+        owner: haaksk                
+        group: haaksk                
+
+    - name: Ensure /etc/samba directory exists
+      ansible.builtin.file:
+        path: /etc/samba
+        state: directory
+        mode: '0755' # Standard directory permissions
+        owner: root
+        group: root
+
+    - name: Add username and password to /etc/samba/credentials
+      ansible.builtin.lineinfile:
+        path: /etc/samba/credentials
+        regexp: '^{{ item.regexp }}$' 
+        line: '{{ item.line }}'    
+        state: present              
+        create: yes                 
+        owner: root                
+        group: root                
+        mode: '0600'                
+        backup: yes
+      loop:
+        - { regexp: 'username=', line: 'username=haaksk' }
+        - { regexp: 'password=', line: 'password={{ smb_user_password }}' } 
+
+    - name: Add the SMB share line to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab              
+        regexp: '^//10\.0\.0\.44/share /mnt/smbshare ' 
+        line: '//10.0.0.44/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,_netdev 0 0' 
+        state: present               
+        create: yes                   
+        owner: root                   
+        group: root                   
+        mode: '0644'                  
+        backup: yes                
+
+    - name: set git name
+      ansible.builtin.command: git config --global user.name "Håkon Skogsrud"
+
+    - name: set git mail
+      ansible.builtin.command: git config --global user.email "haaksk@gmail.com"
+

@@ -1,0 +1,6 @@
+---
+smb_group: sambausers
+smb_user: haaksk
+sudo_group: sudo
+share_path: /mnt/storage/smb
+owner: root

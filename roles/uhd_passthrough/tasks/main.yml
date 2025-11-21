@@ -1,0 +1,8 @@
+- name: install stuff
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - intel-media-va-driver
+    - vainfo

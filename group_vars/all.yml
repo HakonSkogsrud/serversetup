@@ -1,0 +1,19 @@
+---
+
+gateway: 10.0.0.138
+
+template: # template for cloning
+  name: debian-trixie-cloud-image
+  vmid: 9001
+  user: haaksk
+
+proxmox:
+  ip: 10.0.0.41
+  api_user: root@pam
+  user: root
+  node: proxmox
+
+
+virtiofs_tags:
+  smb: smb
+  immich: immich
