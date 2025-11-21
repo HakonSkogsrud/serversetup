@@ -31,9 +31,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Install Python dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install --upgrade ansible
+        run: pip install -r requirements.txt
 
       - name: Install Ansible Collections
         run: ansible-galaxy collection install community.docker community.general ansible.posix community.proxmox  --force
