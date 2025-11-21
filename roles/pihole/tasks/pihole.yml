@@ -126,27 +126,18 @@
   when: item.stat.exists and item.stat.isdir
   changed_when: false
 
-- name: Step 4.1 Clone Pi-hole SELinux policy repository
-  ansible.builtin.git:
-    repo: "{{ pihole_selinux_repo_url }}"
-    dest: "{{ pihole_selinux_repo_dest }}"
-    version: master
-    force: yes
-  register: pihole_selinux_repo # Register this to know if we need to re-run the script
-
-- name: Step 4.2 Ensure selinux.sh script is executable
-  ansible.builtin.file:
-    path: "{{ pihole_selinux_repo_dest }}/selinux.sh"
-    mode: '0755'
-
-# REVISED Step 4.3: Only run if the git COMMIT ID changed. 
-# This prevents the task from running just because git reset some local files.
-- name: Step 4.3 Generate and load Pi-hole SELinux module
-  ansible.builtin.command:
-    cmd: ./selinux.sh
-    chdir: "{{ pihole_selinux_repo_dest }}"
-  when: pihole_selinux_repo.before != pihole_selinux_repo.after
-  notify: Restart pihole-FTL
+- name: Step 4 Configure SELinux booleans for Pi-hole
+  ansible.posix.seboolean:
+    name: "{{ item }}"
+    state: true
+    persistent: true
+  loop:
+    - nis_enabled
+    - domain_can_mmap_files
+    - httpd_run_stickshift
+    - httpd_setrlimit
+    - httpd_mod_auth_pam
+    - httpd_can_network_connect
 
 - name: Step 5 Create tmpfiles.d entry for pihole.log
   ansible.builtin.copy:
