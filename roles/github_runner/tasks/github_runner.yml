@@ -23,21 +23,13 @@
   ansible.builtin.set_fact:
     github_registration_token: "{{ token_response.json.token }}"
 
-- name: Install Python and pip for Ansible workflows
-  ansible.builtin.package:
-    name:
-      - python3
-      - python3-pip
-      - git
-    state: present
-
-- name: Install Ansible in runner environment
+- name: Install Ansible in runner environment using Python 3.12
   ansible.builtin.pip:
     name:
       - ansible
       - ansible-core
     state: present
-    executable: pip3
+    executable: pip3.12
 
 - name: Create runner user
   ansible.builtin.user:
