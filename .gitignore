@@ -5,8 +5,4 @@
 *hcl
 *lock
 .terraform/
-*terraform.tfvars
-*.tfstate.lock.info
-.gitignore
-*.tfstate.backup
-*.tfstate
+
