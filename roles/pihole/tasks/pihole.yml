@@ -12,7 +12,7 @@
   ansible.builtin.service:
     name: firewalld
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Step 0.1 Identify the active NetworkManager connection for the interface
   ansible.builtin.command: "nmcli -g NAME,DEVICE connection show --active"
@@ -65,7 +65,7 @@
   ansible.builtin.dnf:
     name: "*"
     state: latest
-    allowerasing: yes
+    allowerasing: true
 
 - name: Step 2.1 Check if Pi-hole is already installed
   ansible.builtin.stat:
@@ -130,7 +130,7 @@
     repo: "{{ pihole_selinux_repo_url }}"
     dest: "{{ pihole_selinux_repo_dest }}"
     version: master
-    force: yes
+    force: true
   register: pihole_selinux_repo # Register this to know if we need to re-run the script
 
 - name: Step 4.2 Ensure selinux.sh script is executable
@@ -201,7 +201,7 @@
       - /usr/local/bin/pihole
       - setpassword
       - "{{ pihole_password }}"
-  become: yes
+  become: true
   register: setpassword_result
   changed_when: false
   no_log: true

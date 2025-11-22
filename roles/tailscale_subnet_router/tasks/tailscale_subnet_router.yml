@@ -11,7 +11,7 @@
   ansible.builtin.stat:
     path: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
   register: local_machine_id
-  become: no
+  become: false
 
 - name: Restore machine-id from local backup
   ansible.builtin.copy:
@@ -26,7 +26,7 @@
   ansible.builtin.stat:
     path: "{{ role_path }}/files/{{ inventory_hostname }}.state"
   register: local_state_file
-  become: no
+  become: false
 
 - name: Ensure Tailscale directory exists
   ansible.builtin.file:
@@ -82,30 +82,30 @@
     zone: "{{ firewalld_lan_zone }}"
     service: ssh
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 - name: Allow Tailscale UDP Port (Direct Connections)
   ansible.posix.firewalld:
     zone: "{{ firewalld_lan_zone }}"
     port: 41641/udp
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 - name: Enable Masquerade on LAN (Required for NAT)
   ansible.posix.firewalld:
     zone: "{{ firewalld_lan_zone }}"
-    masquerade: yes
+    masquerade: true
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 - name: Create tailscale zone
   ansible.posix.firewalld:
     zone: tailscale
     state: present
-    permanent: yes
+    permanent: true
   register: create_zone
 
 - name: Reload firewalld (Activating Zone)
@@ -131,32 +131,32 @@
     zone: tailscale
     interface: tailscale0
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 - name: Allow Masquerade on Tailscale Zone
   ansible.posix.firewalld:
     zone: tailscale
-    masquerade: yes
+    masquerade: true
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 - name: Add tailscale zone as trusted source for LAN zone
   ansible.posix.firewalld:
     zone: "{{ firewalld_lan_zone }}"
     source: 100.64.0.0/10
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 - name: Add LAN zone as trusted source for tailscale zone
   ansible.posix.firewalld:
     zone: tailscale
     source: 10.0.0.0/24
     state: enabled
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
 
 # --- 3. REGISTRATION ---
 - name: Check if tailscale is logged in
@@ -199,12 +199,12 @@
   ansible.builtin.fetch:
     src: /etc/machine-id
     dest: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
-    flat: yes
+    flat: true
   when: not local_machine_id.stat.exists
 
 - name: Backup Tailscale state to local controller
   ansible.builtin.fetch:
     src: /var/lib/tailscale/tailscaled.state
     dest: "{{ role_path }}/files/{{ inventory_hostname }}.state"
-    flat: yes
+    flat: true
   when: not local_state_file.stat.exists
