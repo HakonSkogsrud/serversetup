@@ -1,14 +1,14 @@
 ---
 - name: Create the mount point directory
   ansible.builtin.file:
-    path: "{{ mount_path }}"
+    path: "{{ mount_virtiofs_path }}"
     state: directory
     mode: "0775"
 
 - name: Add VirtioFS entry to /etc/fstab
   ansible.posix.mount:
-    path: "{{ mount_path }}"
-    src: "{{ virtiofs_tag }}"
+    path: "{{ mount_virtiofs_path }}"
+    src: "{{ mount_virtiofs_tag }}"
     fstype: virtiofs
     opts: "defaults"
     dump: 0
