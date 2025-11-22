@@ -6,11 +6,11 @@ IMAGE_NAME={{ template.name }}
 USER={{ template.user }}
 VM_PASSWORD="{{ vm_password }}"
 GATEWAY="{{ gateway }}"
-STORAGE="{{ template_storage }}"
-SEARCH_DOMAIN="{{ template_search_domain }}"
+STORAGE="{{ create_template_vm_storage }}"
+SEARCH_DOMAIN="{{ create_template_vm_template_search_domain }}"
 
 # Point to the file downloaded by Ansible
-FILE="{{ image_download_path }}/{{ alma_image_filename }}"
+FILE="{{ create_template_vm_image_download_path }}/{{ create_template_vm_alma_image_filename }}"
 
 set -x
 

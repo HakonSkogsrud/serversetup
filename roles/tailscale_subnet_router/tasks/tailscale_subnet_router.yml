@@ -177,7 +177,7 @@
     tailscale up
     --authkey={{ tailscale_auth_key }}
     --hostname={{ tailscale_hostname }}
-    --advertise-routes={{ tailscale_advertise_routes }}
+    --advertise-routes={{ tailscale_subnet_router_advertise_routes }}
     --accept-risk=lose-ssh
     --snat-subnet-routes=true
   when:
@@ -188,11 +188,11 @@
 - name: Update routes for existing machine
   ansible.builtin.command: >
     tailscale set
-    --advertise-routes={{ tailscale_advertise_routes }}
+    --advertise-routes={{ tailscale_subnet_router_advertise_routes }}
   when:
     - local_state_file.stat.exists
     - ts_state | default('NeedsLogin') == 'Running'
-    - (tailscale_advertise_routes | string) not in (ts_routes | default([]) | map(attribute='CIDR') | join(','))
+    - (tailscale_subnet_router_advertise_routes | string) not in (ts_routes | default([]) | map(attribute='CIDR') | join(','))
 
 # --- 4. BACKUP STATE (Persistence) ---
 - name: Backup machine-id to local controller
