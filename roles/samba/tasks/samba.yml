@@ -10,22 +10,22 @@
 
 - name: Create the Samba group
   ansible.builtin.group:
-    name: "{{ smb_group }}"
+    name: "{{ samba_group }}"
     state: present
 
 - name: Create the Samba user
   ansible.builtin.user:
-    name: "{{ smb_user }}"
+    name: "{{ samba_user }}"
     state: present
     shell: /bin/bash
     groups:
-      - "{{ sudo_group }}"
-      - "{{ smb_group }}"
+      - "{{ samba_sudo_group }}"
+      - "{{ samba_group }}"
     append: true
 
 - name: Set Samba password for the user
   ansible.builtin.shell:
-    cmd: set -o pipefail && echo -ne '{{ smb_user_password }}\n{{ smb_user_password }}\n' | smbpasswd -s -a {{ smb_user }}
+    cmd: set -o pipefail && echo -ne '{{ samba_user_password }}\n{{ samba_user_password }}\n' | smbpasswd -s -a {{ samba_user }}
   args:
     executable: /bin/bash
   changed_when: true
@@ -33,7 +33,7 @@
 
 - name: Ensure the Samba share mount point exists
   ansible.builtin.file:
-    path: "{{ mount_path }}"
+    path: "{{ samba_mount_path }}"
     state: directory
     mode: "0755"
 
@@ -48,7 +48,6 @@
 
 - name: Get current state of Samba SELinux booleans (for verification)
   ansible.builtin.command: getsebool samba_enable_home_dirs samba_export_all_rw
-  register: sebool_status
   changed_when: false
 
 - name: Allow Samba service through the firewall
@@ -64,12 +63,12 @@
     block: |
       [share]
           comment = Cross-Platform Shared Folder
-          path = {{ mount_path }}
+          path = {{ samba_mount_path }}
           browseable = Yes
           read only = No
           writable = yes
-          valid users = @{{ smb_group }}
-          write list = @{{ smb_group }}
+          valid users = @{{ samba_group }}
+          write list = @{{ samba_group }}
           inherit permissions = yes
 
           # Permissions
@@ -87,7 +86,7 @@
           fruit:posix_rename = yes
     state: present
     create: false
-    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ mount_path }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ samba_mount_path }}"
   notify: Restart Samba Services # Notify handler if change is made
 
 - name: Ensure Samba services are enabled and running

@@ -8,5 +8,5 @@
     - nmb.service
 
 - name: Apply SELinux contexts
-  ansible.builtin.command: restorecon -Rv "{{ mount_path }}"
+  ansible.builtin.command: restorecon -Rv "{{ samba_mount_path }}"
   changed_when: true # Assume change if handler is notified
