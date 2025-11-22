@@ -24,7 +24,7 @@
     name: "Weekly package updates"
     job: "pushover_token_update='{{ pushover_token_update }}' pushover_user='{{ pushover_user }}' /usr/local/bin/update_packages.sh"
     user: root
-    weekday: "4"  # 0 for Sunday, 1 for Monday, etc.
+    weekday: "4" # 0 for Sunday, 1 for Monday, etc.
     hour: "12"
     minute: "0"
 

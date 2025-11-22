@@ -4,7 +4,6 @@
     dest: /usr/bin/syncoid-backup.sh
     mode: "0775"
 
-
 - name: Add syncoid backup script to crontab with Pushover tokens
   ansible.builtin.cron:
     name: "Run syncoid backup script"
@@ -23,4 +22,3 @@
     name: cron
     state: restarted
     enabled: true
-  

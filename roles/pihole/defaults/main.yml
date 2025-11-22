@@ -2,7 +2,7 @@
 pihole_selinux_repo_url: "https://github.com/nkrgovic/PiHole_SELinux.git"
 pihole_selinux_repo_dest: "/opt/PiHole_SELinux"
 
-pihole_interface: "eth0" 
+pihole_interface: "eth0"
 pihole_ipv4_address: "{{ ansible_facts[pihole_interface]['ipv4']['address'] }}"
 
 pihole_ipv6_interface: "eth0"

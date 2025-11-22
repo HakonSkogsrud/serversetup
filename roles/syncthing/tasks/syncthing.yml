@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure EPEL repository is enabled
   become: yes # Use become (sudo) for system-level tasks
   dnf:
@@ -12,25 +11,25 @@
     name: syncthing
     state: present
 
-- name: Create Syncthing configuration directory for user 
+- name: Create Syncthing configuration directory for user
   become: yes
   file:
     path: "/home/{{ template.user }}/.config/syncthing"
     state: directory
     owner: "{{ template.user }}"
     group: "{{ template.user }}"
-    mode: '0750'
+    mode: "0750"
 
-- name: Copy existing Syncthing configuration for 
+- name: Copy existing Syncthing configuration for
   become: yes
   copy:
     src: syncthing_config/
     dest: "/home/{{ template.user }}/.config/syncthing/"
     owner: "{{ template.user }}"
     group: "{{ template.user }}"
-    mode: '0600'
+    mode: "0600"
 
-- name: Enable and start the Syncthing service for user 
+- name: Enable and start the Syncthing service for user
   become: yes
   systemd:
     name: "syncthing@{{ template.user }}.service"

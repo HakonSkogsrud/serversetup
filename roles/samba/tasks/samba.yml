@@ -19,9 +19,9 @@
     state: present
     shell: /bin/bash
     groups:
-      - "{{ sudo_group }}" 
+      - "{{ sudo_group }}"
       - "{{ smb_group }}"
-    append: true 
+    append: true
 
 - name: Set Samba password for the user
   ansible.builtin.shell:
@@ -35,7 +35,7 @@
   ansible.builtin.file:
     path: "{{ mount_path }}"
     state: directory
-    mode: "0755" 
+    mode: "0755"
 
 - name: Enable necessary Samba SELinux booleans
   ansible.posix.seboolean:

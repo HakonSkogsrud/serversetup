@@ -1,3 +1,3 @@
 ---
 tailnet_hosts:
-  - { name: 'backupserver', ip: '{{ vms.backupserver.ip }}' }
+  - { name: "backupserver", ip: "{{ vms.backupserver.ip }}" }

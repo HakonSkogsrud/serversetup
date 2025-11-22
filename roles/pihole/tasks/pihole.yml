@@ -51,7 +51,7 @@
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
 - name: Create setupVars.conf
   ansible.builtin.template:
@@ -59,7 +59,7 @@
     dest: /etc/pihole/setupVars.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
 
 - name: Update all system packages
   ansible.builtin.dnf:
@@ -78,15 +78,14 @@
     content: |
       nameserver 9.9.9.9
       nameserver 1.1.1.1
-    mode: '0644'
-
+    mode: "0644"
 
 - name: Step 2.2 Install Pi-hole if not installed
   ansible.builtin.shell:
     cmd: "curl -sSL https://install.pi-hole.net | bash /dev/stdin --unattended"
   environment:
     PIHOLE_SKIP_OS_CHECK: "true"
-    PIHOLE_SELINUX: "true" 
+    PIHOLE_SELINUX: "true"
   when: not pihole_executable.stat.exists
   args:
     creates: /etc/pihole/pihole-FTL.conf
@@ -107,8 +106,8 @@
   ansible.builtin.ansible.builtin.import_tasks: restore.yml
   # 15MB = 15728640 bytes. If it's smaller than 15MB, we assume it's the default list and needs restoring.
   # Skip restore for secondary pihole installations
-  when: 
-    - gravity_db.stat.exists 
+  when:
+    - gravity_db.stat.exists
     - gravity_db.stat.size < 15728640
     - not (is_secondary_pihole | default(false))
 
@@ -137,9 +136,9 @@
 - name: Step 4.2 Ensure selinux.sh script is executable
   ansible.builtin.file:
     path: "{{ pihole_selinux_repo_dest }}/selinux.sh"
-    mode: '0755'
+    mode: "0755"
 
-# REVISED Step 4.3: Only run if the git COMMIT ID changed. 
+# REVISED Step 4.3: Only run if the git COMMIT ID changed.
 # This prevents the task from running just because git reset some local files.
 - name: Step 4.3 Generate and load Pi-hole SELinux module
   ansible.builtin.command:
@@ -154,7 +153,7 @@
     content: "d /run/log/pihole 0755 pihole pihole -"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
 
 - name: Create pihole log directory immediately
   ansible.builtin.file:
@@ -162,7 +161,7 @@
     state: directory
     owner: pihole
     group: pihole
-    mode: '0755'
+    mode: "0755"
   notify: Restart pihole-FTL
 
 - name: Step 6 Configure FirewallD for Pi-hole services
@@ -177,7 +176,6 @@
     - dhcp
   notify: reload firewalld
 
-    
 # REVISED Step 7: Handle SELinux state without triggering unnecessary reboots.
 
 # This task restores Enforcing mode.
@@ -207,5 +205,3 @@
   register: setpassword_result
   changed_when: false
   no_log: true
-
-  

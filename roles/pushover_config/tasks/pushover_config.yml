@@ -5,17 +5,20 @@
     regexp: "^{{ item.key }}="
     state: present
   loop:
-    - { key: 'pushover_token_backup', value: '{{ pushover_token_backup }}' }
-    - { key: 'pushover_token_immich_dump', value: '{{ pushover_token_immich_dump }}' }
-    - { key: 'pushover_token_update', value: '{{ pushover_token_update }}' }
-    - { key: 'pushover_user', value: '{{ pushover_user }}' }
-    - { key: 'pushover_reboot', value: '{{ pushover_reboot }}' }
-    - { key: 'pushover_pihole', value: '{{ pushover_pihole }}' }
-    - { key: 'pushover_nebula', value: '{{ pushover_nebula }}' }
-    - { key: 'pushover_tailscale', value: '{{ pushover_tailscale }}' }
-    - { key: 'pushover_gravity', value: '{{ pushover_gravity }}' }
-    - { key: 'pushover_docker', value: '{{ pushover_docker }}' }
-  no_log: true 
+    - { key: "pushover_token_backup", value: "{{ pushover_token_backup }}" }
+    - {
+        key: "pushover_token_immich_dump",
+        value: "{{ pushover_token_immich_dump }}",
+      }
+    - { key: "pushover_token_update", value: "{{ pushover_token_update }}" }
+    - { key: "pushover_user", value: "{{ pushover_user }}" }
+    - { key: "pushover_reboot", value: "{{ pushover_reboot }}" }
+    - { key: "pushover_pihole", value: "{{ pushover_pihole }}" }
+    - { key: "pushover_nebula", value: "{{ pushover_nebula }}" }
+    - { key: "pushover_tailscale", value: "{{ pushover_tailscale }}" }
+    - { key: "pushover_gravity", value: "{{ pushover_gravity }}" }
+    - { key: "pushover_docker", value: "{{ pushover_docker }}" }
+  no_log: true
 
 - name: Copy pushover function to proxmox
   ansible.builtin.copy:

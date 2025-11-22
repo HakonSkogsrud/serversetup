@@ -7,4 +7,4 @@ github_runner_name: "{{ inventory_hostname }}"
 github_runner_labels: "homelab"
 github_runner_user: "runner"
 github_runner_dir: "/opt/github-runner"
-github_pat: ""  # GitHub Personal Access Token with 'repo' scope 
+github_pat: "" # GitHub Personal Access Token with 'repo' scope

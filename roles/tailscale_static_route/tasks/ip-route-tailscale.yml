@@ -2,7 +2,7 @@
 - name: Create static route configuration (Debian/Proxmox)
   ansible.builtin.copy:
     dest: /etc/network/if-up.d/tailscale-route
-    mode: '0755'
+    mode: "0755"
     content: |
       #!/bin/sh
       if [ "$IFACE" = "vmbr0" ]; then
@@ -14,7 +14,7 @@
 - name: Create static route configuration (RHEL/AlmaLinux)
   ansible.builtin.copy:
     dest: /etc/sysconfig/network-scripts/route-eth0
-    mode: '0644'
+    mode: "0644"
     content: |
       {{ tailscale_subnet_cidr }} via {{ tailscale_router_ip }}
   when: ansible_facts["os_family"] == "RedHat"

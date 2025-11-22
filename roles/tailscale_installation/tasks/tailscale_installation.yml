@@ -12,5 +12,5 @@
 - name: Ensure Tailscale is enabled and started (systemd)
   ansible.builtin.systemd:
     name: tailscaled
-    enabled: true 
+    enabled: true
     state: started

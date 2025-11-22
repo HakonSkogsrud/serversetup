@@ -3,7 +3,7 @@
     name:
       - python3.12
       - python3.12-pip
-      - python3.12-devel 
+      - python3.12-devel
       - git
     state: present
 
@@ -44,7 +44,7 @@
     state: directory
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_user }}"
-    mode: '0755'
+    mode: "0755"
 
 - name: Ensure .ssh directory exists for runner user
   ansible.builtin.file:
@@ -52,13 +52,13 @@
     state: directory
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_user }}"
-    mode: '0700'
+    mode: "0700"
 
 - name: Copy ssh config
   ansible.builtin.template:
     src: config.j2
     dest: "/home/{{ github_runner_user }}/.ssh/config"
-    mode: '0600'
+    mode: "0600"
   notify: Reload systemd
 
 - name: Check if runner is installed
@@ -129,14 +129,14 @@
     state: directory
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_user }}"
-    mode: '0755'
+    mode: "0755"
   when: needs_update
 
 - name: Download runner
   ansible.builtin.get_url:
     url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
     dest: "{{ github_runner_dir }}/runner.tar.gz"
-    mode: '0644'
+    mode: "0644"
   when: needs_install or needs_update
 
 - name: Extract runner
@@ -170,7 +170,7 @@
 - name: Configure SELinux for Runner
   when: ansible_facts["selinux"]["status"] == "enabled"
   vars:
-    ansible_python_interpreter: /usr/bin/python3  # Override to system python for SELinux tools
+    ansible_python_interpreter: /usr/bin/python3 # Override to system python for SELinux tools
   block:
     - name: Allow runner service to execute files (Persistent)
       community.general.sefcontext:
@@ -196,7 +196,7 @@
   ansible.builtin.template:
     src: runner.service.j2
     dest: /etc/systemd/system/github-runner.service
-    mode: '0644'
+    mode: "0644"
   notify: Reload systemd
 
 - name: Enable and start runner service

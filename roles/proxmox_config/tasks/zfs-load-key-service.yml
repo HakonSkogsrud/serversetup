@@ -5,7 +5,7 @@
     dest: /etc/systemd/system/zfs-load-key.service
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: Reload systemd daemon
 
 - name: Enable the zfs-load-key service

@@ -1,8 +1,7 @@
 ---
-
 - name: Install DNS utilities (for dig command)
   ansible.builtin.package:
-    name: "bind-utils" 
+    name: "bind-utils"
     state: present
   become: true
 
