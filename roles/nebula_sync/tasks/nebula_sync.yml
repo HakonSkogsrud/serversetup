@@ -21,4 +21,3 @@
     state: present
     pull: always
     recreate: auto
-  register: output
