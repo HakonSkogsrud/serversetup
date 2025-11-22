@@ -16,8 +16,8 @@ else
     log "Warning: Pushover script not found at /usr/local/lib/send_pushover.sh."
 fi
 
-DOCKER_COMPOSE_PATHS=(
-{% for path in docker_compose_paths -%}
+docker_auto_update_compose_paths=(
+{% for path in docker_auto_update_compose_paths -%}
   "{{ path }}"
 {% endfor -%}
 )
@@ -27,13 +27,13 @@ FAILURE_COUNT=0
 FAILED_APPS=""
 UPDATED_APPS=""
 
-if [ "${{ '{#' }}DOCKER_COMPOSE_PATHS[@]}" -eq 0 ]; then
+if [ "${{ '{#' }}docker_auto_update_compose_paths[@]}" -eq 0 ]; then
     log "No Docker Compose paths configured. Exiting."
     send_pushover "${pushover_docker:-}" "Docker auto-update on $(hostname): No compose paths configured" "Docker Update - Configuration Error" 0 "siren"
     exit 1
 fi
 
-for compose_path in "${DOCKER_COMPOSE_PATHS[@]}"; do
+for compose_path in "${docker_auto_update_compose_paths[@]}"; do
     if [ ! -f "$compose_path" ]; then
         log "ERROR: Docker Compose file not found: $compose_path"
         FAILURE_COUNT=$((FAILURE_COUNT + 1))
