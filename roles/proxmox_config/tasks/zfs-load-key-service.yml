@@ -11,4 +11,4 @@
 - name: Enable the zfs-load-key service
   ansible.builtin.systemd:
     name: zfs-load-key.service
-    enabled: yes
+    enabled: true

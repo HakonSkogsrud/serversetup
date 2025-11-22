@@ -4,13 +4,13 @@
     cmd: "pihole-FTL --teleporter"
     chdir: "/tmp"
   delegate_to: pihole-macbook
-  become: yes
+  become: true
 
 - name: Find the backup filename in /tmp (Checking for .zip)
   ansible.builtin.shell: "ls -t /tmp/*teleporter*.zip | head -n 1"
   delegate_to: pihole-macbook
   register: teleporter_find_result
-  become: yes
+  become: true
   changed_when: false
 
 - name: Set the filename fact
@@ -26,7 +26,7 @@
   ansible.builtin.fetch:
     src: "{{ teleporter_filename }}"
     dest: /tmp/
-    flat: yes
+    flat: true
   delegate_to: pihole-macbook
 
 - name: Copy the backup file to the primary Pi-hole
@@ -36,10 +36,10 @@
 
 - name: Restore configuration from Teleporter backup (v6)
   ansible.builtin.command: "pihole-FTL --teleporter /tmp/restore.zip"
-  become: yes
+  become: true
   register: restore_result
   changed_when: "'Restoring' in restore_result.stdout"
 
 - name: Update Gravity to apply imported lists
   ansible.builtin.command: "/usr/local/bin/pihole -g"
-  become: yes
+  become: true

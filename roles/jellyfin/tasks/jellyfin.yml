@@ -40,7 +40,7 @@
     name: "{{ template.user }}"
     # 'render' and 'video' allow access to /dev/dri/* on AlmaLinux
     groups: media, render, video
-    append: yes
+    append: true
   become: true
 
 - name: Create Jellyfin base directory
