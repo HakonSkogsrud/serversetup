@@ -1,0 +1,41 @@
+---
+# Ansible-lint configuration
+# See https://ansible.readthedocs.io/projects/lint/configuring/
+#
+# Usage:
+#   ansible-lint playbooks/ roles/    # Lint all playbooks and roles
+#   ansible-lint playbooks/            # Lint only playbooks
+#   ansible-lint .                     # Only lints files in root (not recommended)
+
+profile: production
+
+exclude_paths:
+  - .venv/
+  - .ansible/
+  - .terraform/
+  - .git/
+  - .vscode/
+  - .github/
+  - '*.drawio'
+  - '*.png'
+  - '*.tfstate*'
+  - secrets.yml
+  - inventory.yml
+  - host_vars/
+  - group_vars/
+
+# Treat warnings as errors
+strict: false
+
+# Rules to skip
+skip_list: []
+
+# Rules to treat as warnings instead of errors
+warn_list: []
+
+# Enable specific rules
+enable_list: []
+
+# Use YAML formatting
+write_list:
+  - none
