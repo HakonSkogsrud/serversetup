@@ -15,7 +15,7 @@
 # ----------------------------------------------------------
 # Restore from backup if db dir not exists
 # ----------------------------------------------------------
-- name: restore if db dir not exists
+- name: Restore if db dir not exists
   ansible.builtin.include_tasks: restore.yml
   when: not immich_db_dir.stat.exists
 

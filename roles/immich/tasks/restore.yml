@@ -11,7 +11,7 @@
 
 - name: Copy backup data files to project directory
   ansible.posix.synchronize:
-    src: "{{ backup_data_dir }}"
+    src: "{{ immich_backup_data_dir }}"
     dest: "{{ immich_project_dir }}"
     archive: true
   delegate_to: "{{ inventory_hostname }}"
@@ -56,15 +56,16 @@
 
 - name: Restore Immich backup if DB directory missing
   ansible.builtin.shell: |
-    set -e
+    set -e -o pipefail
     docker compose create
     docker start immich_postgres
     sleep 10
-    gunzip --stdout {{ backup_database_dump}} \
+    gunzip --stdout {{ immich_backup_dump }} \
       | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" \
-      | docker exec -i immich_postgres psql --dbname=postgres --username=postgres 
+      | docker exec -i immich_postgres psql --dbname=postgres --username=postgres
     docker compose up -d
   args:
     chdir: "{{ immich_project_dir }}"
+    executable: /bin/bash
   become: true
   when: not immich_db_dir.stat.exists
