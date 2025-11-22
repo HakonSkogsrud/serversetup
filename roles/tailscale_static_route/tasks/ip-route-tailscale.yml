@@ -26,4 +26,3 @@
   when: ansible_facts["os_family"] == "RedHat"
   failed_when: false
   changed_when: false
-
