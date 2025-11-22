@@ -31,7 +31,7 @@
   when: inventory_hostname in groups['proxmox_servers'] | default([])
 
 # --- OPTIONAL: Nuke and Pave (Force Recreate) ---
-#ansible-playbook playbooks/samba.yml -e "force_recreate=true"
+# ansible-playbook playbooks/samba.yml -e "force_recreate=true"
 
 - name: Check if VM exists (Pre-destruction check)
   ansible.builtin.command:
@@ -58,7 +58,6 @@
   when:
     - force_recreate | default(false) | bool
     - pre_destroy_check.rc == 0
-
 
 # --- STEP 1: Bootstrap VM (Check, Clone & Configure) ---
 
@@ -140,7 +139,7 @@
 - name: Ensure VM is running (Final Check)
   ansible.builtin.command:
     cmd: "qm start {{ newid }}"
-  when: 
+  when:
     - vm_status_final.rc == 0
     - "'stopped' in vm_status_final.stdout"
   changed_when: true
@@ -151,7 +150,7 @@
     host: "{{ ipaddr }}"
     port: 22
     state: started
-    search_regex: OpenSSH  # Ensures SSH is actually ready to accept login
-    delay: 10              # Wait 10s before starting to check
-    timeout: 600           # Wait up to 10 minutes
-  delegate_to: localhost   # Run check from the runner
+    search_regex: OpenSSH # Ensures SSH is actually ready to accept login
+    delay: 10 # Wait 10s before starting to check
+    timeout: 600 # Wait up to 10 minutes
+  delegate_to: localhost # Run check from the runner

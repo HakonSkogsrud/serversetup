@@ -4,8 +4,8 @@
 reboot_schedule_minute: "0"
 reboot_schedule_hour: "0"
 reboot_schedule_weekday: "4" # 0=Sunday, 1=Monday, ..., 4=Thursday
-reboot_schedule_dom: "*"     # Day of Month
-reboot_schedule_month: "*"   # Month
+reboot_schedule_dom: "*" # Day of Month
+reboot_schedule_month: "*" # Month
 
 # Enable or disable Pushover notifications
 send_reboot_pushover_notification: true

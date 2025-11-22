@@ -7,7 +7,7 @@
 #   ansible-lint playbooks/            # Lint only playbooks
 #   ansible-lint .                     # Only lints files in root (not recommended)
 
-profile: production
+profile: safety
 
 exclude_paths:
   - .venv/

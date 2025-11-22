@@ -17,7 +17,7 @@
   ansible.builtin.copy:
     src: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
     dest: /etc/machine-id
-    mode: '0444'
+    mode: "0444"
   when: local_machine_id.stat.exists
 
 # Restore Tailscale state
@@ -32,13 +32,13 @@
   ansible.builtin.file:
     path: /var/lib/tailscale
     state: directory
-    mode: '0700'
+    mode: "0700"
 
 - name: Restore Tailscale state from local backup
   ansible.builtin.copy:
     src: "{{ role_path }}/files/{{ inventory_hostname }}.state"
     dest: /var/lib/tailscale/tailscaled.state
-    mode: '0600'
+    mode: "0600"
   when: local_state_file.stat.exists
 
 - name: Ensure Tailscale is started
@@ -67,7 +67,7 @@
       # Critical for routing on the same subnet (prevents loops)
       net.ipv4.conf.all.rp_filter = 2
       net.ipv4.conf.default.rp_filter = 2
-    mode: '0644'
+    mode: "0644"
   notify: Apply sysctl changes
 
 # --- 2. FIREWALL CONFIG (Docs: Port 41641 & Masquerade) ---
@@ -180,7 +180,7 @@
     --advertise-routes={{ tailscale_advertise_routes }}
     --accept-risk=lose-ssh
     --snat-subnet-routes=true
-  when: 
+  when:
     - not local_state_file.stat.exists
     - ts_state | default('NeedsLogin') != 'Running'
 

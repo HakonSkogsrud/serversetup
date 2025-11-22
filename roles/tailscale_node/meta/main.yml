@@ -1,2 +1,2 @@
 dependencies:
-  - { role: tailscale_installation}
+  - { role: tailscale_installation }
