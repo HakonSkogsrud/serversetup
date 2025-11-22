@@ -9,19 +9,19 @@
 
 - name: Generate registration token from GitHub API
   ansible.builtin.uri:
-    url: "{{ github_api_url }}/actions/runners/registration-token"
+    url: "{{ github_runner_api_url }}/actions/runners/registration-token"
     method: POST
     headers:
       Accept: "application/vnd.github+json"
-      Authorization: "Bearer {{ github_pat }}"
+      Authorization: "Bearer {{ github_runner_pat }}"
     status_code: 201
-  register: token_response
+  register: github_runner_token_response
   delegate_to: localhost
   become: false
 
 - name: Set registration token fact
   ansible.builtin.set_fact:
-    github_registration_token: "{{ token_response.json.token }}"
+    github_runner_gh_token: "{{ github_runner_token_response.json.token }}"
 
 - name: Install Ansible in runner environment using Python 3.12
   ansible.builtin.pip:
@@ -64,64 +64,64 @@
 - name: Check if runner is installed
   ansible.builtin.stat:
     path: "{{ github_runner_dir }}/bin/Runner.Listener"
-  register: runner_binary
+  register: github_runner_runner_binary
 
 - name: Get current runner version
   ansible.builtin.command:
     cmd: "{{ github_runner_dir }}/bin/Runner.Listener --version"
-  register: runner_version
+  register: github_runner_runner_version_result
   changed_when: false
-  when: runner_binary.stat.exists
+  when: github_runner_runner_binary.stat.exists
 
 - name: Set current version fact
   ansible.builtin.set_fact:
-    current_runner_version: "{{ runner_version.stdout | default('') }}"
+    github_runner_current_github_runner_runner_version: "{{ github_runner_runner_version_result.stdout | default('') }}"
 
 - name: Debug - Show version information
   ansible.builtin.debug:
     msg:
-      - "Runner installed: {{ runner_binary.stat.exists }}"
-      - "Current version: {{ current_runner_version | default('not installed') }}"
-      - "Target version: {{ github_runner_version }}"
+      - "Runner installed: {{ github_runner_runner_binary.stat.exists }}"
+      - "Current version: {{ github_runner_current_github_runner_runner_version | default('not installed') }}"
+      - "Target version: {{ github_runner_runner_version }}"
 
 - name: Compare versions and set update flag
   ansible.builtin.set_fact:
-    needs_install: "{{ not runner_binary.stat.exists }}"
-    needs_update: "{{ runner_binary.stat.exists and current_runner_version != github_runner_version }}"
+    github_runner_needs_install: "{{ not github_runner_runner_binary.stat.exists }}"
+    github_runner_needs_update: "{{ github_runner_runner_binary.stat.exists and github_runner_current_github_runner_runner_version != github_runner_runner_version }}"
 
 - name: Debug - Show action plan
   ansible.builtin.debug:
     msg:
-      - "Needs install: {{ needs_install }}"
-      - "Needs update: {{ needs_update }}"
+      - "Needs install: {{ github_runner_needs_install }}"
+      - "Needs update: {{ github_runner_needs_update }}"
       - "SELinux enabled: {{ ansible_facts['selinux']['status'] | default('unknown') }}"
 
 - name: Check if runner is configured
   ansible.builtin.stat:
     path: "{{ github_runner_dir }}/.runner"
-  register: runner_config
+  register: github_runner_runner_config
 
 - name: Stop runner service if updating
   ansible.builtin.systemd:
     name: github-runner
     state: stopped
-  when: needs_update and runner_config.stat.exists
+  when: github_runner_needs_update and github_runner_runner_config.stat.exists
   ignore_errors: true
 
 - name: Remove runner registration if updating
   ansible.builtin.command:
-    cmd: "./config.sh remove --token {{ github_registration_token }}"
+    cmd: "./config.sh remove --token {{ github_runner_gh_token }}"
     chdir: "{{ github_runner_dir }}"
   become: true
   become_user: "{{ github_runner_user }}"
-  when: needs_update and runner_config.stat.exists
+  when: github_runner_needs_update and github_runner_runner_config.stat.exists
   ignore_errors: true
 
 - name: Remove old runner files if updating
   ansible.builtin.file:
     path: "{{ github_runner_dir }}"
     state: absent
-  when: needs_update
+  when: github_runner_needs_update
 
 - name: Recreate runner directory after removal
   ansible.builtin.file:
@@ -130,14 +130,14 @@
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_user }}"
     mode: "0755"
-  when: needs_update
+  when: github_runner_needs_update
 
 - name: Download runner
   ansible.builtin.get_url:
-    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_runner_version }}/actions-runner-linux-x64-{{ github_runner_runner_version }}.tar.gz"
     dest: "{{ github_runner_dir }}/runner.tar.gz"
     mode: "0644"
-  when: needs_install or needs_update
+  when: github_runner_needs_install or github_runner_needs_update
 
 - name: Extract runner
   ansible.builtin.unarchive:
@@ -146,20 +146,20 @@
     remote_src: true
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_user }}"
-  when: needs_install or needs_update
+  when: github_runner_needs_install or github_runner_needs_update
 
 - name: Remove runner tarball
   ansible.builtin.file:
     path: "{{ github_runner_dir }}/runner.tar.gz"
     state: absent
-  when: needs_install or needs_update
+  when: github_runner_needs_install or github_runner_needs_update
 
 - name: Install runner dependencies
   ansible.builtin.command:
     cmd: "./bin/installdependencies.sh"
     chdir: "{{ github_runner_dir }}"
   become: true
-  when: needs_install or needs_update
+  when: github_runner_needs_install or github_runner_needs_update
 
 - name: Install SELinux python bindings
   ansible.builtin.package:
@@ -181,16 +181,16 @@
       ansible.builtin.command:
         cmd: "restorecon -Rv {{ github_runner_dir }}"
       # Check if restorecon actually did anything to report 'changed' status correctly
-      register: restorecon_out
-      changed_when: restorecon_out.stdout | length > 0
+      register: github_runner_restorecon_out
+      changed_when: github_runner_restorecon_out.stdout | length > 0
 
 - name: Register runner
   ansible.builtin.command:
-    cmd: "./config.sh --url {{ github_web_url }} --token {{ github_registration_token }} --name {{ github_runner_name }} --labels {{ github_runner_labels }} --unattended --replace"
+    cmd: "./config.sh --url {{ github_runner_web_url }} --token {{ github_runner_gh_token }} --name {{ github_runner_name }} --labels {{ github_runner_labels }} --unattended --replace"
     chdir: "{{ github_runner_dir }}"
   become: true
   become_user: "{{ github_runner_user }}"
-  when: (needs_install or needs_update) or not runner_config.stat.exists
+  when: (github_runner_needs_install or github_runner_needs_update) or not github_runner_runner_config.stat.exists
 
 - name: Deploy systemd service file
   ansible.builtin.template:
