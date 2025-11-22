@@ -15,7 +15,6 @@
         memory: 3002
         sockets: 1
         primary_disk_size: 10G
-        
 
 - name: Configure samba vm
   hosts: samba

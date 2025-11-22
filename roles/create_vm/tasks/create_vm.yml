@@ -18,7 +18,7 @@
 
 - name: Install Proxmox dependencies in venv
   ansible.builtin.pip:
-    name: 
+    name:
       - proxmoxer
       - requests
     virtualenv: /opt/ansible_venv
@@ -26,7 +26,7 @@
   when: inventory_hostname in groups['proxmox_servers'] | default([])
 
 - name: Set the Python interpreter
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_python_interpreter: /opt/ansible_venv/bin/python3
   when: inventory_hostname in groups['proxmox_servers'] | default([])
 
@@ -45,7 +45,9 @@
 - name: Stop VM before destruction
   ansible.builtin.command:
     cmd: "qm stop {{ newid }}"
-  ignore_errors: true  # Ignored because it might already be stopped
+  register: stop_vm_result
+  failed_when: stop_vm_result.rc not in [0, 2]
+  changed_when: "'stopped' not in stop_vm_result.stdout"
   when:
     - force_recreate | default(false) | bool
     - pre_destroy_check.rc == 0
@@ -56,7 +58,6 @@
   when:
     - force_recreate | default(false) | bool
     - pre_destroy_check.rc == 0
-
 
 
 # --- STEP 1: Bootstrap VM (Check, Clone & Configure) ---
@@ -74,7 +75,7 @@
   ansible.builtin.shell: |
     # Clone the VM
     qm clone {{ template.vmid }} {{ newid }} --name {{ name }} --full 1
-    
+
     # Apply IP config immediately (Fixes the "No route to host" race condition)
     qm set {{ newid }} --ipconfig0 "ip={{ ipaddr }}/24,gw={{ gateway }}"
 
@@ -112,7 +113,7 @@
     disk_config: "{{ (vm_config_json.stdout | from_json)[primary_disk_name] | default('') }}"
     current_size_capture: "{{ disk_config | regex_search('size=([0-9]+[GM])', '\\1') }}"
     current_size: "{{ current_size_capture[0] if current_size_capture else 'unknown' }}"
-  when: 
+  when:
     - current_size != 'unknown'
     - current_size != primary_disk_size
   notify: "reboot vm"
@@ -122,7 +123,7 @@
     cmd: "qm set '{{ newid }}' --virtiofs0 '{{ virtiofs_tag }},expose-xattr=1'"
   vars:
     current_virtiofs: "{{ (vm_config_json.stdout | from_json).virtiofs0 | default('') }}"
-  when: 
+  when:
     - virtiofs_tag is defined
     - virtiofs_tag | length > 0
     - virtiofs_tag not in current_virtiofs

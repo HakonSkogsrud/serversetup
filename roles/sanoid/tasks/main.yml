@@ -1,3 +1,3 @@
 ---
 - name: Run sanoid setup
-  import_tasks: sanoid.yml
+  ansible.builtin.import_tasks: sanoid.yml
