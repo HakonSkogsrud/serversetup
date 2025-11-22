@@ -174,7 +174,7 @@
     - http
     - dns
     - dhcp
-  notify: reload firewalld
+  notify: Reload firewalld
 
 # REVISED Step 7: Handle SELinux state without triggering unnecessary reboots.
 
