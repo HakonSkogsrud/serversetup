@@ -1,3 +1,0 @@
----
-- name: Proxmox directory mapping
-  ansible.builtin.import_tasks: proxmox_directory_mapping.yml
