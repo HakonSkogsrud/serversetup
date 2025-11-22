@@ -23,7 +23,7 @@
     name:
       - intel-media-driver
       - libva-utils
-      - cifs-utils  # Required if your /mnt/storage/smb mounts use cifs
+      - cifs-utils # Required if your /mnt/storage/smb mounts use cifs
     state: present
   become: true
 
@@ -47,7 +47,7 @@
   ansible.builtin.file:
     path: "/home/{{ template.user }}/jellyfin"
     state: directory
-    mode: '0755'
+    mode: "0755"
     owner: "{{ template.user }}"
     group: media
   become: true
@@ -71,7 +71,7 @@
   ansible.builtin.file:
     path: "/home/{{ template.user }}/jellyfin/cache"
     state: directory
-    mode: '0755'
+    mode: "0755"
     owner: "{{ template.user }}"
     group: media
   become: true
