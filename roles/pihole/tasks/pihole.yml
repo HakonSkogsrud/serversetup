@@ -16,14 +16,14 @@
 
 - name: Step 0.1 Identify the active NetworkManager connection for the interface
   ansible.builtin.command: "nmcli -g NAME,DEVICE connection show --active"
-  register: active_connections
+  register: pihole_active_connections
   changed_when: false
-  check_mode: no
+  check_mode: false
 
 - name: Step 0.2 Set connection name as a fact
   ansible.builtin.set_fact:
     pihole_nm_connection_name: "{{ item.split(':')[0] }}"
-  loop: "{{ active_connections.stdout_lines }}"
+  loop: "{{ pihole_active_connections.stdout_lines }}"
   when: "item.split(':')[1] == pihole_ipv6_interface"
 
 - name: Step 0.3 Configure a static Unique Local Address (ULA) for IPv6
@@ -64,7 +64,8 @@
 - name: Update all system packages
   ansible.builtin.dnf:
     name: "*"
-    state: latest
+    state: present
+    update_only: true
     allowerasing: true
 
 - name: Step 2.1 Check if Pi-hole is already installed
@@ -80,9 +81,16 @@
       nameserver 1.1.1.1
     mode: "0644"
 
-- name: Step 2.2 Install Pi-hole if not installed
-  ansible.builtin.shell:
-    cmd: "curl -sSL https://install.pi-hole.net | bash /dev/stdin --unattended"
+- name: Step 2.2.1 Download Pi-hole installer script
+  ansible.builtin.get_url:
+    url: https://install.pi-hole.net
+    dest: /tmp/pihole-installer.sh
+    mode: "0755"
+  when: not pihole_executable.stat.exists
+
+- name: Step 2.2.2 Install Pi-hole if not installed
+  ansible.builtin.command:
+    cmd: bash /tmp/pihole-installer.sh --unattended
   environment:
     PIHOLE_SKIP_OS_CHECK: "true"
     PIHOLE_SELINUX: "true"
@@ -100,15 +108,15 @@
 - name: Check if Pi-hole gravity database exists
   ansible.builtin.stat:
     path: /etc/pihole/gravity.db
-  register: gravity_db
+  register: pihole_gravity_db
 
 - name: Import restore tasks if DB is small (indicating fresh default install)
-  ansible.builtin.ansible.builtin.import_tasks: restore.yml
+  ansible.builtin.import_tasks: restore.yml
   # 15MB = 15728640 bytes. If it's smaller than 15MB, we assume it's the default list and needs restoring.
   # Skip restore for secondary pihole installations
   when:
-    - gravity_db.stat.exists
-    - gravity_db.stat.size < 15728640
+    - pihole_gravity_db.stat.exists
+    - pihole_gravity_db.stat.size < 15728640
     - not (is_secondary_pihole | default(false))
 
 - name: Step 3 Check if directories for SELinux context restore exist
@@ -117,11 +125,11 @@
   loop:
     - /var/www/html
     - /etc/pihole
-  register: selinux_dirs
+  register: pihole_selinux_dirs
 
 - name: Step 3 Restore SELinux file contexts
   ansible.builtin.command: "restorecon -rv {{ item.item }}"
-  loop: "{{ selinux_dirs.results }}"
+  loop: "{{ pihole_selinux_dirs.results }}"
   when: item.stat.exists and item.stat.isdir
   changed_when: false
 
@@ -185,7 +193,7 @@
   ansible.posix.selinux:
     policy: targeted
     state: enforcing
-  register: selinux_config
+  register: pihole_selinux_config
 
 # We use an explicit task to reboot instead of a handler.
 # This respects the 'reboot_required' flag from the module above.
@@ -193,7 +201,7 @@
 - name: Reboot if SELinux config change requires it
   ansible.builtin.reboot:
     msg: "Rebooting to apply persistent SELinux configuration changes"
-  when: selinux_config.reboot_required | default(false)
+  when: pihole_selinux_config.reboot_required | default(false)
 
 - name: Set Pi-hole admin password
   ansible.builtin.command:
@@ -202,6 +210,5 @@
       - setpassword
       - "{{ pihole_password }}"
   become: true
-  register: setpassword_result
   changed_when: false
   no_log: true

@@ -1,44 +1,47 @@
 ---
 - name: Create Teleporter backup on secondary Pi-hole (v6)
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: "pihole-FTL --teleporter"
     chdir: "/tmp"
   delegate_to: pihole-macbook
   become: true
 
 - name: Find the backup filename in /tmp (Checking for .zip)
-  ansible.builtin.shell: "ls -t /tmp/*teleporter*.zip | head -n 1"
+  ansible.builtin.shell: "set -o pipefail && ls -t /tmp/*teleporter*.zip | head -n 1"
+  args:
+    executable: /bin/bash
   delegate_to: pihole-macbook
-  register: teleporter_find_result
+  register: pihole_teleporter_find_result
   become: true
   changed_when: false
 
 - name: Set the filename fact
   ansible.builtin.set_fact:
-    teleporter_filename: "{{ teleporter_find_result.stdout | trim }}"
+    pihole_teleporter_fname: "{{ pihole_teleporter_find_result.stdout | trim }}"
 
 - name: Fail if no file was found
   ansible.builtin.fail:
     msg: "No teleporter .zip file found in /tmp on remote host."
-  when: teleporter_filename == ""
+  when: pihole_teleporter_fname == ""
 
 - name: Fetch the backup file from pihole-macbook
   ansible.builtin.fetch:
-    src: "{{ teleporter_filename }}"
+    src: "{{ pihole_teleporter_fname }}"
     dest: /tmp/
     flat: true
   delegate_to: pihole-macbook
 
 - name: Copy the backup file to the primary Pi-hole
   ansible.builtin.copy:
-    src: "/tmp/{{ teleporter_filename | basename }}"
+    src: "/tmp/{{ pihole_teleporter_fname | basename }}"
     dest: "/tmp/restore.zip"
+    mode: "0644"
 
 - name: Restore configuration from Teleporter backup (v6)
   ansible.builtin.command: "pihole-FTL --teleporter /tmp/restore.zip"
   become: true
-  register: restore_result
-  changed_when: "'Restoring' in restore_result.stdout"
+  register: pihole_restore_result
+  changed_when: "'Restoring' in pihole_restore_result.stdout"
 
 - name: Update Gravity to apply imported lists
   ansible.builtin.command: "/usr/local/bin/pihole -g"
