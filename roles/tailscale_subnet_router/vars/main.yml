@@ -1,4 +1,4 @@
-tailscale_advertise_routes: "10.0.0.0/24"
+tailscale_subnet_router_advertise_routes: "10.0.0.0/24"
 tailscale_hostname: subnet-router
 firewalld_lan_zone: public
 # Location of the state file on the Linux VM

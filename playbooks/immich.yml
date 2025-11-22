@@ -14,7 +14,7 @@
         cores: 3
         memory: 32000
         sockets: 1
-        primary_disk_size: 200G
+        create_vm_disk_size: 200G
         virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Configure samba vm

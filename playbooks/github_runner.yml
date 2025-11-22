@@ -14,7 +14,7 @@
         cores: 2
         memory: 12000
         sockets: 1
-        primary_disk_size: 20G
+        create_vm_disk_size: 20G
 
 
 - name: Configure GitHub Runner

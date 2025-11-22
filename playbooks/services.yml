@@ -11,7 +11,7 @@
     cores: 1
     memory: 10000
     sockets: 1
-    primary_disk_size: 20G
+    create_vm_disk_size: 20G
     virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
   roles:
