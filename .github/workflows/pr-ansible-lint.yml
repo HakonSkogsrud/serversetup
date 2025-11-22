@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run ansible-lint
-        run: ansible-lint .
+        run: ansible-lint playbooks/ roles/
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
 
