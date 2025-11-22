@@ -1,3 +1,3 @@
 ---
 - name: Scheduled reboot
-  import_tasks: scheduled_reboot.yml
+  ansible.builtin.import_tasks: scheduled_reboot.yml

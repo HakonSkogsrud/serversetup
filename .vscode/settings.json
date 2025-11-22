@@ -12,5 +12,5 @@
             "file:///Users/hakonskogsrud/git/serversetup/servers/fileserver/vars.yml"
         ]
     },
-    "ansible.python.interpreterPath": "/Users/hakonskogsrud/git/serversetup/.venv/bin/python",
+    "ansible.python.interpreterPath": "/home/haaksk/Code/serversetup/.venv/bin/python",
 }
