@@ -2,8 +2,8 @@
 # --- 1. Repositories ---
 - name: Enable CodeReady Builder (CRB)
   ansible.builtin.command: dnf config-manager --set-enabled crb
-  register: crb_result
-  changed_when: "'Nothing to do' not in crb_result.stdout"
+  register: jellyfin_crb_result
+  changed_when: "'Nothing to do' not in jellyfin_crb_result.stdout"
   become: true
 
 - name: Install EPEL & RPM Fusion
@@ -105,6 +105,7 @@
           restart: 'unless-stopped'
     owner: "{{ template.user }}"
     group: media
+    mode: "0644"
 
 - name: Start Jellyfin
   community.docker.docker_compose_v2:
