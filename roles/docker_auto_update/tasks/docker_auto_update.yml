@@ -22,9 +22,9 @@
 - name: Add a cron job to run the Docker auto-update script weekly
   ansible.builtin.cron:
     name: "Weekly Docker auto-update"
-    minute: "{{ update_schedule_minute }}"
-    hour: "{{ update_schedule_hour }}"
-    weekday: "{{ update_schedule_weekday }}"
+    minute: "{{ docker_auto_update_cron_minute }}"
+    hour: "{{ docker_auto_update_cron_hour }}"
+    weekday: "{{ docker_auto_update_cron_weekday }}"
     job: "pushover_docker='{{ pushover_docker }}' pushover_user='{{ pushover_user }}' /usr/local/bin/docker_auto_update.sh"
     user: root
 
