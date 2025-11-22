@@ -8,24 +8,15 @@ on:
       - 'inventory/**'
 
   workflow_dispatch:
-    inputs:
-      playbook:
-        description: 'Playbook to run'
-        required: true
-        type: choice
-        options:
-          - all
-          - playbooks/backupserver.yml
-          - playbooks/immich.yml
-          - playbooks/pihole.yml
-          - playbooks/proxmox.yml
-          - playbooks/samba.yml
-          - playbooks/services.yml
-          - playbooks/subnet_router.yml
 
 jobs:
   run-ansible:
     runs-on: self-hosted
+    env:
+      ANSIBLE_CONFIG: ./ansible.cfg
+      ANSIBLE_HOST_KEY_CHECKING: "False"
+      ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+      ANSIBLE_FORCE_COLOR: "true"
     
     steps:
       - name: Checkout repository
@@ -37,81 +28,34 @@ jobs:
       - name: Install Ansible Collections
         run: ansible-galaxy collection install community.docker community.general ansible.posix community.proxmox --force
 
-      
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
-      - name: Run Ansible Playbooks
-        id: ansible_loop
-        env:
-          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
-          ANSIBLE_CONFIG: ./ansible.cfg
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-        shell: bash
-        run: |
-          # 1. Define List
-          ALL_PLAYBOOKS=(
-            "playbooks/backupserver.yml"
-            "playbooks/immich.yml"
-            "playbooks/pihole.yml"
-            "playbooks/proxmox.yml"
-            "playbooks/samba.yml"
-            "playbooks/services.yml"
-            "playbooks/subnet_router.yml"
-          )
+      - name: Run Backupserver
+        run: ansible-playbook playbooks/backupserver.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
-          # 2. Determine Targets
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-             if [[ "${{ github.event.inputs.playbook }}" == "all" ]]; then
-               TARGETS=("${ALL_PLAYBOOKS[@]}")
-               echo "Manual run detected. Running ALL playbooks."
-             else
-               TARGETS=("${{ github.event.inputs.playbook }}")
-               echo "Manual run detected. Target: ${TARGETS[@]}"
-             fi
-          else
-             TARGETS=("${ALL_PLAYBOOKS[@]}")
-             echo "Push detected. Running ALL playbooks."
-          fi
+      - name: Run Immich
+        run: ansible-playbook playbooks/immich.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
-          # 3. Initialize Failure Tracking
-          FAILED_LIST=()
-          EXIT_CODE=0
+      - name: Run Pihole
+        run: ansible-playbook playbooks/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
-          # 4. The Loop
-          for playbook in "${TARGETS[@]}"; do
-            echo "---------------------------------------------------"
-            echo "🚀 STARTING: $playbook"
-            echo "---------------------------------------------------"
-            
-            # Run Ansible (allow failure)
-            if ! ansible-playbook "$playbook" --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}"); then
-              echo "❌ FAILED: $playbook"
-              FAILED_LIST+=("$playbook")
-              EXIT_CODE=1
-              # We do NOT exit here, we continue to the next item
-            else
-              echo "✅ SUCCESS: $playbook"
-            fi
-          done
+      - name: Run Proxmox
+        run: ansible-playbook playbooks/proxmox.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
-          # 5. Final Reporting
-          if [ $EXIT_CODE -ne 0 ]; then
-             # Join array with newlines for env var
-             FAILED_STRING=$(IFS=$'\n'; echo "${FAILED_LIST[*]}")
-             echo "FAILED_PLAYBOOKS<<EOF" >> $GITHUB_ENV
-             echo "$FAILED_STRING" >> $GITHUB_ENV
-             echo "EOF" >> $GITHUB_ENV
-             
-             echo "⚠️  Failures detected in: ${FAILED_LIST[*]}"
-             exit 1
-          else
-             echo "🎉 All playbooks passed successfully."
-             exit 0
-          fi
+      - name: Run Samba
+        run: ansible-playbook playbooks/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+
+      - name: Run Services
+        run: ansible-playbook playbooks/services.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+
+      - name: Run Subnet Router
+        run: ansible-playbook playbooks/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+
+      - name: Run Pihole-secondary
+        run: ansible-playbook playbooks/pihole-secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")  
 
       - name: Notify success via Pushover
         if: success()
@@ -120,28 +64,17 @@ jobs:
             -F "token=${{ secrets.PUSHOVER_APP_TOKEN }}" \
             -F "user=${{ secrets.PUSHOVER_USER_TOKEN }}" \
             -F "title=Ansible Deployment Success" \
-            -F "message=All tasks completed successfully on ${{ github.ref_name }}" \
+            -F "message=Successfully deployed playbooks to homelab!" \
             -F "priority=0" \
             -F "sound=bugle"
       
       - name: Notify failure via Pushover
         if: failure()
         run: |
-          # Retrieve the list of failed files from ENV
-          FAILED_FILES="${{ env.FAILED_PLAYBOOKS }}"
-          
-          if [[ -z "$FAILED_FILES" ]]; then
-             FAILED_FILES="Unknown Error (Script crashed before Ansible)"
-          fi
-
-          # Format message to show list
-          MSG="The following playbooks failed on ${{ github.ref_name }}:
-          $FAILED_FILES"
-
           curl -s -X POST https://api.pushover.net/1/messages.json \
             -F "token=${{ secrets.PUSHOVER_APP_TOKEN }}" \
             -F "user=${{ secrets.PUSHOVER_USER_TOKEN }}" \
             -F "title=Ansible Deployment Failed" \
-            -F "message=$MSG" \
+            -F "message=Deployment failed. Check GitHub Actions logs for details." \
             -F "priority=0" \
             -F "sound=siren"
