@@ -8,6 +8,5 @@
     - sanoid
     - syncoid
     - scheduled_update
-    - proxmox_config  
+    - proxmox_config
     - tailscale_static_route
-

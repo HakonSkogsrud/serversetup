@@ -35,7 +35,7 @@
 
 - name: Check if VM exists (Pre-destruction check)
   ansible.builtin.command:
-    cmd: "qm status {{ newid }}"
+    cmd: "qm status {{ create_vm_newid }}"
   register: create_vm_pre_destroy_check
   failed_when: false
   changed_when: false
@@ -44,7 +44,7 @@
 
 - name: Stop VM before destruction
   ansible.builtin.command:
-    cmd: "qm stop {{ newid }}"
+    cmd: "qm stop {{ create_vm_newid }}"
   register: create_vm_stop_result
   failed_when: create_vm_stop_result.rc not in [0, 2]
   changed_when: "'stopped' not in create_vm_stop_result.stdout"
@@ -54,7 +54,7 @@
 
 - name: Destroy existing VM (Force Recreate)
   ansible.builtin.command:
-    cmd: "qm destroy {{ newid }} --purge"
+    cmd: "qm destroy {{ create_vm_newid }} --purge"
   when:
     - force_recreate | default(false) | bool
     - create_vm_pre_destroy_check.rc == 0
@@ -64,7 +64,7 @@
 # 1. First, check if the VM already exists
 - name: Check if VM exists
   ansible.builtin.command:
-    cmd: "qm status {{ newid }}"
+    cmd: "qm status {{ create_vm_newid }}"
   register: create_vm_status_check
   failed_when: false
   changed_when: false
@@ -73,10 +73,10 @@
 - name: Clone VM and Apply Network Config (CLI)
   ansible.builtin.shell: |
     # Clone the VM
-    qm clone {{ template.vmid }} {{ newid }} --name {{ name }} --full 1
+    qm clone {{ template.vmid }} {{ create_vm_newid }} --name {{ create_vm_name }} --full 1
 
     # Apply IP config immediately (Fixes the "No route to host" race condition)
-    qm set {{ newid }} --ipconfig0 "ip={{ ipaddr }}/24,gw={{ gateway }}"
+    qm set {{ create_vm_newid }} --ipconfig0 "ip={{ create_vm_ipaddr }}/24,gw={{ create_vm_gateway }}"
 
   when: create_vm_status_check.rc != 0
 
@@ -84,14 +84,14 @@
 
 - name: Get current VM configuration (JSON)
   ansible.builtin.command:
-    cmd: "/usr/bin/pvesh get /nodes/{{ create_vm_target_node }}/qemu/{{ newid }}/config --output-format json"
+    cmd: "/usr/bin/pvesh get /nodes/{{ create_vm_target_node }}/qemu/{{ create_vm_newid }}/config --output-format json"
   register: create_vm_config_json
   changed_when: false
   check_mode: false
 
 - name: Ensure VM Resource Allocation
   ansible.builtin.command:
-    cmd: "qm set {{ newid }} --cores {{ cores }} --sockets {{ sockets }} --memory {{ memory }} --balloon {{ balloon }} --onboot 1"
+    cmd: "qm set {{ create_vm_newid }} --cores {{ create_vm_cores }} --sockets {{ create_vm_sockets }} --memory {{ create_vm_memory }} --balloon {{ create_vm_balloon }} --onboot 1"
   vars:
     config: "{{ create_vm_config_json.stdout | from_json }}"
     cur_cores: "{{ config.cores | default(1) | int }}"
@@ -99,15 +99,15 @@
     cur_memory: "{{ config.memory | default(512) | int }}"
     cur_balloon: "{{ config.balloon | default(cur_memory) | int }}"
   when:
-    - (cur_cores != cores | int) or
-      (cur_sockets != sockets | int) or
-      (cur_memory != memory | int) or
-      (cur_balloon != balloon | int)
+    - (cur_cores != create_vm_cores | int) or
+      (cur_sockets != create_vm_sockets | int) or
+      (cur_memory != create_vm_memory | int) or
+      (cur_balloon != create_vm_balloon | int)
   notify: "reboot vm"
 
 - name: Resize Primary Disk
   ansible.builtin.command:
-    cmd: "qm resize {{ newid }} {{ create_vm_disk_name }} {{ create_vm_disk_size }}"
+    cmd: "qm resize {{ create_vm_newid }} {{ create_vm_disk_name }} {{ create_vm_disk_size }}"
   vars:
     disk_config: "{{ (create_vm_config_json.stdout | from_json)[create_vm_disk_name] | default('') }}"
     current_size_capture: "{{ disk_config | regex_search('size=([0-9]+[GM])', '\\1') }}"
@@ -119,26 +119,26 @@
 
 - name: Set virtiofs0 configuration
   ansible.builtin.command:
-    cmd: "qm set '{{ newid }}' --virtiofs0 '{{ virtiofs_tag }},expose-xattr=1'"
+    cmd: "qm set '{{ create_vm_newid }}' --virtiofs0 '{{ create_vm_virtiofs_tag }},expose-xattr=1'"
   vars:
     current_virtiofs: "{{ (create_vm_config_json.stdout | from_json).virtiofs0 | default('') }}"
   when:
-    - virtiofs_tag is defined
-    - virtiofs_tag | length > 0
-    - virtiofs_tag not in current_virtiofs
+    - create_vm_virtiofs_tag is defined
+    - create_vm_virtiofs_tag | length > 0
+    - create_vm_virtiofs_tag not in current_virtiofs
   notify: "reboot vm"
 
 # --- STEP 4: Final Checks ---
 
 - name: Check VM status before starting
   ansible.builtin.command:
-    cmd: "qm status {{ newid }}"
+    cmd: "qm status {{ create_vm_newid }}"
   register: create_vm_status_final
   changed_when: false
 
 - name: Ensure VM is running (Final Check)
   ansible.builtin.command:
-    cmd: "qm start {{ newid }}"
+    cmd: "qm start {{ create_vm_newid }}"
   when:
     - create_vm_status_final.rc == 0
     - "'stopped' in create_vm_status_final.stdout"
@@ -147,7 +147,7 @@
 # --- STEP 5: Connectivity Wait (The Fix) ---
 - name: Wait for VM to initialize and SSH to become accessible
   ansible.builtin.wait_for:
-    host: "{{ ipaddr }}"
+    host: "{{ create_vm_ipaddr }}"
     port: 22
     state: started
     search_regex: OpenSSH # Ensures SSH is actually ready to accept login

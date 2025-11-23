@@ -7,18 +7,16 @@
   roles:
     - role: create_vm
       vars:
-        name: pihole-secondary
-        newid: 4001
-        ipaddr: "{{ vms['pihole-secondary'].ip }}"
-        node: "{{ proxmox2.node }}"
-        api_user: "{{ proxmox2.api_user }}"
-        balloon: 1500
-        cores: 1
-        memory: 2000
-        sockets: 1
+        create_vm_name: pihole-secondary
+        create_vm_newid: 4001
+        create_vm_ipaddr: "{{ vms['pihole-secondary'].ip }}"
+        create_vm_target_node: "{{ proxmox2.node }}"
+        create_vm_balloon: 1500
+        create_vm_cores: 1
+        create_vm_memory: 2000
+        create_vm_sockets: 1
         create_vm_disk_size: 10G
 
-        
 - name: Setup pihole vm
   hosts: pihole-secondary
   become: true

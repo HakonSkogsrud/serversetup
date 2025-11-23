@@ -7,15 +7,14 @@
   roles:
     - role: create_vm
       vars:
-        name: github-runner
-        newid: 4006
-        ipaddr: "{{ vms.github_runner.ip }}"
-        balloon: 3000
-        cores: 2
-        memory: 12000
-        sockets: 1
+        create_vm_name: github-runner
+        create_vm_newid: 4006
+        create_vm_ipaddr: "{{ vms.github_runner.ip }}"
+        create_vm_balloon: 3000
+        create_vm_cores: 2
+        create_vm_memory: 12000
+        create_vm_sockets: 1
         create_vm_disk_size: 20G
-
 
 - name: Configure GitHub Runner
   hosts: github-runner

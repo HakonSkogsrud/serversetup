@@ -1,18 +1,18 @@
 - name: Create services VM
-  hosts: proxmox 
+  hosts: proxmox
   become: false
   vars_files:
     - ../secrets.yml
   vars:
-    name: services
-    newid: 4001
-    ipaddr: "{{ vms.services.ip }}"
-    balloon: 2000
-    cores: 1
-    memory: 10000
-    sockets: 1
+    create_vm_name: services
+    create_vm_newid: 4001
+    create_vm_ipaddr: "{{ vms.services.ip }}"
+    create_vm_balloon: 2000
+    create_vm_cores: 1
+    create_vm_memory: 10000
+    create_vm_sockets: 1
     create_vm_disk_size: 20G
-    virtiofs_tag: "{{ virtiofs_tags.smb }}"
+    create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
   roles:
     - role: create_vm
@@ -20,22 +20,22 @@
   post_tasks:
     - name: Get current VM config for PCI check
       ansible.builtin.command:
-        cmd: "/usr/bin/pvesh get /nodes/{{ inventory_hostname }}/qemu/{{ newid }}/config --output-format json"
+        cmd: "/usr/bin/pvesh get /nodes/{{ inventory_hostname }}/qemu/{{ create_vm_newid }}/config --output-format json"
       register: post_vm_config
       changed_when: false
       become: true
 
     - name: Add UHD Graphics PCI Passthrough
       ansible.builtin.command:
-        cmd: "qm set {{ newid }} --hostpci0 mapping=uhdgraphics"
-      when: 
+        cmd: "qm set {{ create_vm_newid }} --hostpci0 mapping=uhdgraphics"
+      when:
         - "'mapping=uhdgraphics' not in (post_vm_config.stdout | from_json).hostpci0 | default('')"
       register: pci_passthrough_added
       become: true
 
     - name: Cold Boot VM to apply PCI Passthrough
       ansible.builtin.shell: |
-        qm stop {{ newid }} && sleep 5 && qm start {{ newid }}
+        qm stop {{ create_vm_newid }} && sleep 5 && qm start {{ create_vm_newid }}
       when: pci_passthrough_added.changed
       become: true
 
@@ -49,8 +49,6 @@
         timeout: 300
       delegate_to: localhost
       when: pci_passthrough_added.changed
-
-
 
 - name: Configure services
   hosts: services
