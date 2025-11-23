@@ -1,4 +1,13 @@
 ---
+- name: Backup immich before recreate
+  hosts: immich
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Run immich backup script
+      ansible.builtin.command: /usr/local/bin/immich_backup_notice.sh
+      when: force_recreate | default(false) | bool
+
 - name: Create services VM
   hosts: proxmox
   become: false
