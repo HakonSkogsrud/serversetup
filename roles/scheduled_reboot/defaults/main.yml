@@ -1,11 +1,11 @@
 # roles/scheduled_reboot/defaults/main.yml
 ---
 # Default schedule: Thursday at 00:00 (Midnight)
-reboot_schedule_minute: "0"
-reboot_schedule_hour: "0"
-reboot_schedule_weekday: "4" # 0=Sunday, 1=Monday, ..., 4=Thursday
-reboot_schedule_dom: "*" # Day of Month
-reboot_schedule_month: "*" # Month
+scheduled_reboot_cron_minute: "0"
+scheduled_reboot_cron_hour: "0"
+scheduled_reboot_cron_weekday: "4" # 0=Sunday, 1=Monday, ..., 4=Thursday
+scheduled_reboot_cron_dom: "*" # Day of Month
+scheduled_reboot_cron_month: "*" # Month
 
 # Enable or disable Pushover notifications
-send_reboot_pushover_notification: true
+scheduled_reboot_notify: true

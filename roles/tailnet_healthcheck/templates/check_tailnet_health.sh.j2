@@ -33,7 +33,7 @@ fi
 
 # Array of Tailnet devices to check (populated by Ansible)
 HOSTS_TO_CHECK=(
-{% for host in tailnet_hosts %}
+{% for host in tailnet_healthcheck_hosts %}
     "{{ host.name }}|{{ host.ip }}"
 {% endfor %}
 )
