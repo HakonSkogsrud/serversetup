@@ -113,18 +113,20 @@ if $BACKUP_SUCCESSFUL; then
     MESSAGE="Immich backup for $(hostname) completed successfully."
     TITLE="Immich Backup Success"
     PRIORITY=0
+    SOUND="bugle"
 else
     log "ERROR during Immich backup: $ERROR_MESSAGE"
     MESSAGE="Error during Immich backup on $(hostname): $ERROR_MESSAGE"
     TITLE="Immich Backup FAILED"
-    PRIORITY=1
+    PRIORITY=0
+    SOUND="siren"
 fi
 
 # --- Send Pushover Notification ---
 if [ -f "$PUSHOVER_SCRIPT" ]; then
     log "Pushover script found, sending notification..."
     source "$PUSHOVER_SCRIPT"
-    send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY
+    send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY "$SOUND"
 else
     log "Pushover script not found at $PUSHOVER_SCRIPT. Skipping notification."
 fi
