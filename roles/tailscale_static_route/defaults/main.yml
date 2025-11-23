@@ -1,6 +1,6 @@
 # -- Tailscale Static Route Configuration --
 # The CIDR of the entire Tailscale network (CGNAT space)
-tailscale_subnet_cidr: "100.64.0.0/10"
+tailscale_static_route_subnet_cidr: "100.64.0.0/10"
 
 # The local IP address of the Tailscale subnet router VM
-tailscale_router_ip: "{{ vms.subnet_router.ip }}"
+tailscale_static_route_router_ip: "{{ vms.subnet_router.ip }}"
