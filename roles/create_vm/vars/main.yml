@@ -1,4 +1,24 @@
 ---
+# VM identification and naming
+create_vm_name: ""
+create_vm_newid: ""
+
+# Network configuration
+create_vm_ipaddr: ""
+create_vm_gateway: "{{ gateway }}"
+
+# Hardware resources
+create_vm_cores: 2
+create_vm_sockets: 1
+create_vm_memory: 2048
+create_vm_balloon: 1024
+
+# Disk configuration
 create_vm_disk_name: scsi0
-create_vm_target_node: "{{ node | default(proxmox.node) }}"
 create_vm_disk_size: 10G
+
+# Node configuration
+create_vm_target_node: "{{ create_vm_node | default(proxmox.node) }}"
+
+# Optional virtiofs configuration
+create_vm_virtiofs_tag: ""

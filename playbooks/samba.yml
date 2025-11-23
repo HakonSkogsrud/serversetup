@@ -7,13 +7,13 @@
   roles:
     - role: create_vm
       vars:
-        name: samba
-        newid: 4004
-        ipaddr: "{{ vms.samba.ip }}"
-        balloon: 1501
-        cores: 1
-        memory: 3002
-        sockets: 1
+        create_vm_name: samba
+        create_vm_newid: 4004
+        create_vm_ipaddr: "{{ vms.samba.ip }}"
+        create_vm_balloon: 1501
+        create_vm_cores: 1
+        create_vm_memory: 3002
+        create_vm_sockets: 1
         create_vm_disk_size: 10G
 
 - name: Configure samba vm

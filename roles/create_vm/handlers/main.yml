@@ -1,7 +1,7 @@
 ---
 - name: Reboot VM
   ansible.builtin.command:
-    cmd: "qm reboot {{ newid }}"
+    cmd: "qm reboot {{ create_vm_newid }}"
   listen: "reboot vm"
 
 - name: Wait for VM to reboot

@@ -4,10 +4,9 @@
   become: true
   vars_files:
     - ../secrets.yml
-
+  vars:
+    tailscale_node_hostname: backupserver
   roles:
     - scheduled_update
     - scheduled_reboot
-    - role: tailscale_node
-      vars:
-        tailscale_hostname: backupserver
+    - tailscale_node
