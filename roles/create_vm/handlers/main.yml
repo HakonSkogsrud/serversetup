@@ -3,6 +3,7 @@
   ansible.builtin.command:
     cmd: "qm reboot {{ create_vm_newid }}"
   listen: "reboot vm"
+  changed_when: true
 
 - name: Wait for VM to reboot
   ansible.builtin.pause:

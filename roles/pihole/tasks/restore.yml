@@ -5,6 +5,7 @@
     chdir: "/tmp"
   delegate_to: pihole-secondary
   become: true
+  changed_when: true
 
 - name: Find the backup filename in /tmp (Checking for .zip)
   ansible.builtin.shell: "set -o pipefail && ls -t /tmp/*teleporter*.zip | head -n 1"
@@ -46,3 +47,4 @@
 - name: Update Gravity to apply imported lists
   ansible.builtin.command: "/usr/local/bin/pihole -g"
   become: true
+  changed_when: false

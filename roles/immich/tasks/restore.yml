@@ -69,3 +69,4 @@
     executable: /bin/bash
   become: true
   when: not immich_db_dir.stat.exists
+  changed_when: true # Restores database from backup, always makes changes

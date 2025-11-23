@@ -119,6 +119,7 @@
     cmd: firewall-cmd --permanent --zone=tailscale --set-target=ACCEPT
   when: tailscale_subnet_router_create_zone.changed
   register: tailscale_subnet_router_set_target
+  changed_when: tailscale_subnet_router_set_target.rc == 0
 
 - name: Reload firewalld after setting target # noqa: no-handler
   ansible.builtin.service:
@@ -183,6 +184,7 @@
   when:
     - not tailscale_subnet_router_local_state_file.stat.exists
     - tailscale_subnet_router_ts_state | default('NeedsLogin') != 'Running'
+  changed_when: true
 
 # For machines with restored state, only update routes if needed
 - name: Update routes for existing machine
@@ -194,6 +196,7 @@
     - tailscale_subnet_router_local_state_file.stat.exists
     - tailscale_subnet_router_ts_state | default('NeedsLogin') == 'Running'
     - (tailscale_subnet_router_advertise_routes | string) not in (tailscale_subnet_router_ts_routes | default([]) | map(attribute='CIDR') | join(','))
+  changed_when: false
 
 # --- 4. BACKUP STATE (Persistence) ---
 - name: Backup machine-id to local controller

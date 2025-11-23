@@ -116,6 +116,7 @@
   become_user: "{{ github_runner_user }}"
   when: github_runner_needs_update and github_runner_runner_config.stat.exists
   failed_when: false
+  changed_when: true # Unregisters runner from GitHub, always makes changes
 
 - name: Remove old runner files if updating
   ansible.builtin.file:
@@ -160,6 +161,7 @@
     chdir: "{{ github_runner_dir }}"
   become: true
   when: github_runner_needs_install or github_runner_needs_update
+  changed_when: true # Installs dependencies, always makes changes
 
 - name: Install SELinux python bindings
   ansible.builtin.package:
@@ -191,6 +193,7 @@
   become: true
   become_user: "{{ github_runner_user }}"
   when: (github_runner_needs_install or github_runner_needs_update) or not github_runner_runner_config.stat.exists
+  changed_when: true # Registers runner with GitHub, always makes changes
 
 - name: Deploy systemd service file
   ansible.builtin.template:
