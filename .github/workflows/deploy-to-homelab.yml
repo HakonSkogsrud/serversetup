@@ -1,11 +1,11 @@
-name: CD - Deploy to Homelab
+name: Deploy to Homelab
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - '**.yml'
-      - '**.yaml'
-      - 'inventory/**'
+      - "**.yml"
+      - "**.yaml"
+      - "inventory/**"
 
   workflow_dispatch:
 
@@ -17,11 +17,11 @@ jobs:
       ANSIBLE_HOST_KEY_CHECKING: "False"
       ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
       ANSIBLE_FORCE_COLOR: "true"
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Install Python dependencies
         run: pip3.12 install -r requirements.txt
 
@@ -31,8 +31,8 @@ jobs:
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Run Backupserver
         run: ansible-playbook playbooks/backupserver.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
@@ -55,7 +55,7 @@ jobs:
         run: ansible-playbook playbooks/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: Run Pihole-secondary
-        run: ansible-playbook playbooks/pihole-secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")  
+        run: ansible-playbook playbooks/pihole-secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: Notify success via Pushover
         if: success()
@@ -67,7 +67,7 @@ jobs:
             -F "message=Successfully deployed playbooks to homelab!" \
             -F "priority=0" \
             -F "sound=bugle"
-      
+
       - name: Notify failure via Pushover
         if: failure()
         run: |
