@@ -74,7 +74,7 @@
   register: pihole_executable
 
 - name: Force DNS in resolv.conf to ensure installation success
-  copy:
+  ansible.builtin.copy:
     dest: /etc/resolv.conf
     content: |
       nameserver 9.9.9.9

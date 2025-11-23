@@ -114,7 +114,7 @@
   become: true
 
 - name: Open Firewall
-  ansible.builtin.firewalld:
+  ansible.posix.firewalld:
     port: 8096/tcp
     state: enabled
     permanent: true

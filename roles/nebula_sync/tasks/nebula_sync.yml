@@ -1,16 +1,16 @@
 ---
 - name: Set nebula-sync project directory
-  set_fact:
+  ansible.builtin.set_fact:
     nebula_sync_project_dir: "/home/{{ template.user }}/nebula-sync"
 
 - name: Create a directory for nebula-sync
-  file:
+  ansible.builtin.file:
     path: "{{ nebula_sync_project_dir }}"
     state: directory
     mode: "0755"
 
 - name: Create docker-compose.yml from template
-  template:
+  ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ nebula_sync_project_dir }}/docker-compose.yml"
     mode: "0644"

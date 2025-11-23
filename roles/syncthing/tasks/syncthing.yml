@@ -1,19 +1,19 @@
 ---
 - name: Ensure EPEL repository is enabled
   become: true # Use become (sudo) for system-level tasks
-  dnf:
+  ansible.builtin.dnf:
     name: epel-release
     state: present
 
 - name: Install Syncthing package
   become: true
-  dnf:
+  ansible.builtin.dnf:
     name: syncthing
     state: present
 
 - name: Create Syncthing configuration directory for user
   become: true
-  file:
+  ansible.builtin.file:
     path: "/home/{{ template.user }}/.config/syncthing"
     state: directory
     owner: "{{ template.user }}"
@@ -22,7 +22,7 @@
 
 - name: Copy existing Syncthing configuration for
   become: true
-  copy:
+  ansible.builtin.copy:
     src: syncthing_config/
     dest: "/home/{{ template.user }}/.config/syncthing/"
     owner: "{{ template.user }}"
@@ -31,7 +31,7 @@
 
 - name: Enable and start the Syncthing service for user
   become: true
-  systemd:
+  ansible.builtin.systemd:
     name: "syncthing@{{ template.user }}.service"
     enabled: true
     state: started
