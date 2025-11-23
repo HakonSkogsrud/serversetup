@@ -154,6 +154,7 @@
     chdir: "{{ pihole_selinux_repo_dest }}"
   when: pihole_selinux_repo.before != pihole_selinux_repo.after
   notify: Restart pihole-FTL
+  changed_when: true # Always modifies SELinux policy when executed
 
 - name: Step 5 Create tmpfiles.d entry for pihole.log
   ansible.builtin.copy:

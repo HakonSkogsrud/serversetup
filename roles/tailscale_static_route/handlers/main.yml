@@ -1,2 +1,3 @@
 - name: Apply route immediately
   ansible.builtin.command: ip route replace {{ tailscale_static_route_subnet_cidr }} via {{ tailscale_static_route_router_ip }}
+  changed_when: true

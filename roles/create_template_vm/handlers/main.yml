@@ -2,6 +2,7 @@
 - name: Execute the creation script
   ansible.builtin.command:
     cmd: /usr/local/bin/alma_template.sh
+  changed_when: true
 
 - name: Cleanup the script
   ansible.builtin.file:

@@ -58,6 +58,7 @@
   when:
     - force_recreate | default(false) | bool
     - create_vm_pre_destroy_check.rc == 0
+  changed_when: true
 
 # --- STEP 1: Bootstrap VM (Check, Clone & Configure) ---
 
@@ -77,8 +78,8 @@
 
     # Apply IP config immediately (Fixes the "No route to host" race condition)
     qm set {{ create_vm_newid }} --ipconfig0 "ip={{ create_vm_ipaddr }}/24,gw={{ create_vm_gateway }}"
-
   when: create_vm_status_check.rc != 0
+  changed_when: true
 
 # --- STEP 3: Hardware Resources (Idempotent CLI) ---
 
@@ -104,6 +105,7 @@
       (cur_memory != create_vm_memory | int) or
       (cur_balloon != create_vm_balloon | int)
   notify: "reboot vm"
+  changed_when: true
 
 - name: Resize Primary Disk
   ansible.builtin.command:
@@ -116,6 +118,7 @@
     - current_size != 'unknown'
     - current_size != create_vm_disk_size
   notify: "reboot vm"
+  changed_when: true # Resizes VM disk, always makes changes
 
 - name: Set virtiofs0 configuration
   ansible.builtin.command:
@@ -127,6 +130,7 @@
     - create_vm_virtiofs_tag | length > 0
     - create_vm_virtiofs_tag not in current_virtiofs
   notify: "reboot vm"
+  changed_when: true # Modifies VM configuration, always makes changes
 
 # --- STEP 4: Final Checks ---
 

@@ -34,12 +34,14 @@
         - "'mapping=uhdgraphics' not in (post_vm_config.stdout | from_json).hostpci0 | default('')"
       register: pci_passthrough_added
       become: true
+      changed_when: true
 
     - name: Cold Boot VM to apply PCI Passthrough # noqa: no-handler
       ansible.builtin.shell: |
         qm stop {{ newid }} && sleep 5 && qm start {{ newid }}
       when: pci_passthrough_added.changed
       become: true
+      changed_when: true
 
     - name: Wait for VM to come back up after PCI reboot # noqa: no-handler
       ansible.builtin.wait_for:
