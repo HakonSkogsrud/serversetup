@@ -10,7 +10,7 @@
   delegate_to: localhost
   ansible.builtin.stat:
     path: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
-  register: local_machine_id
+  register: tailscale_subnet_router_local_machine_id
   become: false
 
 - name: Restore machine-id from local backup
@@ -18,14 +18,14 @@
     src: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
     dest: /etc/machine-id
     mode: "0444"
-  when: local_machine_id.stat.exists
+  when: tailscale_subnet_router_local_machine_id.stat.exists
 
 # Restore Tailscale state
 - name: Check for local Tailscale state file
   delegate_to: localhost
   ansible.builtin.stat:
     path: "{{ role_path }}/files/{{ inventory_hostname }}.state"
-  register: local_state_file
+  register: tailscale_subnet_router_local_state_file
   become: false
 
 - name: Ensure Tailscale directory exists
@@ -39,7 +39,7 @@
     src: "{{ role_path }}/files/{{ inventory_hostname }}.state"
     dest: /var/lib/tailscale/tailscaled.state
     mode: "0600"
-  when: local_state_file.stat.exists
+  when: tailscale_subnet_router_local_state_file.stat.exists
 
 - name: Ensure Tailscale is started
   ansible.builtin.service:
@@ -49,13 +49,13 @@
 
 - name: Wait for Tailscale daemon to initialize
   ansible.builtin.command: tailscale status
-  register: ts_ready
+  register: tailscale_subnet_router_ts_ready
   retries: 10
   delay: 2
-  until: ts_ready.rc == 0
+  until: tailscale_subnet_router_ts_ready.rc == 0
   changed_when: false
   failed_when: false
-  when: local_state_file.stat.exists
+  when: tailscale_subnet_router_local_state_file.stat.exists
 
 # --- 1. KERNEL SETTINGS (Docs: Enable IP Forwarding) ---
 - name: Configure Kernel Parameters for Subnet Routing
@@ -79,7 +79,7 @@
 
 - name: Allow SSH on LAN zone
   ansible.posix.firewalld:
-    zone: "{{ firewalld_lan_zone }}"
+    zone: "{{ tailscale_subnet_router_fw_lan_zone }}"
     service: ssh
     state: enabled
     permanent: true
@@ -87,7 +87,7 @@
 
 - name: Allow Tailscale UDP Port (Direct Connections)
   ansible.posix.firewalld:
-    zone: "{{ firewalld_lan_zone }}"
+    zone: "{{ tailscale_subnet_router_fw_lan_zone }}"
     port: 41641/udp
     state: enabled
     permanent: true
@@ -95,7 +95,7 @@
 
 - name: Enable Masquerade on LAN (Required for NAT)
   ansible.posix.firewalld:
-    zone: "{{ firewalld_lan_zone }}"
+    zone: "{{ tailscale_subnet_router_fw_lan_zone }}"
     masquerade: true
     state: enabled
     permanent: true
@@ -106,25 +106,25 @@
     zone: tailscale
     state: present
     permanent: true
-  register: create_zone
+  register: tailscale_subnet_router_create_zone
 
 - name: Reload firewalld (Activating Zone)
   ansible.builtin.service:
     name: firewalld
     state: reloaded
-  when: create_zone.changed
+  when: tailscale_subnet_router_create_zone.changed
 
 - name: Set tailscale zone target to ACCEPT
   ansible.builtin.command:
     cmd: firewall-cmd --permanent --zone=tailscale --set-target=ACCEPT
-  when: create_zone.changed
-  register: set_target
+  when: tailscale_subnet_router_create_zone.changed
+  register: tailscale_subnet_router_set_target
 
 - name: Reload firewalld after setting target
   ansible.builtin.service:
     name: firewalld
     state: reloaded
-  when: set_target.changed
+  when: tailscale_subnet_router_set_target.changed
 
 - name: Bind tailscale0 interface to zone
   ansible.posix.firewalld:
@@ -144,7 +144,7 @@
 
 - name: Add tailscale zone as trusted source for LAN zone
   ansible.posix.firewalld:
-    zone: "{{ firewalld_lan_zone }}"
+    zone: "{{ tailscale_subnet_router_fw_lan_zone }}"
     source: 100.64.0.0/10
     state: enabled
     permanent: true
@@ -161,28 +161,28 @@
 # --- 3. REGISTRATION ---
 - name: Check if tailscale is logged in
   ansible.builtin.command: "tailscale status --json"
-  register: tailscale_status
+  register: tailscale_subnet_router_status
   changed_when: false
   failed_when: false
 
 - name: Parse status
   set_fact:
-    ts_state: "{{ (tailscale_status.stdout | from_json).BackendState | default('NeedsLogin') }}"
-    ts_routes: "{{ (tailscale_status.stdout | from_json).Self.AdvertisedRoutes | default([]) }}"
-  when: tailscale_status.rc == 0
+    tailscale_subnet_router_ts_state: "{{ (tailscale_subnet_router_status.stdout | from_json).BackendState | default('NeedsLogin') }}"
+    tailscale_subnet_router_ts_routes: "{{ (tailscale_subnet_router_status.stdout | from_json).Self.AdvertisedRoutes | default([]) }}"
+  when: tailscale_subnet_router_status.rc == 0
 
 # Only run 'tailscale up' if we DON'T have a restored state file
 - name: Register Subnet Router (New Installation Only)
   ansible.builtin.command: >
     tailscale up
     --authkey={{ tailscale_auth_key }}
-    --hostname={{ tailscale_hostname }}
+    --hostname={{ tailscale_subnet_router_hostname }}
     --advertise-routes={{ tailscale_subnet_router_advertise_routes }}
     --accept-risk=lose-ssh
     --snat-subnet-routes=true
   when:
-    - not local_state_file.stat.exists
-    - ts_state | default('NeedsLogin') != 'Running'
+    - not tailscale_subnet_router_local_state_file.stat.exists
+    - tailscale_subnet_router_ts_state | default('NeedsLogin') != 'Running'
 
 # For machines with restored state, only update routes if needed
 - name: Update routes for existing machine
@@ -190,9 +190,9 @@
     tailscale set
     --advertise-routes={{ tailscale_subnet_router_advertise_routes }}
   when:
-    - local_state_file.stat.exists
-    - ts_state | default('NeedsLogin') == 'Running'
-    - (tailscale_subnet_router_advertise_routes | string) not in (ts_routes | default([]) | map(attribute='CIDR') | join(','))
+    - tailscale_subnet_router_local_state_file.stat.exists
+    - tailscale_subnet_router_ts_state | default('NeedsLogin') == 'Running'
+    - (tailscale_subnet_router_advertise_routes | string) not in (tailscale_subnet_router_ts_routes | default([]) | map(attribute='CIDR') | join(','))
 
 # --- 4. BACKUP STATE (Persistence) ---
 - name: Backup machine-id to local controller
@@ -200,11 +200,11 @@
     src: /etc/machine-id
     dest: "{{ role_path }}/files/{{ inventory_hostname }}.machine-id"
     flat: true
-  when: not local_machine_id.stat.exists
+  when: not tailscale_subnet_router_local_machine_id.stat.exists
 
 - name: Backup Tailscale state to local controller
   ansible.builtin.fetch:
     src: /var/lib/tailscale/tailscaled.state
     dest: "{{ role_path }}/files/{{ inventory_hostname }}.state"
     flat: true
-  when: not local_state_file.stat.exists
+  when: not tailscale_subnet_router_local_state_file.stat.exists

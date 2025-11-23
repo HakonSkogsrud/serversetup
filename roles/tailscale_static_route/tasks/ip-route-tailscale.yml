@@ -6,7 +6,7 @@
     content: |
       #!/bin/sh
       if [ "$IFACE" = "vmbr0" ]; then
-          ip route add {{ tailscale_subnet_cidr }} via {{ tailscale_router_ip }} 2>/dev/null || true
+          ip route add {{ tailscale_static_route_subnet_cidr }} via {{ tailscale_static_route_router_ip }} 2>/dev/null || true
       fi
   when: ansible_facts["os_family"] == "Debian"
   notify: Apply route immediately
@@ -16,13 +16,13 @@
     dest: /etc/sysconfig/network-scripts/route-eth0
     mode: "0644"
     content: |
-      {{ tailscale_subnet_cidr }} via {{ tailscale_router_ip }}
+      {{ tailscale_static_route_subnet_cidr }} via {{ tailscale_static_route_router_ip }}
   when: ansible_facts["os_family"] == "RedHat"
   notify: Apply route immediately
 
 - name: Apply route immediately on RHEL/AlmaLinux
   ansible.builtin.command:
-    cmd: ip route add {{ tailscale_subnet_cidr }} via {{ tailscale_router_ip }}
+    cmd: ip route add {{ tailscale_static_route_subnet_cidr }} via {{ tailscale_static_route_router_ip }}
   when: ansible_facts["os_family"] == "RedHat"
   failed_when: false
   changed_when: false
