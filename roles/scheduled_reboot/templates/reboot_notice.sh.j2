@@ -13,7 +13,7 @@ touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Lo
 
 log "System has been rebooted."
 
-{% if send_reboot_pushover_notification | default(true) %}
+{% if scheduled_reboot_notify | default(true) %}
 # Source the Pushover script if it exists
 if [ -f /usr/local/lib/send_pushover.sh ]; then
     source /usr/local/lib/send_pushover.sh

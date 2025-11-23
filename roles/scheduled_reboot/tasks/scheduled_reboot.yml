@@ -30,11 +30,11 @@
 - name: Schedule a weekly reboot
   ansible.builtin.cron:
     name: "Weekly reboot"
-    minute: "{{ reboot_schedule_minute }}"
-    hour: "{{ reboot_schedule_hour }}"
-    weekday: "{{ reboot_schedule_weekday }}"
-    day: "{{ reboot_schedule_dom }}"
-    month: "{{ reboot_schedule_month }}"
+    minute: "{{ scheduled_reboot_cron_minute }}"
+    hour: "{{ scheduled_reboot_cron_hour }}"
+    weekday: "{{ scheduled_reboot_cron_weekday }}"
+    day: "{{ scheduled_reboot_cron_dom }}"
+    month: "{{ scheduled_reboot_cron_month }}"
     job: "/sbin/reboot"
     user: root
 

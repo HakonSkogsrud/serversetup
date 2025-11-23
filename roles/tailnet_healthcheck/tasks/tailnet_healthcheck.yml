@@ -48,7 +48,7 @@
 - name: Add cron job to run the Tailnet check
   ansible.builtin.cron:
     name: "Check Tailnet Device Status"
-    minute: "{{ tailnet_health_cron_minute }}"
+    minute: "{{ tailnet_healthcheck_cron_minute }}"
     user: root
     job: "pushover_tailscale='{{ pushover_tailscale }}' pushover_user='{{ pushover_user }}' /usr/local/bin/check_tailnet_health.sh"
   become: true
