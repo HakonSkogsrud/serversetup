@@ -15,6 +15,7 @@
         create_vm_memory: 3002
         create_vm_sockets: 1
         create_vm_disk_size: 10G
+        create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Configure samba vm
   hosts: samba
