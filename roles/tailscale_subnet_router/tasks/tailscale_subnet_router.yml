@@ -108,19 +108,19 @@
     permanent: true
   register: tailscale_subnet_router_create_zone
 
-- name: Reload firewalld (Activating Zone)
+- name: Reload firewalld (Activating Zone) # noqa: no-handler
   ansible.builtin.service:
     name: firewalld
     state: reloaded
   when: tailscale_subnet_router_create_zone.changed
 
-- name: Set tailscale zone target to ACCEPT
+- name: Set tailscale zone target to ACCEPT # noqa: no-handler
   ansible.builtin.command:
     cmd: firewall-cmd --permanent --zone=tailscale --set-target=ACCEPT
   when: tailscale_subnet_router_create_zone.changed
   register: tailscale_subnet_router_set_target
 
-- name: Reload firewalld after setting target
+- name: Reload firewalld after setting target # noqa: no-handler
   ansible.builtin.service:
     name: firewalld
     state: reloaded

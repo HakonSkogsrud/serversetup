@@ -1,0 +1,9 @@
+---
+- name: Execute the creation script
+  ansible.builtin.command:
+    cmd: /usr/local/bin/alma_template.sh
+
+- name: Cleanup the script
+  ansible.builtin.file:
+    path: /usr/local/bin/alma_template.sh
+    state: absent

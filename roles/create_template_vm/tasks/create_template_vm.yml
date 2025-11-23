@@ -12,20 +12,15 @@
     mode: "0644"
     force: false
   register: create_template_vm_image_download
+  notify:
+    - Execute the creation script
+    - Cleanup the script
 
 - name: Template the creation script
   ansible.builtin.template:
     src: create_alma_template_vm.sh.j2
     dest: /usr/local/bin/alma_template.sh
     mode: "0700"
-
-- name: Execute the creation script
-  ansible.builtin.command:
-    cmd: /usr/local/bin/alma_template.sh
-  # OPTIONAL optimization: Only run the script if the image changed OR the script changed
-  when: create_template_vm_image_download.changed
-
-- name: Cleanup the script
-  ansible.builtin.file:
-    path: /usr/local/bin/alma_template.sh
-    state: absent
+  notify:
+    - Execute the creation script
+    - Cleanup the script

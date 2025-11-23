@@ -35,13 +35,13 @@
       register: pci_passthrough_added
       become: true
 
-    - name: Cold Boot VM to apply PCI Passthrough
+    - name: Cold Boot VM to apply PCI Passthrough # noqa: no-handler
       ansible.builtin.shell: |
         qm stop {{ newid }} && sleep 5 && qm start {{ newid }}
       when: pci_passthrough_added.changed
       become: true
 
-    - name: Wait for VM to come back up after PCI reboot
+    - name: Wait for VM to come back up after PCI reboot # noqa: no-handler
       ansible.builtin.wait_for:
         host: "{{ ipaddr }}"
         port: 22
