@@ -106,7 +106,7 @@
     name: github-runner
     state: stopped
   when: github_runner_needs_update and github_runner_runner_config.stat.exists
-  ignore_errors: true
+  failed_when: false
 
 - name: Remove runner registration if updating
   ansible.builtin.command:
@@ -115,7 +115,7 @@
   become: true
   become_user: "{{ github_runner_user }}"
   when: github_runner_needs_update and github_runner_runner_config.stat.exists
-  ignore_errors: true
+  failed_when: false
 
 - name: Remove old runner files if updating
   ansible.builtin.file:
