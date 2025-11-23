@@ -189,6 +189,7 @@
   ansible.builtin.command: >
     tailscale set
     --advertise-routes={{ tailscale_subnet_router_advertise_routes }}
+    --accept-risk=lose-ssh
   when:
     - tailscale_subnet_router_local_state_file.stat.exists
     - tailscale_subnet_router_ts_state | default('NeedsLogin') == 'Running'
