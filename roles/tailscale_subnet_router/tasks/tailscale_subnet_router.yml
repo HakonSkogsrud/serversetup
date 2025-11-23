@@ -166,7 +166,7 @@
   failed_when: false
 
 - name: Parse status
-  set_fact:
+  ansible.builtin.set_fact:
     tailscale_subnet_router_ts_state: "{{ (tailscale_subnet_router_status.stdout | from_json).BackendState | default('NeedsLogin') }}"
     tailscale_subnet_router_ts_routes: "{{ (tailscale_subnet_router_status.stdout | from_json).Self.AdvertisedRoutes | default([]) }}"
   when: tailscale_subnet_router_status.rc == 0

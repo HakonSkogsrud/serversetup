@@ -3,14 +3,14 @@
   ansible.builtin.command:
     cmd: "pihole-FTL --teleporter"
     chdir: "/tmp"
-  delegate_to: pihole-macbook
+  delegate_to: pihole-secondary
   become: true
 
 - name: Find the backup filename in /tmp (Checking for .zip)
   ansible.builtin.shell: "set -o pipefail && ls -t /tmp/*teleporter*.zip | head -n 1"
   args:
     executable: /bin/bash
-  delegate_to: pihole-macbook
+  delegate_to: pihole-secondary
   register: pihole_teleporter_find_result
   become: true
   changed_when: false
@@ -24,12 +24,12 @@
     msg: "No teleporter .zip file found in /tmp on remote host."
   when: pihole_teleporter_fname == ""
 
-- name: Fetch the backup file from pihole-macbook
+- name: Fetch the backup file from pihole-secondary
   ansible.builtin.fetch:
     src: "{{ pihole_teleporter_fname }}"
     dest: /tmp/
     flat: true
-  delegate_to: pihole-macbook
+  delegate_to: pihole-secondary
 
 - name: Copy the backup file to the primary Pi-hole
   ansible.builtin.copy:

@@ -6,8 +6,8 @@ services:
     container_name: nebula-sync
     restart: unless-stopped
     environment:
-      - PRIMARY=http://{{ pihole_main_ip}}|{{ pihole_password }}
-      - REPLICAS=http://{{ pihole_backup_ip }}|{{ pihole_password }}
+      - PRIMARY=http://{{ pihole_health_main_ip}}|{{ pihole_password }}
+      - REPLICAS=http://{{ pihole_health_backup_ip }}|{{ pihole_password }}
       - FULL_SYNC=true
       - RUN_GRAVITY=true
       - CRON=0 * * * *
