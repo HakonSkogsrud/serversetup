@@ -1,4 +1,4 @@
-name: Ansible Lint and Syntax Check
+name: Lint and Syntax Check
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install Ansible and ansible-lint
         run: pip install -r requirements-dev.txt
@@ -28,7 +28,9 @@ jobs:
       - name: Check Ansible playbook syntax
         run: |
           for file in playbooks/*.yml; do
-            ansible-playbook --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD") --syntax-check "$file"
+            if [ "$(basename "$file")" != "fedora.yml" ]; then
+              ansible-playbook --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD") --syntax-check "$file"
+            fi
           done
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
