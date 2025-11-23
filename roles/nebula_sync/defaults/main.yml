@@ -1,2 +1,2 @@
-pihole_health_main_ip: "{{ vms.pihole.ip }}"
-pihole_health_backup_ip: "{{ vms['pihole-secondary'].ip }}"
+nebula_sync_main_ip: "{{ vms.pihole.ip }}"
+nebula_sync_backup_ip: "{{ vms['pihole-secondary'].ip }}"
