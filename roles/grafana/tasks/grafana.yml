@@ -58,3 +58,5 @@
   become_user: "{{ template.user }}"
   register: grafana_compose_up
   changed_when: "'Started' in grafana_compose_up.stderr or 'Creating' in grafana_compose_up.stderr"
+  args:
+    executable: /bin/bash
