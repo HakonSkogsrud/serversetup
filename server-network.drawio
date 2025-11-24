@@ -1,0 +1,113 @@
+<mxfile host="65bd71144e">
+    <diagram id="Homelab-Network" name="Page-1">
+        <mxGraphModel dx="1514" dy="1029" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="cloud_zone" value="☁️ Tailscale Tailnet (100.64.0.0/10)" style="swimlane;html=1;startSize=20;horizontal=1;containerType=tree;glass=0;fillColor=#e1f5fe;strokeColor=#01579b;fontColor=#000000;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="40" width="480" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="remote_device" value="📱 Remote Phone" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#fbc02d;fontColor=#000000;" parent="cloud_zone" vertex="1">
+                    <mxGeometry x="40" y="60" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="note_ts" value="Mesh VPN Backbone" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="cloud_zone" vertex="1">
+                    <mxGeometry x="180" y="30" width="130" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="offsite_zone" value="🏠 Offsite (Dad&#39;s House)" style="swimlane;html=1;startSize=20;horizontal=1;fillColor=#ffcdd2;strokeColor=#b71c1c;fontColor=#000000;rounded=1;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="240" width="200" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="backup_server" value="🗄️ Backup Server&#xa;(Ubuntu ZFS)&#xa;IP: 100.x.x.x" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffebee;strokeColor=#b71c1c;" parent="offsite_zone" vertex="1">
+                    <mxGeometry x="40" y="50" width="120" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="lan_zone" value="🏠 Home LAN (10.0.0.0/24)" style="swimlane;html=1;startSize=20;horizontal=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="240" width="1070" height="620" as="geometry"/>
+                </mxCell>
+                <mxCell id="gateway" value="Router / Gateway&#xa;(DHCP/DNS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="lan_zone" vertex="1">
+                    <mxGeometry x="450" y="40" width="160" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="pve1_zone" value="🖥️ Proxmox Primary (Host)" style="swimlane;html=1;startSize=20;horizontal=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;rounded=0;" parent="lan_zone" vertex="1">
+                    <mxGeometry x="40" y="120" width="740" height="480" as="geometry"/>
+                </mxCell>
+                <mxCell id="pve1_os" value="🐧 Host OS (Debian)&#xa;ZFS Pool: storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6c8ebf;strokeColor=#1a1a1a;fontColor=#ffffff;fontStyle=1" parent="pve1_zone" vertex="1">
+                    <mxGeometry x="20" y="40" width="140" height="360" as="geometry"/>
+                </mxCell>
+                <mxCell id="vms_group" value="Virtual Machines" style="swimlane;html=1;startSize=20;fillColor=#d5e8d4;strokeColor=#82b366;" parent="pve1_zone" vertex="1">
+                    <mxGeometry x="200" y="47" width="520" height="420" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm_pihole1" value="VM: Pihole (Primary)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="vms_group" vertex="1">
+                    <mxGeometry x="280" y="133" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm_samba" value="VM: Samba" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="vms_group" vertex="1">
+                    <mxGeometry x="30" y="133" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm_immich" value="VM: Immich" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="vms_group" vertex="1">
+                    <mxGeometry x="150" y="133" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm_runner" value="VM: Github-runner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="vms_group" vertex="1">
+                    <mxGeometry x="30" y="180" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm_services" value="VM: Services (Docker Bridge)" style="swimlane;html=1;startSize=20;fillColor=#fff9c4;strokeColor=#d6b656;" parent="vms_group" vertex="1">
+                    <mxGeometry x="20" y="250" width="480" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="svc_jelly" value="Jellyfin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" parent="vm_services" vertex="1">
+                    <mxGeometry x="20" y="40" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="svc_sync" value="Syncthing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" parent="vm_services" vertex="1">
+                    <mxGeometry x="120" y="40" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="svc_nebula" value="Nebula&#xa;(Syncs Piholes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b0e3e6;strokeColor=#006e70;" parent="vm_services" vertex="1">
+                    <mxGeometry x="220" y="40" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="pve2_zone" value="🖥️ Proxmox Secondary (Host)" style="swimlane;html=1;startSize=20;horizontal=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;rounded=0;" parent="lan_zone" vertex="1">
+                    <mxGeometry x="790" y="120" width="250" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm_pihole2" value="VM: Pihole (Secondary)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" parent="pve2_zone" vertex="1">
+                    <mxGeometry x="20" y="47" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="link_lan1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;" parent="lan_zone" source="gateway" target="pve1_zone" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="link_lan2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;" parent="lan_zone" source="gateway" target="pve2_zone" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" style="edgeStyle=none;html=1;entryX=1;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;dashed=1;" edge="1" parent="lan_zone" source="vm_pihole2" target="vm_pihole1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="nebula" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9">
+                    <mxGeometry x="-0.0187" y="-3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="5" style="edgeStyle=none;html=1;exitX=1;exitY=0;exitDx=0;exitDy=15;exitPerimeter=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="backup_server" target="cloud_zone">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="tunnel" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="5">
+                    <mxGeometry x="0.0329" y="-3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" style="edgeStyle=none;html=1;dashed=1;" edge="1" parent="1" source="vm_subnet">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="470" y="190" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="470" y="340"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="12" value="Tunnel" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="11">
+                    <mxGeometry x="-0.005" y="4" relative="1" as="geometry">
+                        <mxPoint x="-56" y="-69" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="vm_subnet" value="VM: Subnet Router&#xa;Advertises: 10.0.0.0/24&#xa;Masquerade: Yes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="450" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="link_static_route" value="Static Route&#xa;100.64.0.0/10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=3;" parent="1" source="pve1_os" target="vm_subnet" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
