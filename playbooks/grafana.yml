@@ -1,0 +1,31 @@
+---
+- name: Create grafana VM
+  hosts: proxmox
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        create_vm_name: grafana
+        create_vm_newid: "{{ vms.grafana.vmid }}"
+        create_vm_ipaddr: "{{ vms.grafana.ip }}"
+        create_vm_balloon: 1501
+        create_vm_cores: 2
+        create_vm_memory: 4096
+        create_vm_sockets: 1
+        create_vm_disk_size: 20G
+
+- name: Configure grafana vm
+  hosts: grafana
+  become: true
+  vars_files:
+    - ../secrets.yml
+  vars:
+    scheduled_reboot_notify: false
+  roles:
+    - firewall
+    - docker
+    - grafana
+    - scheduled_reboot
+    - scheduled_update
