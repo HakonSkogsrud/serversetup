@@ -22,7 +22,7 @@
   vars_files:
     - ../secrets.yml
   vars:
-    send_reboot_pushover_notification: false
+    scheduled_reboot_notify: false
   roles:
     - loki
     - scheduled_reboot

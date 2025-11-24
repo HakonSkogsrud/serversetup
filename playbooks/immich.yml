@@ -33,7 +33,7 @@
   vars_files:
     - ../secrets.yml
   vars:
-    send_reboot_pushover_notification: false
+    scheduled_reboot_notify: false
     docker_compose_paths:
       - "/home/{{ template.user }}/immich-app/docker-compose.yml"
   roles:
