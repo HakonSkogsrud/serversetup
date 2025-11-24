@@ -1,0 +1,60 @@
+---
+- name: Create Grafana base directory
+  ansible.builtin.file:
+    path: "{{ grafana_data_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Create Grafana data subdirectories
+  ansible.builtin.file:
+    path: "{{ grafana_data_dir }}/{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+  loop:
+    - data
+    - provisioning
+    - provisioning/datasources
+    - provisioning/dashboards
+
+- name: Deploy Grafana datasource configuration (Loki)
+  ansible.builtin.template:
+    src: datasources.yml.j2
+    dest: "{{ grafana_data_dir }}/provisioning/datasources/loki.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart grafana
+
+- name: Deploy Grafana docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ grafana_data_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart grafana
+
+- name: Configure firewalld for Grafana
+  ansible.posix.firewalld:
+    port: "{{ grafana_http_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+
+- name: Start Grafana container
+  ansible.builtin.shell:
+    cmd: sg docker -c 'docker compose up -d'
+    chdir: "{{ grafana_data_dir }}"
+  become: true
+  become_user: "{{ template.user }}"
+  register: grafana_compose_up
+  changed_when: "'Started' in grafana_compose_up.stderr or 'Creating' in grafana_compose_up.stderr"

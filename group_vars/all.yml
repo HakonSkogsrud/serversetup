@@ -21,6 +21,9 @@ vms:
   loki:
     ip: 10.0.0.83
     vmid: 4007
+  grafana:
+    ip: 10.0.0.84
+    vmid: 4008
 
 template:
   name: alma-96-cloud-template-automated
