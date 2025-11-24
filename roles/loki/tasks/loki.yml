@@ -56,3 +56,5 @@
   become_user: "{{ template.user }}"
   register: loki_compose_up
   changed_when: "'Started' in loki_compose_up.stderr or 'Creating' in loki_compose_up.stderr"
+  args:
+    executable: /bin/bash
