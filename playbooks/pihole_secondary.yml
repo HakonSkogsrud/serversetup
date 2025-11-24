@@ -24,7 +24,7 @@
     ansible_host_key_checking: false
     is_secondary_pihole: true
     pihole_ipv6_ula_address: "fd00:abcd::27"
-    send_reboot_pushover_notification: false
+    scheduled_reboot_notify: false
   vars_files:
     - ../secrets.yml
   roles:

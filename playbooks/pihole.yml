@@ -21,7 +21,7 @@
   become: true
   vars:
     ansible_host_key_checking: false
-    send_reboot_pushover_notification: false
+    scheduled_reboot_notify: false
   vars_files:
     - ../secrets.yml
   roles:
