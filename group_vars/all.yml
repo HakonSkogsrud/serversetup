@@ -1,27 +1,25 @@
 ---
-
 gateway: 10.0.0.138
 
-# VM and Server IP Addresses
 vms:
-  github_runner:
-    ip: 10.0.0.81
-  immich:
-    ip: 10.0.0.80
-  samba:
-    ip: 10.0.0.79
-  subnet_router:
-    ip: 10.0.0.78
+  backupserver:
+    ip: 100.104.43.26
   services:
     ip: 10.0.0.44
   pihole:
     ip: 10.0.0.77
+  subnet_router:
+    ip: 10.0.0.78
+  samba:
+    ip: 10.0.0.79
+  immich:
+    ip: 10.0.0.80
+  github_runner:
+    ip: 10.0.0.81
   pihole-secondary:
     ip: 10.0.0.82
-  pihole_macbook:
-    ip: 10.0.0.27
-  backupserver:
-    ip: 100.104.43.26
+  loki:
+    ip: 10.0.0.83
 
 template:
   name: alma-96-cloud-template-automated
