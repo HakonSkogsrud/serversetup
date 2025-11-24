@@ -41,12 +41,12 @@ for compose_path in "${docker_auto_update_compose_paths[@]}"; do
 - $compose_path (file not found)"
         continue
     fi
-    
+
     compose_dir=$(dirname "$compose_path")
     app_name=$(basename "$compose_dir")
-    
+
     log "Processing: $app_name at $compose_path"
-    
+
     cd "$compose_dir" || {
         log "ERROR: Could not change to directory: $compose_dir"
         FAILURE_COUNT=$((FAILURE_COUNT + 1))
@@ -54,11 +54,11 @@ for compose_path in "${docker_auto_update_compose_paths[@]}"; do
 - $app_name (directory access failed)"
         continue
     }
-    
+
     log "Running docker compose pull for $app_name..."
     if docker compose pull >> "$LOG_FILE" 2>&1; then
         log "Pull successful for $app_name"
-        
+
         log "Running docker compose up -d for $app_name..."
         if docker compose up -d >> "$LOG_FILE" 2>&1; then
             log "Update successful for $app_name"

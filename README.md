@@ -6,7 +6,7 @@ WORK IN PROGRESS 🔨🧱🏗️
 
 ---
 
-Written by AI. 
+Written by AI.
 
 This high-reliability, low-maintenance infrastructure is built on Proxmox, ZFS for data integrity, and a **full GitOps/Infrastructure as Code (IaC)** model. The architecture is engineered to achieve the **3-2-1 backup rule** and utilize dedicated host redundancy for critical service continuity.
 
