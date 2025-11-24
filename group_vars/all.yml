@@ -20,6 +20,7 @@ vms:
     ip: 10.0.0.82
   loki:
     ip: 10.0.0.83
+    vmid: 4007
 
 template:
   name: alma-96-cloud-template-automated

@@ -1,0 +1,29 @@
+---
+- name: Create loki VM
+  hosts: proxmox
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        create_vm_name: loki
+        create_vm_newid: "{{ vms.loki.vmid }}"
+        create_vm_ipaddr: "{{ vms.loki.ip }}"
+        create_vm_balloon: 1501
+        create_vm_cores: 1
+        create_vm_memory: 4096
+        create_vm_sockets: 1
+        create_vm_disk_size: 20G
+
+- name: Configure loki vm
+  hosts: loki
+  become: true
+  vars_files:
+    - ../secrets.yml
+  vars:
+    send_reboot_pushover_notification: false
+  roles:
+    - loki
+    - scheduled_reboot
+    - scheduled_update
