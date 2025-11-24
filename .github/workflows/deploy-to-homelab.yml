@@ -37,25 +37,25 @@ jobs:
         run: ansible-playbook playbooks/backupserver.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: Run Immich
-        run: ansible-playbook playbooks/immich.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+        run: ansible-playbook playbooks/immich.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Run Pihole
-        run: ansible-playbook playbooks/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+        run: ansible-playbook playbooks/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Run Proxmox
         run: ansible-playbook playbooks/proxmox.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: Run Samba
-        run: ansible-playbook playbooks/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+        run: ansible-playbook playbooks/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Run Services
-        run: ansible-playbook playbooks/services.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+        run: ansible-playbook playbooks/services.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Run Subnet Router
-        run: ansible-playbook playbooks/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+        run: ansible-playbook playbooks/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Run Pihole-secondary
-        run: ansible-playbook playbooks/pihole-secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+        run: ansible-playbook playbooks/pihole_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Notify success via Pushover
         if: success()
