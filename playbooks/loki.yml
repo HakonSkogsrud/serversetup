@@ -25,5 +25,6 @@
     scheduled_reboot_notify: false
   roles:
     - loki
+    - promtail
     - scheduled_reboot
     - scheduled_update

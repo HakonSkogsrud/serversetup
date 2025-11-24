@@ -1,0 +1,17 @@
+---
+promtail_version: "3.3.2"
+promtail_loki_url: "http://{{ vms.loki.ip }}:3100/loki/api/v1/push"
+promtail_port: 9080
+promtail_install_dir: "/usr/local/bin"
+promtail_config_dir: "/etc/promtail"
+promtail_positions_file: "/var/lib/promtail/positions.yaml"
+
+# Extra scrape configs for VM-specific log files
+# Override this in playbooks to add custom logs
+promtail_extra_scrape_configs: []
+# Example:
+# promtail_extra_scrape_configs:
+#   - job_name: immich_backup
+#     path: /var/log/immich_backup.log
+#   - job_name: syncoid
+#     path: /var/log/syncoid_backup.log
