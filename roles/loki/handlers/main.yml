@@ -1,0 +1,7 @@
+---
+- name: Restart loki
+  ansible.builtin.shell:
+    cmd: sg docker -c 'docker compose up -d --force-recreate'
+    chdir: "{{ loki_data_dir }}"
+  become: true
+  become_user: "{{ template.user }}"

@@ -1,0 +1,58 @@
+---
+- name: Create Loki base directory
+  ansible.builtin.file:
+    path: "{{ loki_data_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Create Loki data subdirectory
+  ansible.builtin.file:
+    path: "{{ loki_data_dir }}/data"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Deploy Loki configuration
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ loki_data_dir }}/loki-config.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart loki
+
+- name: Deploy Loki docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ loki_data_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart loki
+
+- name: Configure firewalld for Loki
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - "{{ loki_http_port }}/tcp"
+    - "{{ loki_grpc_port }}/tcp"
+  become: true
+
+- name: Start Loki container
+  ansible.builtin.shell:
+    cmd: sg docker -c 'docker compose up -d'
+    chdir: "{{ loki_data_dir }}"
+  become: true
+  become_user: "{{ template.user }}"
+  register: loki_compose_up
+  changed_when: "'Started' in loki_compose_up.stderr or 'Creating' in loki_compose_up.stderr"
