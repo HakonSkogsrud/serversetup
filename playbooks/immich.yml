@@ -7,6 +7,7 @@
     - name: Run immich backup script
       ansible.builtin.command: /usr/local/bin/immich_backup_notice.sh
       when: force_recreate | default(false) | bool
+      changed_when: true
 
 - name: Create services VM
   hosts: proxmox
