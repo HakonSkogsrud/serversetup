@@ -58,10 +58,10 @@ fi
 if $BACKUP_SUCCESSFUL; then
     log "Dumping and compressing database..."
     sleep 5 # Give services a moment to fully initialize
-    
+
     # The database container is now running from the 'up -d' command.
     $DOCKER_BIN exec -t "$POSTGRES_CONTAINER" pg_dumpall --clean --if-exists --username=postgres | $GZIP_BIN > "$BACKUP_DEST_DIR/immich_db.sql.gz"
-    
+
     if [ "${PIPESTATUS[0]}" -ne 0 ]; then
         ERROR_MESSAGE="Database dump (pg_dumpall) failed."
         BACKUP_SUCCESSFUL=false

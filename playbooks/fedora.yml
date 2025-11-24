@@ -286,4 +286,3 @@
         scope: global
         value: "haaksk@gmail.com"
       become_user: haaksk
-

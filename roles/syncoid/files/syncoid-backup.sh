@@ -34,7 +34,7 @@ acquire_lock() {
             rm -f "$LOCK_FILE"
         fi
     fi
-    
+
     echo $$ > "$LOCK_FILE"
     log "Lock acquired (PID: $$)."
 }

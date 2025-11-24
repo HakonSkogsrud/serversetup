@@ -55,7 +55,7 @@ log "Package update completed successfully."
 # Check if tailscale service is running and restart if needed
 if systemctl is-active --quiet tailscaled.service; then
   log "Detected running Tailscale service: tailscaled.service"
-  
+
   # Check if tailscale needs restart after update
   if command -v dnf >/dev/null 2>&1; then
     if command -v needs-restarting >/dev/null 2>&1; then
@@ -105,7 +105,7 @@ fi
 SYNCTHING_SERVICE=$(systemctl list-units "syncthing@*.service" --state=running --no-legend 2>/dev/null | awk '{print $1}' | head -n1)
 if [ -n "$SYNCTHING_SERVICE" ]; then
   log "Detected running Syncthing service: $SYNCTHING_SERVICE"
-  
+
   # Check if syncthing package was updated
   if command -v dnf >/dev/null 2>&1; then
     if dnf list updates syncthing 2>/dev/null | grep -q syncthing; then

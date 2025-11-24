@@ -32,7 +32,7 @@ qm set $VMID --numa 1
 # Cloud-Init Settings
 qm set $VMID --ciuser $USER
 qm set $VMID --cipassword "$VM_PASSWORD"
-qm set $VMID --sshkeys /root/.ssh/authorized_keys 
+qm set $VMID --sshkeys /root/.ssh/authorized_keys
 qm set $VMID --ipconfig0 ip=dhcp
 
 # DNS Settings
