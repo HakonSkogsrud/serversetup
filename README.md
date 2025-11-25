@@ -1,6 +1,8 @@
 # My Homelab: GitOps & Resilient Self-Hosting
 
-WORK IN PROGRESS 🔨🧱🏗️
+## Tech Stack
+
+<img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="25"/> <img src="https://img.shields.io/badge/AlmaLinux-000000?style=flat&logo=almalinux&logoColor=white" alt="AlmaLinux" height="25"/> <img src="https://img.shields.io/badge/ZFS-0052CC?style=flat&logo=openzfs&logoColor=white" alt="ZFS" height="25"/> <img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white" alt="GitHub" height="25"/> <img src="https://img.shields.io/badge/Ansible-EE0000?style=flat&logo=ansible&logoColor=white" alt="Ansible" height="25"/> <img src="https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker" height="25"/> <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="25"/> <img src="https://img.shields.io/badge/Tailscale-000000?style=flat&logo=tailscale&logoColor=white" alt="Tailscale" height="25"/> <img src="https://img.shields.io/badge/Grafana-F46800?style=flat&logo=grafana&logoColor=white" alt="Grafana" height="25"/> <img src="https://img.shields.io/badge/Loki-F46800?style=flat&logo=grafana&logoColor=white" alt="Loki" height="25"/> <img src="https://img.shields.io/badge/Immich-4250AF?style=flat&logo=immich&logoColor=white" alt="Immich" height="25"/> <img src="https://img.shields.io/badge/Jellyfin-00A4DC?style=flat&logo=jellyfin&logoColor=white" alt="Jellyfin" height="25"/> <img src="https://img.shields.io/badge/Syncthing-0891D1?style=flat&logo=syncthing&logoColor=white" alt="Syncthing" height="25"/> <img src="https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white" alt="Ubuntu" height="25"/> <img src="https://img.shields.io/badge/Samba-B10000?style=flat&logo=samba&logoColor=white" alt="Samba" height="25"/> <img src="https://img.shields.io/badge/firewalld-EE0000?style=flat&logo=firewalld&logoColor=white" alt="firewalld" height="25"/> <img src="https://img.shields.io/badge/SELinux-0066CC?style=flat&logo=linux&logoColor=white" alt="SELinux" height="25"/>
 
 ![setup](server-architecture.png)
 
@@ -10,11 +12,12 @@ This infrastructure is built on Proxmox, ZFS, and a **GitOps/Infrastructure as C
 
 ### Automation & Maintenance
 
-My homelab uses a strict GitOps principle where a single GitHub repository is the source of truth.
+My homelab uses a strict GitOps principle where a single GitHub repository is the source of truth. All VMs are build from Alma Linux.
 
 - **"Nuke and Pave" Pipeline:** A **`github-runner` VM** executes the CI/CD pipeline. To prevent drift, major updates involve destroying the old instance and reprovisioning a new one from the Golden Image.
 - **Weekly Maintenance:** Ansible configures local **cron jobs** on VMs to handle OS updates, service restarts, and updates for Pi-hole and Docker Compose apps.
 - **Alerting:** Scripts log activity and provide instant feedback (success/failure) to my phone via **Pushover**.
+- **Observability:** **Loki** centralizes log aggregation from all VMs (via **Promtail**), while **Grafana** provides visualization and monitoring dashboards for the entire infrastructure.
 
 ### Core Infrastructure & Security
 
@@ -26,7 +29,7 @@ My homelab uses a strict GitOps principle where a single GitHub repository is th
 
 **Tailscale** provides a secure mesh backbone. Primary and secondary Pi-hole VMs provide content filtering and DNS resolution for the entire network via the gateway.
 
-- **Key VMs:** **`github-runner`** (CI/CD), **`samba`** (File server/backup ingestion), **`immich`** (Photos/Video), and **`services`** (Docker host for Jellyfin, Syncthing, Nebula).
+- **Key VMs:** **`github-runner`** (CI/CD), **`samba`** (File server/backup ingestion), **`immich`** (Photos/Video), **`loki`** (Log aggregation), **`grafana`** (Monitoring/Visualization), and **`services`** (Docker host for Jellyfin, Syncthing, Nebula).
 
 ### Data Protection (3-2-1 Strategy)
 
