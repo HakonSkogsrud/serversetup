@@ -41,3 +41,4 @@
     - tailscale_subnet_router
     - scheduled_reboot
     - scheduled_update
+    - promtail

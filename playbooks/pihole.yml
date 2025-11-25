@@ -29,3 +29,4 @@
     - scheduled_reboot
     - pihole
     - pihole_gravity_update
+    - promtail

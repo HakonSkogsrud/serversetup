@@ -72,3 +72,4 @@
     - syncthing
     - jellyfin
     - docker_auto_update
+    - promtail
