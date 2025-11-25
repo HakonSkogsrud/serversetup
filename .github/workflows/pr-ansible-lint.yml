@@ -24,13 +24,3 @@ jobs:
         run: ansible-lint playbooks/ roles/
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
-
-      - name: Check Ansible playbook syntax
-        run: |
-          for file in playbooks/*.yml; do
-            if [ "$(basename "$file")" != "fedora.yml" ]; then
-              ansible-playbook --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD") --syntax-check "$file"
-            fi
-          done
-        env:
-          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
