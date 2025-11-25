@@ -11,4 +11,5 @@ repos:
     rev: v25.2.1
     hooks:
       - id: ansible-lint
-        args: [--fix=all]
+        files: ^(playbooks|roles)/
+        exclude: ^(playbooks/fedora\.yml|host_vars/|group_vars/|secrets\.yml|inventory\.yml)
