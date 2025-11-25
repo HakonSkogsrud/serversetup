@@ -23,8 +23,11 @@
     - ../secrets.yml
   vars:
     scheduled_reboot_notify: false
+    docker_auto_update_compose_paths:
+      - "/home/{{ template.user }}/loki/docker-compose.yml"
   roles:
     - loki
     - promtail
+    - docker_auto_update
     - scheduled_reboot
     - scheduled_update
