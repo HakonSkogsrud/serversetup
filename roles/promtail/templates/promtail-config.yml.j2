@@ -54,7 +54,7 @@ scrape_configs:
       - source_labels: [__path__]
         regex: '.*/([^/]+\.log)'
         target_label: filename
-
+{% if promtail_docker_installed | default(false) %}
   # Docker container logs with service discovery
   - job_name: docker
     docker_sd_configs:
@@ -87,3 +87,4 @@ scrape_configs:
       # Use log field as the actual log line
       - output:
           source: log
+{% endif %}

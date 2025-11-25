@@ -63,6 +63,7 @@
     docker_compose_paths:
       - "/home/{{ template.user }}/jellyfin/docker-compose.yml"
       - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
+    promtail_docker_installed: true
   roles:
     - scheduled_update
     - scheduled_reboot

@@ -19,7 +19,7 @@
   become: true
 
 - name: Install unzip if not present
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: unzip
     state: present
   become: true

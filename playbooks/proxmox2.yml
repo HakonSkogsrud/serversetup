@@ -6,3 +6,4 @@
   roles:
     - create_template_vm
     - scheduled_update
+    - promtail

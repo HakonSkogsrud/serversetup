@@ -45,6 +45,9 @@ jobs:
       - name: Run Proxmox
         run: ansible-playbook playbooks/proxmox.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
+      - name: Run Proxmox2
+        run: ansible-playbook playbooks/proxmox2.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+
       - name: Run Samba
         run: ansible-playbook playbooks/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
