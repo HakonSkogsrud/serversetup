@@ -1,5 +1,5 @@
 ---
-loki_version: "3.3.2"
+loki_version: "latest"
 loki_http_port: 3100
 loki_grpc_port: 9096
 loki_retention_period: "744h" # 31 days
