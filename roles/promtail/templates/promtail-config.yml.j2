@@ -54,3 +54,36 @@ scrape_configs:
       - source_labels: [__path__]
         regex: '.*/([^/]+\.log)'
         target_label: filename
+
+  # Docker container logs with service discovery
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 30s
+    relabel_configs:
+      # Use container name as a label
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container_name
+      # Add container ID
+      - source_labels: ['__meta_docker_container_id']
+        target_label: container_id
+      # Set the log path
+      - source_labels: ['__meta_docker_container_id']
+        target_label: __path__
+        replacement: /var/lib/docker/containers/$1/*-json.log
+      # Add host label
+      - replacement: {{ ansible_hostname }}
+        target_label: host
+    pipeline_stages:
+      # Parse Docker JSON log format
+      - json:
+          expressions:
+            stream: stream
+            log: log
+            time: time
+      - labels:
+          stream:
+      # Use log field as the actual log line
+      - output:
+          source: log
