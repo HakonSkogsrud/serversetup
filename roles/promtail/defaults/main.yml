@@ -5,3 +5,4 @@ promtail_port: 9080
 promtail_install_dir: "/usr/local/bin"
 promtail_config_dir: "/etc/promtail"
 promtail_positions_file: "/var/lib/promtail/positions.yaml"
+promtail_docker_installed: false

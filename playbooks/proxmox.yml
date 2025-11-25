@@ -10,3 +10,4 @@
     - scheduled_update
     - proxmox_config
     - tailscale_static_route
+    - promtail

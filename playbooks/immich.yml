@@ -36,6 +36,7 @@
     scheduled_reboot_notify: false
     docker_compose_paths:
       - "/home/{{ template.user }}/immich-app/docker-compose.yml"
+    promtail_docker_installed: true
     promtail_extra_scrape_configs:
       - job_name: immich_backup
         path: /var/log/immich_backup.log
