@@ -8,7 +8,6 @@ pihole_ipv4_address: "{{ ansible_facts[pihole_interface]['ipv4']['address'] }}"
 pihole_ipv6_interface: "eth0"
 pihole_ipv6_ula_address: "fd00:abcd::28"
 
+# Upstream DNS servers (IPv4 only for better compatibility)
 pihole_upstream_dns_1: "9.9.9.9"
 pihole_upstream_dns_2: "149.112.112.112"
-pihole_upstream_dns_3: "2620:fe::fe"
-pihole_upstream_dns_4: "2620:fe::9"
