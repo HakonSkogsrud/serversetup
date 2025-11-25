@@ -40,20 +40,17 @@ scrape_configs:
           host: {{ ansible_hostname }}
           __path__: /var/log/secure
 
-{% if promtail_extra_scrape_configs | length > 0 %}
-  # Custom logs for this VM
-{% for config in promtail_extra_scrape_configs %}
-  - job_name: {{ config.job_name }}
+  # All log files in /var/log
+  - job_name: varlog
     static_configs:
       - targets:
           - localhost
         labels:
-          job: {{ config.job_name }}
+          job: varlog
           host: {{ ansible_hostname }}
-          __path__: {{ config.path }}
-{% if config.get('pipeline_stages') %}
-    pipeline_stages:
-{{ config.pipeline_stages | to_nice_yaml(indent=2) | indent(6, first=True) }}
-{% endif %}
-{% endfor %}
-{% endif %}
+          __path__: /var/log/*.log
+    relabel_configs:
+      # Extract filename from path and add as 'filename' label
+      - source_labels: [__path__]
+        regex: '.*/([^/]+\.log)'
+        target_label: filename
