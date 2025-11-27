@@ -4,3 +4,4 @@ loki_http_port: 3100
 loki_grpc_port: 9096
 loki_retention_period: "744h" # 31 days
 loki_data_dir: "/home/{{ template.user }}/loki"
+loki_storage_path: "/mnt/storage/smb/loki"

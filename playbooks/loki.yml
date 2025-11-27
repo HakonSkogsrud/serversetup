@@ -15,6 +15,7 @@
         create_vm_memory: 4096
         create_vm_sockets: 1
         create_vm_disk_size: 20G
+        create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Configure loki vm
   hosts: loki
@@ -26,6 +27,7 @@
     docker_auto_update_compose_paths:
       - "/home/{{ template.user }}/loki/docker-compose.yml"
   roles:
+    - mount_virtiofs
     - loki
     - promtail
     - docker_auto_update

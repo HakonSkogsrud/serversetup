@@ -8,9 +8,9 @@
     group: "{{ template.user }}"
   become: true
 
-- name: Create Loki data subdirectory
+- name: Create Loki storage data directory
   ansible.builtin.file:
-    path: "{{ loki_data_dir }}/data"
+    path: "{{ loki_storage_path }}/data"
     state: directory
     mode: "0755"
     owner: "{{ template.user }}"
