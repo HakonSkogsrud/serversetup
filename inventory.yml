@@ -28,6 +28,9 @@ all:
         pihole-secondary:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms['pihole-secondary'].ip }}"
+        subnet-router-secondary:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms['subnet-router-secondary'].ip }}"
         backupserver:
           ansible_host: "{{ vms.backupserver.ip }}"
           ansible_user: "{{ template.user }}"

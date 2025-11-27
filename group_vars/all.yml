@@ -24,6 +24,9 @@ vms:
   grafana:
     ip: 10.0.0.84
     vmid: 4008
+  subnet-router-secondary:
+    ip: 10.0.0.85
+    vmid: 4009
 
 template:
   name: alma-96-cloud-template-automated

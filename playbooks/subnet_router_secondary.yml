@@ -1,0 +1,45 @@
+---
+- name: Create tailscale subnet router VM (Secondary)
+  hosts: proxmox2
+  become: false
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - role: create_vm
+      vars:
+        create_vm_name: subnet-router-secondary
+        create_vm_newid: "{{ vms['subnet-router-secondary'].vmid }}"
+        create_vm_ipaddr: "{{ vms['subnet-router-secondary'].ip }}"
+        create_vm_target_node: "{{ proxmox2.node }}"
+        create_vm_balloon: 1500
+        create_vm_cores: 1
+        create_vm_memory: 3000
+        create_vm_sockets: 1
+        create_vm_disk_size: 10G
+
+- name: Setup subnet router (Secondary)
+  hosts: subnet-router-secondary
+  become: true
+  gather_facts: false
+  pre_tasks:
+    - name: Wait for target to be reachable via SSH
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 300
+        connect_timeout: 5
+        sleep: 5
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  vars:
+    ansible_host_key_checking: false
+    scheduled_reboot_notify: false
+    tailscale_subnet_router_hostname: subnet-router-secondary
+  vars_files:
+    - ../secrets.yml
+  roles:
+    - tailscale_subnet_router
+    - scheduled_reboot
+    - scheduled_update
+    - promtail
