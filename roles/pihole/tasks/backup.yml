@@ -1,0 +1,43 @@
+---
+- name: Check if Pi-hole is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/pihole
+  register: pihole_backup_executable
+
+- name: Create Teleporter backup
+  when: pihole_backup_executable.stat.exists
+  block:
+    - name: Create Teleporter backup (v6)
+      ansible.builtin.command:
+        cmd: "pihole-FTL --teleporter"
+        chdir: "/tmp"
+      become: true
+      changed_when: true
+
+    - name: Find the backup filename in /tmp
+      ansible.builtin.shell: "set -o pipefail && ls -t /tmp/*teleporter*.zip | head -n 1"
+      args:
+        executable: /bin/bash
+      register: pihole_backup_find_result
+      become: true
+      changed_when: false
+
+    - name: Set the backup filename fact
+      ansible.builtin.set_fact:
+        pihole_backup_fname: "{{ pihole_backup_find_result.stdout | trim }}"
+
+    - name: Fail if no backup file was found
+      ansible.builtin.fail:
+        msg: "No teleporter .zip file found in /tmp."
+      when: pihole_backup_fname == ""
+
+    - name: Fetch backup to controller
+      ansible.builtin.fetch:
+        src: "{{ pihole_backup_fname }}"
+        dest: "/tmp/pihole-teleporter-latest.zip"
+        flat: true
+
+    - name: Clean up temp backup file on remote
+      ansible.builtin.file:
+        path: "{{ pihole_backup_fname }}"
+        state: absent

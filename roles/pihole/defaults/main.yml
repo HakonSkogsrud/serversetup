@@ -11,3 +11,6 @@ pihole_ipv6_ula_address: "fd00:abcd::28"
 # Upstream DNS servers (IPv4 only for better compatibility)
 pihole_upstream_dns_1: "9.9.9.9"
 pihole_upstream_dns_2: "149.112.112.112"
+
+# Backup settings
+pihole_backup_path: "/mnt/storage/smb/pihole"
