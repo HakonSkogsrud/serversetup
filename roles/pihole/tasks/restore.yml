@@ -1,42 +1,51 @@
 ---
-- name: Create Teleporter backup on secondary Pi-hole (v6)
-  ansible.builtin.command:
-    cmd: "pihole-FTL --teleporter"
-    chdir: "/tmp"
-  delegate_to: pihole-secondary
-  become: true
-  changed_when: true
+- name: Check if backup file exists on controller
+  ansible.builtin.stat:
+    path: "/tmp/pihole-teleporter-latest.zip"
+  delegate_to: localhost
+  become: false
+  register: pihole_controller_backup
 
-- name: Find the backup filename in /tmp (Checking for .zip)
-  ansible.builtin.shell: "set -o pipefail && ls -t /tmp/*teleporter*.zip | head -n 1"
-  args:
-    executable: /bin/bash
-  delegate_to: pihole-secondary
-  register: pihole_teleporter_find_result
-  become: true
-  changed_when: false
+- name: Check if backup file exists on storage
+  ansible.builtin.stat:
+    path: "{{ pihole_backup_path }}/pihole-teleporter-latest.zip"
+  register: pihole_storage_backup
 
-- name: Set the filename fact
+- name: Set backup source fact
   ansible.builtin.set_fact:
-    pihole_teleporter_fname: "{{ pihole_teleporter_find_result.stdout | trim }}"
+    pihole_backup_source: >-
+      {{ '/tmp/pihole-teleporter-latest.zip' if pihole_controller_backup.stat.exists
+         else (pihole_backup_path ~ '/pihole-teleporter-latest.zip') if pihole_storage_backup.stat.exists
+         else '' }}
+    pihole_backup_is_remote: "{{ pihole_storage_backup.stat.exists and not pihole_controller_backup.stat.exists }}"
 
-- name: Fail if no file was found
+- name: Fail if no backup file found
   ansible.builtin.fail:
-    msg: "No teleporter .zip file found in /tmp on remote host."
-  when: pihole_teleporter_fname == ""
+    msg: "No backup file found on controller (/tmp/) or storage ({{ pihole_backup_path }}/)"
+  when: pihole_backup_source == ''
 
-- name: Fetch the backup file from pihole-secondary
-  ansible.builtin.fetch:
-    src: "{{ pihole_teleporter_fname }}"
-    dest: /tmp/
-    flat: true
-  delegate_to: pihole-secondary
-
-- name: Copy the backup file to the primary Pi-hole
+- name: Copy backup from controller to remote
   ansible.builtin.copy:
-    src: "/tmp/{{ pihole_teleporter_fname | basename }}"
+    src: "{{ pihole_backup_source }}"
     dest: "/tmp/restore.zip"
     mode: "0644"
+  when: not pihole_backup_is_remote | bool
+
+- name: Copy backup from storage to temp (remote_src)
+  ansible.builtin.copy:
+    src: "{{ pihole_backup_source }}"
+    dest: "/tmp/restore.zip"
+    mode: "0644"
+    remote_src: true
+  when: pihole_backup_is_remote | bool
+
+- name: Copy backup to persistent storage
+  ansible.builtin.copy:
+    src: "/tmp/restore.zip"
+    dest: "{{ pihole_backup_path }}/pihole-teleporter-latest.zip"
+    mode: "0644"
+    remote_src: true
+  when: not pihole_backup_is_remote | bool
 
 - name: Restore configuration from Teleporter backup (v6)
   ansible.builtin.command: "pihole-FTL --teleporter /tmp/restore.zip"
@@ -48,3 +57,8 @@
   ansible.builtin.command: "/usr/local/bin/pihole -g"
   become: true
   changed_when: false
+
+- name: Clean up temp restore file
+  ansible.builtin.file:
+    path: "/tmp/restore.zip"
+    state: absent

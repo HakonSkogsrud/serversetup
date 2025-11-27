@@ -1,4 +1,16 @@
 ---
+- name: Backup pihole before recreating VM
+  hosts: pihole
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  tasks:
+    - name: Take backup of current pihole
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/../roles/pihole/tasks/backup.yml"
+      when: force_recreate | default(false) | bool
+
 - name: Create pihole VM
   hosts: proxmox
   become: false
@@ -15,6 +27,7 @@
         create_vm_memory: 2000
         create_vm_sockets: 1
         create_vm_disk_size: 10G
+        create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Setup pihole vm
   hosts: pihole
@@ -25,6 +38,7 @@
   vars_files:
     - ../secrets.yml
   roles:
+    - mount_virtiofs
     - scheduled_update
     - scheduled_reboot
     - pihole
