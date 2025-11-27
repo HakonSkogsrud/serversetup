@@ -18,6 +18,7 @@
     - { key: "pushover_tailscale", value: "{{ pushover_tailscale }}" }
     - { key: "pushover_gravity", value: "{{ pushover_gravity }}" }
     - { key: "pushover_docker", value: "{{ pushover_docker }}" }
+    - { key: "pushover_template", value: "{{ pushover_template }}" }
   no_log: true
 
 - name: Copy pushover function to proxmox

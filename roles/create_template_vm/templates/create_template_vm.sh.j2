@@ -1,0 +1,242 @@
+#!/bin/bash
+
+# ==============================================================================
+# AlmaLinux Cloud Template VM Creator
+#
+# This script downloads the latest AlmaLinux Cloud image (if checksum differs),
+# destroys any existing template VM, and recreates it from the new image.
+# Designed to run via cron on Proxmox hosts.
+# ==============================================================================
+
+# --- Configuration ---
+LOG_FILE="{{ create_template_vm_log_file }}"
+SCRIPT_NAME="{{ create_template_vm_script_name }}"
+
+# Source logging library
+source /usr/local/lib/logging.sh
+source /usr/local/lib/send_pushover.sh
+
+# Ensure the log file is accessible
+touch "$LOG_FILE" 2>/dev/null || log "WARNING" "Could not access $LOG_FILE. Logging only to cron output."
+
+# --- Variables ---
+VMID="{{ template.vmid }}"
+IMAGE_NAME="{{ template.name }}"
+USER="{{ template.user }}"
+VM_PASSWORD="{{ vm_password }}"
+GATEWAY="{{ gateway }}"
+STORAGE="{{ create_template_vm_storage }}"
+SEARCH_DOMAIN="{{ create_template_vm_template_search_domain }}"
+
+IMAGE_URL="{{ create_template_vm_alma_image_url }}"
+IMAGE_FILENAME="{{ create_template_vm_alma_image_filename }}"
+IMAGE_DOWNLOAD_PATH="{{ create_template_vm_image_download_path }}"
+IMAGE_FILE="${IMAGE_DOWNLOAD_PATH}/${IMAGE_FILENAME}"
+CHECKSUM_CACHE_FILE="{{ create_template_vm_checksum_cache_file }}"
+
+# Checksum URL (AlmaLinux provides CHECKSUM file in same directory)
+CHECKSUM_URL="{{ create_template_vm_alma_checksum_url }}"
+
+# --- Functions ---
+
+send_failure_notification() {
+    local message="$1"
+    log "ERROR" "$message"
+    if [[ -n "${pushover_template:-}" ]]; then
+        send_pushover "$pushover_template" "$message" "Template VM Creation FAILED" 0 "siren"
+    else
+        log "WARNING" "Pushover token not set, skipping notification"
+    fi
+}
+
+get_remote_checksum() {
+    log "INFO" "Fetching remote checksum from ${CHECKSUM_URL}" >&2
+    local checksum_content
+    checksum_content=$(curl -sL "$CHECKSUM_URL" 2>/dev/null)
+    if [[ $? -ne 0 ]] || [[ -z "$checksum_content" ]]; then
+        log "ERROR" "Failed to fetch remote checksum" >&2
+        return 1
+    fi
+
+    # Extract SHA256 checksum for the specific image file
+    # AlmaLinux CHECKSUM format: "SHA256 (filename) = checksum"
+    local checksum
+    checksum=$(echo "$checksum_content" | grep "SHA256 (${IMAGE_FILENAME})" | awk '{print $4}')
+
+    if [[ -z "$checksum" ]]; then
+        # Try alternative format: "checksum  filename"
+        checksum=$(echo "$checksum_content" | grep "${IMAGE_FILENAME}" | awk '{print $1}')
+    fi
+
+    if [[ -z "$checksum" ]]; then
+        log "ERROR" "Could not extract checksum for ${IMAGE_FILENAME} from remote CHECKSUM file" >&2
+        return 1
+    fi
+
+    echo "$checksum"
+}
+
+get_cached_checksum() {
+    if [[ -f "$CHECKSUM_CACHE_FILE" ]]; then
+        cat "$CHECKSUM_CACHE_FILE"
+    else
+        echo ""
+    fi
+}
+
+save_checksum() {
+    local checksum="$1"
+    echo "$checksum" > "$CHECKSUM_CACHE_FILE"
+}
+
+download_image() {
+    log "INFO" "Downloading AlmaLinux Cloud image from ${IMAGE_URL}"
+
+    # Ensure download directory exists
+    mkdir -p "$IMAGE_DOWNLOAD_PATH"
+
+    if ! curl -L -o "$IMAGE_FILE" "$IMAGE_URL"; then
+        send_failure_notification "Failed to download AlmaLinux Cloud image from ${IMAGE_URL}"
+        return 1
+    fi
+
+    log "INFO" "Download completed: ${IMAGE_FILE}"
+    return 0
+}
+
+verify_download() {
+    local expected_checksum="$1"
+    log "INFO" "Verifying downloaded image checksum"
+
+    local actual_checksum
+    actual_checksum=$(sha256sum "$IMAGE_FILE" | awk '{print $1}')
+
+    if [[ "$actual_checksum" != "$expected_checksum" ]]; then
+        send_failure_notification "Checksum verification failed! Expected: ${expected_checksum}, Got: ${actual_checksum}"
+        return 1
+    fi
+
+    log "INFO" "Checksum verification passed"
+    return 0
+}
+
+destroy_existing_template() {
+    log "INFO" "Checking for existing template VM ${VMID}"
+
+    if qm status "$VMID" &>/dev/null; then
+        log "INFO" "Destroying existing template VM ${VMID}"
+        if ! qm destroy "$VMID" --purge; then
+            send_failure_notification "Failed to destroy existing template VM ${VMID}"
+            return 1
+        fi
+        log "INFO" "Existing template VM destroyed"
+    else
+        log "INFO" "No existing template VM found with ID ${VMID}"
+    fi
+    return 0
+}
+
+create_template_vm() {
+    log "INFO" "Creating new template VM ${VMID} with name ${IMAGE_NAME}"
+
+    # Create VM structure
+    if ! qm create "$VMID" --name "$IMAGE_NAME" --memory 4096 --net0 virtio,bridge=vmbr0 --agent 1; then
+        send_failure_notification "Failed to create VM ${VMID}"
+        return 1
+    fi
+
+    # Import disk
+    log "INFO" "Importing disk from ${IMAGE_FILE}"
+    if ! qm importdisk "$VMID" "$IMAGE_FILE" "$STORAGE"; then
+        send_failure_notification "Failed to import disk for VM ${VMID}"
+        qm destroy "$VMID" --purge 2>/dev/null
+        return 1
+    fi
+
+    # Hardware Settings
+    log "INFO" "Configuring hardware settings"
+    qm set "$VMID" --scsihw virtio-scsi-single
+    qm set "$VMID" --scsi0 "${STORAGE}:vm-${VMID}-disk-0,discard=on,iothread=1,ssd=1,cache=none"
+    qm set "$VMID" --ide2 "${STORAGE}:cloudinit"
+    qm set "$VMID" --boot c --bootdisk scsi0
+    qm set "$VMID" --serial0 socket
+    qm set "$VMID" --cpu host
+    qm set "$VMID" --numa 1
+
+    # Cloud-Init Settings
+    log "INFO" "Configuring Cloud-Init settings"
+    qm set "$VMID" --ciuser "$USER"
+    qm set "$VMID" --cipassword "$VM_PASSWORD"
+    qm set "$VMID" --sshkeys /root/.ssh/authorized_keys
+    qm set "$VMID" --ipconfig0 ip=dhcp
+
+    # DNS Settings
+    qm set "$VMID" --nameserver "$GATEWAY"
+    qm set "$VMID" --searchdomain "$SEARCH_DOMAIN"
+
+    # Convert to Template
+    log "INFO" "Converting VM to template"
+    if ! qm template "$VMID"; then
+        send_failure_notification "Failed to convert VM ${VMID} to template"
+        return 1
+    fi
+
+    log "INFO" "Template VM ${VMID} created successfully"
+    return 0
+}
+
+# --- Main Script ---
+
+log "INFO" "Starting AlmaLinux Cloud template VM creation script"
+
+# Step 1: Get remote checksum
+remote_checksum=$(get_remote_checksum)
+if [[ $? -ne 0 ]] || [[ -z "$remote_checksum" ]]; then
+    send_failure_notification "Failed to retrieve remote checksum"
+    exit 1
+fi
+log "INFO" "Remote checksum: ${remote_checksum}"
+
+# Step 2: Compare with cached checksum
+cached_checksum=$(get_cached_checksum)
+log "INFO" "Cached checksum: ${cached_checksum:-none}"
+
+if [[ "$remote_checksum" == "$cached_checksum" ]]; then
+    log "INFO" "Checksums match - no update needed. Exiting."
+    exit 0
+fi
+
+log "INFO" "Checksum changed - proceeding with template update"
+
+# Step 3: Download new image
+if ! download_image; then
+    exit 1
+fi
+
+# Step 4: Verify download
+if ! verify_download "$remote_checksum"; then
+    rm -f "$IMAGE_FILE"
+    exit 1
+fi
+
+# Step 5: Destroy existing template
+if ! destroy_existing_template; then
+    exit 1
+fi
+
+# Step 6: Create new template VM
+if ! create_template_vm; then
+    exit 1
+fi
+
+# Step 7: Save new checksum to cache
+save_checksum "$remote_checksum"
+log "INFO" "Checksum cached for future comparisons"
+
+# Step 8: Send success notification (optional)
+if [[ -n "${pushover_template:-}" ]]; then
+    send_pushover "$pushover_template" "AlmaLinux Cloud template VM ${VMID} updated successfully on $(hostname)" "Template VM Update SUCCESS" 0 "bike"
+fi
+
+log "INFO" "Template VM creation script completed successfully"
+exit 0
