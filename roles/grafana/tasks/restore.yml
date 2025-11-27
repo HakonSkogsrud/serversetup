@@ -1,0 +1,69 @@
+---
+- name: Check if backup file exists on controller
+  ansible.builtin.stat:
+    path: "/tmp/grafana-backup.tar.gz"
+  delegate_to: localhost
+  become: false
+  register: grafana_controller_backup
+
+- name: Check if backup file exists on storage
+  ansible.builtin.stat:
+    path: "{{ grafana_backup_path }}/grafana-backup.tar.gz"
+  register: grafana_storage_backup
+
+- name: Set backup source fact
+  ansible.builtin.set_fact:
+    grafana_backup_source: >-
+      {{ '/tmp/grafana-backup.tar.gz' if grafana_controller_backup.stat.exists
+         else (grafana_backup_path ~ '/grafana-backup.tar.gz') if grafana_storage_backup.stat.exists
+         else '' }}
+    grafana_backup_is_remote: "{{ grafana_storage_backup.stat.exists and not grafana_controller_backup.stat.exists }}"
+
+- name: Restore Grafana data
+  when: grafana_backup_source != ''
+  block:
+    - name: Copy backup from controller to remote
+      ansible.builtin.copy:
+        src: "{{ grafana_backup_source }}"
+        dest: "/tmp/grafana-backup.tar.gz"
+        mode: "0644"
+      when: not grafana_backup_is_remote | bool
+
+    - name: Copy backup from storage to temp (remote_src)
+      ansible.builtin.copy:
+        src: "{{ grafana_backup_source }}"
+        dest: "/tmp/grafana-backup.tar.gz"
+        mode: "0644"
+        remote_src: true
+      when: grafana_backup_is_remote | bool
+
+    - name: Ensure Grafana data directory exists
+      ansible.builtin.file:
+        path: "{{ grafana_data_dir }}/data"
+        state: directory
+        mode: "0755"
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
+    - name: Extract backup to Grafana data directory
+      ansible.builtin.unarchive:
+        src: "/tmp/grafana-backup.tar.gz"
+        dest: "{{ grafana_data_dir }}"
+        remote_src: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
+    - name: Copy backup to persistent storage
+      ansible.builtin.copy:
+        src: "/tmp/grafana-backup.tar.gz"
+        dest: "{{ grafana_backup_path }}/grafana-backup.tar.gz"
+        mode: "0644"
+        remote_src: true
+      when: not grafana_backup_is_remote | bool
+
+    - name: Clean up temp restore file
+      ansible.builtin.file:
+        path: "/tmp/grafana-backup.tar.gz"
+        state: absent

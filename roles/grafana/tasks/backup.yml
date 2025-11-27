@@ -1,0 +1,27 @@
+---
+- name: Check if Grafana data directory exists
+  ansible.builtin.stat:
+    path: "{{ grafana_data_dir }}/data"
+  register: grafana_data_exists
+
+- name: Backup Grafana dashboards
+  when: grafana_data_exists.stat.exists
+  block:
+    - name: Create backup archive of Grafana data
+      community.general.archive:
+        path: "{{ grafana_data_dir }}/data"
+        dest: "/tmp/grafana-backup.tar.gz"
+        format: gz
+        mode: "0644"
+      become: true
+
+    - name: Fetch backup to controller
+      ansible.builtin.fetch:
+        src: "/tmp/grafana-backup.tar.gz"
+        dest: "/tmp/grafana-backup.tar.gz"
+        flat: true
+
+    - name: Clean up temp backup file on remote
+      ansible.builtin.file:
+        path: "/tmp/grafana-backup.tar.gz"
+        state: absent
