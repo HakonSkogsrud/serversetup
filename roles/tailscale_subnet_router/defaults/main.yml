@@ -1,3 +1,4 @@
+---
 tailscale_subnet_router_advertise_routes: "10.0.0.0/24"
 tailscale_subnet_router_hostname: subnet-router
 tailscale_subnet_router_fw_lan_zone: public

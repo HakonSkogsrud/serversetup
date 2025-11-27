@@ -45,7 +45,6 @@ jobs:
       - name: Run Pihole
         run: ansible-playbook playbooks/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
-      # This MUST be run after the primary
       - name: Run Pihole-secondary
         run: ansible-playbook playbooks/pihole_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
@@ -63,6 +62,9 @@ jobs:
 
       - name: Run Subnet Router
         run: ansible-playbook playbooks/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+
+      - name: Run Subnet Router secondary
+        run: ansible-playbook playbooks/subnet_router_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: Loki
         run: ansible-playbook playbooks/loki.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
