@@ -7,7 +7,7 @@
 
 - name: Ensure log file exists with proper permissions
   ansible.builtin.file:
-    path: /var/log/weekly_reboot.log
+    path: "{{ scheduled_reboot_log_file }}"
     state: touch
     mode: "0666"
     owner: root
@@ -15,8 +15,8 @@
 
 - name: Create the reboot notification script
   ansible.builtin.template:
-    src: reboot_notice.sh.j2
-    dest: /usr/local/bin/reboot_notice.sh
+    src: scheduled_reboot.sh.j2
+    dest: "/usr/local/bin/{{ scheduled_reboot_script_name }}.sh"
     mode: "0755"
 
 - name: Add a cron job to run the reboot notification script at startup
@@ -24,7 +24,7 @@
     name: "Notify on reboot"
     special_time: reboot
     # Since we injected variables into the script above, the cron job is cleaner
-    job: "/usr/local/bin/reboot_notice.sh"
+    job: "/usr/local/bin/{{ scheduled_reboot_script_name }}.sh"
     user: root
 
 - name: Schedule a weekly reboot

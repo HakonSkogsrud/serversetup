@@ -14,8 +14,8 @@
 
 - name: Deploy the Tailnet monitoring script
   ansible.builtin.template:
-    src: check_tailnet_health.sh.j2
-    dest: /usr/local/bin/check_tailnet_health.sh
+    src: tailnet_healthcheck.sh.j2
+    dest: "/usr/local/bin/{{ tailnet_healthcheck_script_name }}.sh"
     owner: root
     group: root
     mode: "0755"
@@ -23,7 +23,7 @@
 
 - name: Ensure log file exists and has secure base permissions
   ansible.builtin.file:
-    path: /var/log/tailnet_monitor.log
+    path: "{{ tailnet_healthcheck_log_file }}"
     state: touch # Creates the file if it doesn't exist
     owner: root
     group: root
@@ -38,7 +38,7 @@
 
 - name: Grant read access to the log file for user
   ansible.posix.acl:
-    path: /var/log/tailnet_monitor.log
+    path: "{{ tailnet_healthcheck_log_file }}"
     entity: "{{ template.user }}"
     etype: user
     permissions: rw
@@ -50,5 +50,5 @@
     name: "Check Tailnet Device Status"
     minute: "{{ tailnet_healthcheck_cron_minute }}"
     user: root
-    job: "pushover_tailscale='{{ pushover_tailscale }}' pushover_user='{{ pushover_user }}' /usr/local/bin/check_tailnet_health.sh"
+    job: "pushover_tailscale='{{ pushover_tailscale }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ tailnet_healthcheck_script_name }}.sh"
   become: true

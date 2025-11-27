@@ -7,7 +7,7 @@
 
 - name: Ensure log file exists with proper permissions
   ansible.builtin.file:
-    path: /var/log/pihole_gravity_update.log
+    path: "{{ pihole_gravity_update_log_file }}"
     state: touch
     mode: "0666"
     owner: root
@@ -16,13 +16,13 @@
 - name: Create the Pi-hole gravity update script
   ansible.builtin.template:
     src: pihole_gravity_update.sh.j2
-    dest: /usr/local/bin/pihole_gravity_update.sh
+    dest: "/usr/local/bin/{{ pihole_gravity_update_script_name }}.sh"
     mode: "0755"
 
 - name: Add a cron job to run the gravity update script weekly
   ansible.builtin.cron:
     name: "Weekly Pi-hole gravity update"
-    job: "pushover_gravity='{{ pushover_gravity }}' pushover_user='{{ pushover_user }}' /usr/local/bin/pihole_gravity_update.sh"
+    job: "pushover_gravity='{{ pushover_gravity }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ pihole_gravity_update_script_name }}.sh"
     user: root
     weekday: "0"
     hour: "3"
