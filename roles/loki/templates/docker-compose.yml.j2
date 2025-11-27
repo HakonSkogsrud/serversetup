@@ -8,7 +8,7 @@ services:
       - "{{ loki_grpc_port }}:{{ loki_grpc_port }}"
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro,Z
-      - ./data:/loki:Z
+      - {{ loki_storage_path }}/data:/loki:Z
     command: -config.file=/etc/loki/local-config.yaml
     restart: unless-stopped
     networks:
