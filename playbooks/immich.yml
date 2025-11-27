@@ -4,9 +4,17 @@
   become: true
   gather_facts: false
   tasks:
-    - name: Run immich backup script
-      ansible.builtin.command: /usr/local/bin/immich_backup_notice.sh
+    - name: Check if immich backup script exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/immich_backup.sh
+      register: immich_backup_script
       when: force_recreate | default(false) | bool
+
+    - name: Run immich backup script
+      ansible.builtin.command: /usr/local/bin/immich_backup.sh
+      when:
+        - force_recreate | default(false) | bool
+        - immich_backup_script.stat.exists | default(false)
       changed_when: true
 
 - name: Create services VM
