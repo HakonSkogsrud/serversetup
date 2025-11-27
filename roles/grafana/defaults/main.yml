@@ -5,3 +5,6 @@ grafana_data_dir: "/home/{{ template.user }}/grafana"
 grafana_admin_user: "admin"
 grafana_admin_password: "{{ grafana_admin_pass }}"
 grafana_loki_url: "http://{{ vms.loki.ip }}:3100"
+
+# Backup settings
+grafana_backup_path: "/mnt/storage/smb/grafana"

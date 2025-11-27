@@ -1,3 +1,6 @@
 ---
+- name: Restore grafana backup if available
+  ansible.builtin.import_tasks: restore.yml
+
 - name: Install grafana
   ansible.builtin.import_tasks: grafana.yml
