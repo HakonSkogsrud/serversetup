@@ -12,7 +12,7 @@ touch "$LOG_FILE" 2>/dev/null || log "WARNING" "Could not access $LOG_FILE. Logg
 
 log "INFO" "Starting package update script."
 
-{% if scheduled_update_notify | default(true) %}
+{% if scheduled_update_notify %}
 # Source the Pushover script if it exists
 if [ -f /usr/local/lib/send_pushover.sh ]; then
     source /usr/local/lib/send_pushover.sh
