@@ -1,4 +1,7 @@
 ---
+# Enable or disable Pushover notifications
+scheduled_update_notify: false
+
 # Logging configuration
 scheduled_update_log_file: "/var/log/scheduled_update.log"
 scheduled_update_script_name: "scheduled_update"
