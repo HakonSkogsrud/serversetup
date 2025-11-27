@@ -54,6 +54,16 @@ scrape_configs:
       - source_labels: [__path__]
         regex: '.*/([^/]+\.log)'
         target_label: filename
+    pipeline_stages:
+      # Parse JSON logs from custom scripts
+      - json:
+          expressions:
+            level: level
+            script: script
+            message: message
+      - labels:
+          level:
+          script:
 {% if promtail_docker_installed | default(false) %}
   # Docker container logs with service discovery
   - job_name: docker

@@ -7,7 +7,7 @@
 
 - name: Ensure log file exists with proper permissions
   ansible.builtin.file:
-    path: /var/log/scheduled_update-script.log
+    path: "{{ scheduled_update_log_file }}"
     state: touch
     mode: "0666"
     owner: root
@@ -15,14 +15,14 @@
 
 - name: Create the update script with logging
   ansible.builtin.template:
-    src: update_packages.sh.j2
-    dest: /usr/local/bin/update_packages.sh
+    src: scheduled_update.sh.j2
+    dest: "/usr/local/bin/{{ scheduled_update_script_name }}.sh"
     mode: "0755"
 
 - name: Add a cron job to run the update script weekly as root
   ansible.builtin.cron:
     name: "Weekly package updates"
-    job: "pushover_token_update='{{ pushover_token_update }}' pushover_user='{{ pushover_user }}' /usr/local/bin/update_packages.sh"
+    job: "pushover_token_update='{{ pushover_token_update }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ scheduled_update_script_name }}.sh"
     user: root
     weekday: "4" # 0 for Sunday, 1 for Monday, etc.
     hour: "12"

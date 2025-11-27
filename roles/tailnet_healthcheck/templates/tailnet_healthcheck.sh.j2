@@ -4,29 +4,28 @@
 # This script is managed by Ansible.
 
 # --- Configuration ---
-LOG_FILE="/var/log/tailnet_monitor.log"
+LOG_FILE="{{ tailnet_healthcheck_log_file }}"
+SCRIPT_NAME="{{ tailnet_healthcheck_script_name }}"
 
-# --- Logging Function ---
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
-}
+# Source logging library
+source /usr/local/lib/logging.sh
 
 # Ensure the log file is accessible
-touch "$LOG_FILE" 2>/dev/null || log "Warning: Could not access $LOG_FILE. Logging only to standard output."
+touch "$LOG_FILE" 2>/dev/null || log "WARNING" "Could not access $LOG_FILE. Logging only to standard output."
 
-log "Starting Tailnet device monitoring script."
+log "INFO" "Starting Tailnet device monitoring script."
 
 # Assumes /usr/local/lib/send_pushover.sh is present and conforms to the
 # expected interface (app_token as first argument, user_key from env).
 
 if [ -f /usr/local/lib/send_pushover.sh ]; then
     source /usr/local/lib/send_pushover.sh
-    log "Successfully loaded send_pushover.sh library."
+    log "INFO" "Successfully loaded send_pushover.sh library."
 else
-    log "Error: /usr/local/lib/send_pushover.sh not found. Pushover notifications will fail."
+    log "ERROR" "/usr/local/lib/send_pushover.sh not found. Pushover notifications will fail."
     # Define a dummy function to prevent script errors if the library is missing
     send_pushover() {
-        log "Pushover notification not sent because send_pushover.sh is missing."
+        log "WARNING" "Pushover notification not sent because send_pushover.sh is missing."
     }
 fi
 
@@ -43,28 +42,28 @@ check_device() {
     local device_ip=$1
     local device_name=$2
 
-    log "Checking device: '$device_name' ($device_ip)"
+    log "INFO" "Checking device: '$device_name' ($device_ip)"
 
     # Ping the host to check for network reachability.
     # -c 2: Send 2 packets.
     # -W 3: Wait 3 seconds for a response.
     if ! ping -c 2 -W 3 "$device_ip" > /dev/null 2>&1; then
         local alert_message="The Tailnet device '$device_name' ($device_ip) is unreachable. Ping check FAILED."
-        log "$alert_message"
+        log "ERROR" "$alert_message"
         send_pushover "${pushover_tailscale}" "$alert_message" "Tailnet Health Alert" 0 "siren"
-        log "Pushover alert sent for '$device_name'."
+        log "INFO" "Pushover alert sent for '$device_name'."
     else
-        log "Device '$device_name' ($device_ip) is reachable."
+        log "INFO" "Device '$device_name' ($device_ip) is reachable."
         #send_pushover "${pushover_tailscale}" "test" "Tailnet Health Alert" 0 "bike"
     fi
 }
 
 
 # --- Main Execution Loop ---
-log "Beginning checks"
+log "INFO" "Beginning checks"
 for host_info in "${HOSTS_TO_CHECK[@]}"; do
     IFS='|' read -r name ip <<< "$host_info"
     check_device "$ip" "$name"
 done
 
-log "Tailnet device monitoring script finished."
+log "INFO" "Tailnet device monitoring script finished."

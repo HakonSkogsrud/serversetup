@@ -1,0 +1,4 @@
+---
+# Logging configuration
+syncoid_log_file: "/var/log/syncoid.log"
+syncoid_script_name: "syncoid"

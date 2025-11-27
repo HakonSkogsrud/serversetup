@@ -9,3 +9,7 @@ scheduled_reboot_cron_month: "*" # Month
 
 # Enable or disable Pushover notifications
 scheduled_reboot_notify: true
+
+# Logging configuration
+scheduled_reboot_log_file: "/var/log/scheduled_reboot.log"
+scheduled_reboot_script_name: "scheduled_reboot"

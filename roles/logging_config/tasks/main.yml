@@ -1,0 +1,12 @@
+---
+- name: Ensure /usr/local/lib directory exists
+  ansible.builtin.file:
+    path: /usr/local/lib
+    state: directory
+    mode: "0755"
+
+- name: Copy logging.sh library to /usr/local/lib
+  ansible.builtin.copy:
+    src: logging.sh
+    dest: /usr/local/lib/logging.sh
+    mode: "0755"

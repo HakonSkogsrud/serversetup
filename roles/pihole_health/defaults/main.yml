@@ -1,0 +1,4 @@
+---
+# Logging configuration
+pihole_health_log_file: "/var/log/pihole_health.log"
+pihole_health_script_name: "pihole_health"

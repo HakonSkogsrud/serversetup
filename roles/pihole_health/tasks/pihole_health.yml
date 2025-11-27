@@ -13,7 +13,7 @@
 
 - name: Ensure log file exists and has secure base permissions
   ansible.builtin.file:
-    path: /var/log/pihole_health_check.log
+    path: "{{ pihole_health_log_file }}"
     state: touch # Creates the file if it doesn't exist
     owner: root
     group: root
@@ -28,7 +28,7 @@
 
 - name: Grant read access to the log file for user
   ansible.posix.acl:
-    path: /var/log/pihole_health_check.log
+    path: "{{ pihole_health_log_file }}"
     entity: "{{ template.user }}"
     etype: user
     permissions: rw
@@ -37,8 +37,8 @@
 
 - name: Deploy the Pi-hole monitoring script
   ansible.builtin.template:
-    src: check_piholes.sh.j2
-    dest: /usr/local/bin/check_piholes.sh
+    src: pihole_health.sh.j2
+    dest: "/usr/local/bin/{{ pihole_health_script_name }}.sh"
     owner: root
     group: root
     mode: "0755"
@@ -47,5 +47,5 @@
   ansible.builtin.cron:
     name: "Check Pi-hole Status"
     minute: "*/30"
-    job: "pushover_pihole='{{ pushover_pihole }}' pushover_user='{{ pushover_user }}' /usr/local/bin/check_piholes.sh"
+    job: "pushover_pihole='{{ pushover_pihole }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ pihole_health_script_name }}.sh"
     user: root

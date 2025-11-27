@@ -6,3 +6,7 @@ docker_auto_update_compose_paths: []
 docker_auto_update_cron_weekday: "3" # 0=Sunday, 1=Monday, etc.
 docker_auto_update_cron_hour: "3"
 docker_auto_update_cron_minute: "0"
+
+# Logging configuration
+docker_auto_update_log_file: "/var/log/docker_auto_update.log"
+docker_auto_update_script_name: "docker_auto_update"

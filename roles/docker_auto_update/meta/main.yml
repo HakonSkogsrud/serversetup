@@ -1,4 +1,5 @@
 ---
 dependencies:
   - role: docker
+  - role: logging_config
   - role: pushover_config
