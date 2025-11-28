@@ -39,9 +39,9 @@ if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get update -y
   if [ $? -eq 0 ]; then
     log "INFO" "Package list updated. Running upgrades..."
-    $SUDO apt-get upgrade -y
+    $SUDO apt-get dist-upgrade -y
     if [ $? -ne 0 ]; then
-      log "ERROR" "APT upgrade failed."
+      log "ERROR" "APT dist-upgrade failed."
       [ "$PUSHOVER_ENABLED" = true ] && send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) failed during apt upgrade" "System update FAILED" 0 "siren"
       exit 1
     fi
