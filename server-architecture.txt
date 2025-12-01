@@ -1,0 +1,39 @@
+┌──────────────────────────────────────────────────────────────────────┐
+│  Proxmox Server (Primary)                                            │
+│  │                                                                   │
+│  ├── ZFS Pool: storage (2x 4TB SSD - RAID 1 Mirror)                  │
+│  │   ├── Sanoid snapshots                                            │
+│  │   └── virtiofs → Shared storage for VMs                           │
+│  │                                                                   │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │  Virtual Machines                                              │  │
+│  │  ├── samba (← virtiofs)                                        │  │
+│  │  ├── immich (← virtiofs)                                       │  │
+│  │  ├── pihole (primary)                                          │  │
+│  │  ├── Github-runner                                             │  │
+│  │  ├── loki + grafana                                            │  │
+│  │  ├── services (Syncthing, Jellyfin, Nebula, etc.)              │  │
+│  │  └── subnet-router (Tailscale)                                 │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                                │                                     │
+│     (Manual Backup)            │ (Scheduled Syncoid)                 │
+│           │                    │                                     │
+│           ▼                    ▼                                     │
+│  ┌──────────────────┐    ┌─────────────────────────────────────┐     │
+│  │ External Drive   │    │ Backup Server (Offsite @ Dad's)     │     │
+│  │ (Offline @ Work) │    │ ├── Ubuntu Server                   │     │
+│  └──────────────────┘    │ └── ZFS Backup Pool                 │     │
+│                          └─────────────────────────────────────┘     │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│  Proxmox (Secondary)                                                 │
+│  ├── pihole (secondary)                                              │
+│  └── Tailscale subnet-router                                         │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│  Tailscale VPN Network                                               │
+│  ├── Connects: Primary, Secondary, Offsite Backup                    │
+│  └── Remote Devices (Phones/Laptops) → Access Photos/Samba           │
+└──────────────────────────────────────────────────────────────────────┘
