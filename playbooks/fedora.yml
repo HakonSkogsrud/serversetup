@@ -9,7 +9,6 @@
     - scheduled_update
 
   tasks:
-
     # --- VSCodium Installation ---
     - name: Import VSCodium GPG key
       ansible.builtin.rpm_key:
@@ -79,7 +78,7 @@
 
     - name: Update all system packages
       ansible.builtin.dnf:
-        name: '*'
+        name: "*"
         state: latest
 
     # --- Multimedia Setup ---
@@ -107,168 +106,34 @@
         name: "@sound-and-video"
         state: present
 
-    # --- VSCodium Configuration ---
-    - name: Ensure VSCodium user config directory exists
-      ansible.builtin.file:
-        path: "/home/haaksk/.config/VSCodium/User"
-        state: directory
-        owner: haaksk
-        group: haaksk
-        mode: '0755'
-
-    - name: Set VSCodium keyboard bindings
-      ansible.builtin.copy:
-        dest: /home/haaksk/.config/VSCodium/User/keybindings.json
-        owner: haaksk
-        group: haaksk
-        mode: '0644'
-        content: |
-          [
-              {
-                  "key": "alt+[Semicolon]",
-                  "command": "workbench.action.terminal.toggleTerminal",
-                  "when": "terminal.active"
-              },
-              {
-                  "key": "ctrl+shift+[Equal]",
-                  "command": "-workbench.action.terminal.toggleTerminal",
-                  "when": "terminal.active"
-              },
-              {
-                  "key": "ctrl+w",
-                  "command": "-workbench.action.terminal.killEditor",
-                  "when": "terminalEditorFocus && terminalFocus && terminalHasBeenCreated || terminalEditorFocus && terminalFocus && terminalProcessSupported"
-              },
-              {
-                  "key": "ctrl+t ctrl+t",
-                  "command": "workbench.action.terminal.kill"
-              }
-          ]
-
-    - name: Set VSCodium settings
-      ansible.builtin.copy:
-        dest: /home/haaksk/.config/VSCodium/User/settings.json
-        owner: haaksk
-        group: haaksk
-        mode: '0644'
-        backup: yes
-        content: |
-          {
-            "window.titleBarStyle": "custom",
-            "window.menuBarVisibility": "visible",
-            "workbench.colorTheme": "Night Owl Light",
-            "window.customTitleBarVisibility": "never",
-            "window.zoomLevel": 0.6,
-            "chat.editor.fontSize": 13,
-            "editor.fontSize": 13,
-            "editor.scrollbar.verticalScrollbarSize": 6,
-            "editor.scrollbar.horizontalScrollbarSize": 6,
-            "terminal.integrated.fontSize": 13,
-            "editor.minimap.enabled": false,
-            "git.confirmSync": false,
-            "git.autofetch": true,
-            "explorer.confirmDelete": false,
-            "editor.fontFamily": "Luxi Mono Regular",
-            "terminal.integrated.fontFamily": "courier",
-            "git.enableSmartCommit": true,
-            "terminal.integrated.defaultProfile.linux": "fish",
-            "terminal.integrated.sendKeybindingsToShell": true,
-            "symbols.hidesExplorerArrows": false,
-            "workbench.iconTheme": "symbols",
-            "workbench.startupEditor": "none",
-            "window.autoDetectColorScheme": true,
-          }
-
-    # --- Fish Shell Configuration ---
-    - name: Ensure fish config directories exist
-      ansible.builtin.file:
-        path: /home/haaksk/.config/fish/functions
-        state: directory
-        mode: '0755'
-        owner: haaksk
-        group: haaksk
-
-    - name: Add aliases block to fish config
-      ansible.builtin.blockinfile:
-        path: "/home/haaksk/.config/fish/config.fish"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK - ALIASES"
-        create: yes
-        owner: haaksk
-        group: haaksk
-        mode: '0644'
-        block: |
-          set -g VIRTUAL_ENV_DISABLE_PROMPT 1
-          alias restart="source ~/.config/fish/config.fish"
-          alias proxmox="ssh root@10.0.0.41"
-          alias services="ssh haaksk@10.0.0.44"
-          alias backupserver="ssh haaksk@100.104.43.26"
-          alias pihole-macbook="ssh haaksk@10.0.0.27"
-          alias pihole="ssh haaksk@10.0.0.77"
-          alias codemachine2="ssh haaksk@10.0.0.84"
-          alias venv="source .venv/bin/activate.fish"
-          alias vim="vim"
-          export EDITOR="vim"
-
-    - name: Create custom fish prompt
-      ansible.builtin.blockinfile:
-        path: "/home/haaksk/.config/fish/functions/fish_prompt.fish"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK - PROMPT"
-        create: yes
-        owner: haaksk
-        group: haaksk
-        mode: '0644'
-        block: |
-          function fish_prompt
-              # Current Working Directory (CWD)
-              set_color cyan
-              echo -n (prompt_pwd)
-
-              # Virtual Environment (Venv)
-              if set -q VIRTUAL_ENV
-                  set_color green
-                  echo -n ' (🐍 '(basename "$VIRTUAL_ENV")')'
-              end
-
-              # Git Branch
-              if git rev-parse --is-inside-work-tree >/dev/null 2>&1
-                  set_color magenta
-                  echo -n ' ('(git rev-parse --abbrev-ref HEAD 2>/dev/null)')'
-              end
-
-              # Final Prompt Separator
-              set_color normal
-              echo -n ' ❯ '
-          end
-
-
     - name: Create Samba credentials file
       ansible.builtin.template:
         dest: /etc/samba/credentials
         src: /dev/null # Create an empty file first with correct permissions
         owner: root
         group: root
-        mode: '0600'
+        mode: "0600"
         force: no # Do not overwrite if it exists
 
     - name: Add username and password to Samba credentials file
       ansible.builtin.lineinfile:
         path: /etc/samba/credentials
-        regexp: '^{{ item.key }}='
-        line: '{{ item.key }}={{ item.value }}'
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
         state: present
         owner: root
         group: root
-        mode: '0600'
+        mode: "0600"
       loop:
-        - { key: 'username', value: 'haaksk' }
-        - { key: 'password', value: '{{ smb_user_password }}' }
+        - { key: "username", value: "haaksk" }
+        - { key: "password", value: "{{ smb_user_password }}" }
       no_log: true # Prevent password from being logged'
 
     - name: Add SMB share to fstab for automounting
       ansible.builtin.lineinfile:
         path: /etc/fstab
         regexp: '^//10\.0\.0\.79/share'
-        line: '//10.0.0.79/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0'
+        line: "//10.0.0.79/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0"
         state: present
         backup: yes
 
