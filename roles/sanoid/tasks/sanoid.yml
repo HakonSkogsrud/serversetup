@@ -40,8 +40,10 @@
   ansible.builtin.systemd:
     name: sanoid.timer
     enabled: true
+    state: started
 
 - name: Start sanoid timer service immediately
   ansible.builtin.systemd:
     name: sanoid.timer
-    state: stopped
+    state: started
+    enabled: true
