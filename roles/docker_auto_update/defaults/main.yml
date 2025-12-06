@@ -10,3 +10,7 @@ docker_auto_update_cron_minute: "0"
 # Logging configuration
 docker_auto_update_log_file: "/var/log/docker_auto_update.log"
 docker_auto_update_script_name: "docker_auto_update"
+
+# Enable or disable Pushover notifications for successful updates
+# (Failure notifications are always sent)
+docker_auto_update_notify: false

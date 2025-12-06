@@ -13,9 +13,11 @@ log "INFO" "Starting Docker auto-update script."
 
 if [ -f /usr/local/lib/send_pushover.sh ]; then
     source /usr/local/lib/send_pushover.sh
+    PUSHOVER_ENABLED=true
     log "INFO" "Pushover script sourced."
 else
     log "WARNING" "Pushover script not found at /usr/local/lib/send_pushover.sh."
+    PUSHOVER_ENABLED=false
 fi
 
 docker_auto_update_compose_paths=(
@@ -31,7 +33,10 @@ UPDATED_APPS=""
 
 if [ "${{ '{#' }}docker_auto_update_compose_paths[@]}" -eq 0 ]; then
     log "ERROR" "No Docker Compose paths configured. Exiting."
-    send_pushover "${pushover_docker:-}" "Docker auto-update on $(hostname): No compose paths configured" "Docker Update - Configuration Error" 0 "siren"
+    # Always send failure notifications
+    if [ "$PUSHOVER_ENABLED" = true ]; then
+        send_pushover "${pushover_docker:-}" "Docker auto-update on $(hostname): No compose paths configured" "Docker Update - Configuration Error" 0 "siren"
+    fi
     exit 1
 fi
 
@@ -87,8 +92,15 @@ if [ "$FAILURE_COUNT" -eq 0 ]; then
     MESSAGE="Docker auto-update on $(hostname) completed successfully.
 
 Updated apps ($SUCCESS_COUNT):${UPDATED_APPS}"
-    send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - Success" 0 "bike"
-    log "INFO" "Success notification sent."
+{% if docker_auto_update_notify | default(true) %}
+    # Send success notification only when enabled
+    if [ "$PUSHOVER_ENABLED" = true ]; then
+        send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - Success" 0 "bike"
+        log "INFO" "Success notification sent."
+    fi
+{% else %}
+    log "INFO" "Pushover notifications for successful updates disabled."
+{% endif %}
 else
     MESSAGE="Docker auto-update on $(hostname) completed with errors.
 
@@ -101,8 +113,11 @@ Failed apps:${FAILED_APPS}"
 
 Successful apps:${UPDATED_APPS}"
     fi
-    send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - PARTIAL FAILURE" 0 "siren"
-    log "WARNING" "Failure notification sent."
+    # Always send failure notifications
+    if [ "$PUSHOVER_ENABLED" = true ]; then
+        send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - PARTIAL FAILURE" 0 "siren"
+        log "WARNING" "Failure notification sent."
+    fi
 fi
 
 log "INFO" "Script finished."
