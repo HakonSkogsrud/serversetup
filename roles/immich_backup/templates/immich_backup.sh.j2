@@ -107,32 +107,42 @@ fi
 
 # The rest of the script (notification and exit) remains the same.
 
+# Source the Pushover script if it exists
+if [ -f "$PUSHOVER_SCRIPT" ]; then
+    source "$PUSHOVER_SCRIPT"
+    PUSHOVER_ENABLED=true
+else
+    log "WARNING" "Pushover script not found at $PUSHOVER_SCRIPT. Skipping notifications."
+    PUSHOVER_ENABLED=false
+fi
+
 if $BACKUP_SUCCESSFUL; then
     log "INFO" "Immich backup completed successfully."
     MESSAGE="Immich backup for $(hostname) completed successfully."
     TITLE="Immich Backup Success"
     PRIORITY=0
     SOUND="bugle"
+{% if immich_backup_notify | default(true) %}
+    # --- Send Pushover Notification for Success ---
+    if [ "$PUSHOVER_ENABLED" = true ]; then
+        log "INFO" "Sending success notification..."
+        send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY "$SOUND"
+    fi
+{% else %}
+    log "INFO" "Pushover notifications for successful backups disabled."
+{% endif %}
 else
     log "ERROR" "Error during Immich backup: $ERROR_MESSAGE"
     MESSAGE="Error during Immich backup on $(hostname): $ERROR_MESSAGE"
     TITLE="Immich Backup FAILED"
     PRIORITY=0
     SOUND="siren"
+    # --- Always Send Pushover Notification for Failures ---
+    if [ "$PUSHOVER_ENABLED" = true ]; then
+        log "INFO" "Sending failure notification..."
+        send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY "$SOUND"
+    fi
 fi
-
-{% if immich_backup_notify | default(true) %}
-# --- Send Pushover Notification ---
-if [ -f "$PUSHOVER_SCRIPT" ]; then
-    log "INFO" "Pushover script found, sending notification..."
-    source "$PUSHOVER_SCRIPT"
-    send_pushover "${pushover_token_immich_dump:-}" "$MESSAGE" "$TITLE" $PRIORITY "$SOUND"
-else
-    log "WARNING" "Pushover script not found at $PUSHOVER_SCRIPT. Skipping notification."
-fi
-{% else %}
-log "INFO" "Pushover notifications disabled."
-{% endif %}
 
 log "INFO" "====== Immich Backup Script Finished ======"
 
