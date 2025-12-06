@@ -10,4 +10,4 @@ services:
       - REPLICAS=http://{{ nebula_sync_backup_ip }}|{{ pihole_password }}
       - FULL_SYNC=true
       - RUN_GRAVITY=true
-      - CRON=5 * * * *
+      - CRON=15 * * * *
