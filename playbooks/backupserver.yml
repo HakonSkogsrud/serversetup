@@ -6,6 +6,7 @@
     - ../secrets.yml
   vars:
     tailscale_node_hostname: backupserver
+    scheduled_reboot_notify: false
   roles:
     - scheduled_update
     - scheduled_reboot
