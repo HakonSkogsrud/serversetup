@@ -121,6 +121,7 @@ else
     SOUND="siren"
 fi
 
+{% if immich_backup_notify | default(true) %}
 # --- Send Pushover Notification ---
 if [ -f "$PUSHOVER_SCRIPT" ]; then
     log "INFO" "Pushover script found, sending notification..."
@@ -129,6 +130,9 @@ if [ -f "$PUSHOVER_SCRIPT" ]; then
 else
     log "WARNING" "Pushover script not found at $PUSHOVER_SCRIPT. Skipping notification."
 fi
+{% else %}
+log "INFO" "Pushover notifications disabled."
+{% endif %}
 
 log "INFO" "====== Immich Backup Script Finished ======"
 
