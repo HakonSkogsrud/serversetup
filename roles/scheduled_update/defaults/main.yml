@@ -1,5 +1,6 @@
 ---
-# Enable or disable Pushover notifications
+# Enable or disable Pushover notifications for successful updates
+# (Failure notifications are always sent)
 scheduled_update_notify: false
 
 # Logging configuration

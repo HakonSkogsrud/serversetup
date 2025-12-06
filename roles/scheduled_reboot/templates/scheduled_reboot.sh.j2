@@ -15,19 +15,24 @@ touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Lo
 
 log "INFO" "System has been rebooted."
 
-{% if scheduled_reboot_notify | default(true) %}
 # Source the Pushover script if it exists
 if [ -f /usr/local/lib/send_pushover.sh ]; then
     source /usr/local/lib/send_pushover.sh
+    PUSHOVER_ENABLED=true
+else
+    log "WARNING" "Pushover script not found at /usr/local/lib/send_pushover.sh. Skipping notifications."
+    PUSHOVER_ENABLED=false
+fi
+
+{% if scheduled_reboot_notify | default(true) %}
+if [ "$PUSHOVER_ENABLED" = true ]; then
     log "INFO" "Pushover script sourced."
     # Pass the injected token variable
     send_pushover "${PUSHOVER_REBOOT_TOKEN}" "System $(hostname) has successfully rebooted." "System Reboot" 0 "bike"
     log "INFO" "Pushover notification sent."
-else
-    log "WARNING" "Pushover script not found at /usr/local/lib/send_pushover.sh. Skipping notification."
 fi
 {% else %}
-log "INFO" "Pushover notifications disabled."
+log "INFO" "Pushover notifications for successful reboots disabled."
 {% endif %}
 
 log "INFO" "Reboot notification script finished."
