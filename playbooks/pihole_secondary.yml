@@ -32,4 +32,5 @@
     - scheduled_reboot
     - pihole
     - pihole_gravity_update
+    - internet_monitor
     - promtail

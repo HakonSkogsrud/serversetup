@@ -1,0 +1,13 @@
+[Unit]
+Description=Internet Connectivity Monitor
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ internet_monitor_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ internet_monitor_script_name }}
+
+[Install]
+WantedBy=multi-user.target

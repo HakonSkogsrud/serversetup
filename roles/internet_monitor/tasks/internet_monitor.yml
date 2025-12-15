@@ -1,0 +1,33 @@
+---
+- name: Deploy the internet connectivity monitoring script
+  ansible.builtin.template:
+    src: internet_monitor.sh.j2
+    dest: "/usr/local/bin/{{ internet_monitor_script_name }}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: internet-monitor.service.j2
+    dest: "/etc/systemd/system/internet-monitor.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: internet-monitor.timer.j2
+    dest: "/etc/systemd/system/internet-monitor.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start internet monitor timer
+  ansible.builtin.systemd:
+    name: internet-monitor.timer
+    enabled: true
+    state: started
+    daemon_reload: true

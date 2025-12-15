@@ -43,4 +43,6 @@
     - scheduled_reboot
     - pihole
     - pihole_gravity_update
+    - role: internet_monitor
+      tags: internet_monitor
     - promtail
