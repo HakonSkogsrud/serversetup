@@ -1,0 +1,9 @@
+---
+internet_monitor_script_name: "internet_monitor"
+
+# Multiple targets to ping - if all fail, internet is down
+internet_monitor_targets:
+  - name: "Cloudflare DNS"
+    ip: "1.1.1.1"
+  - name: "Quad9 DNS"
+    ip: "9.9.9.9"

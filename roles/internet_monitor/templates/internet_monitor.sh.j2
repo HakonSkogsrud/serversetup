@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Monitors internet connectivity by pinging external targets.
+# Logs outages and recovery to systemd journal for Grafana/Loki.
+# This script is managed by Ansible.
+
+SCRIPT_NAME="{{ internet_monitor_script_name }}"
+STATE_FILE="/var/run/internet_monitor.state"
+
+# Array of targets to ping
+TARGETS=(
+{% for target in internet_monitor_targets %}
+    "{{ target.name }}|{{ target.ip }}"
+{% endfor %}
+)
+
+# Check if any target is reachable
+check_internet() {
+    for target_info in "${TARGETS[@]}"; do
+        IFS='|' read -r name ip <<< "$target_info"
+        if ping -c 3 -W 2 -i 0.5 "$ip" > /dev/null 2>&1; then
+            return 0  # Success - internet is up
+        fi
+    done
+    return 1  # Failed - internet is down
+}
+
+# Read previous state
+PREVIOUS_STATE=$(cat "$STATE_FILE" 2>/dev/null || echo "UNKNOWN")
+
+# Check current connectivity
+if check_internet; then
+    CURRENT_STATE="UP"
+
+    # Log recovery if we were down
+    if [ "$PREVIOUS_STATE" = "DOWN" ]; then
+        logger -t "$SCRIPT_NAME" -p user.info "INTERNET_RECOVERY - Internet connectivity restored"
+    fi
+else
+    CURRENT_STATE="DOWN"
+
+    # Log outage if this is new or continuing
+    if [ "$PREVIOUS_STATE" != "DOWN" ]; then
+        logger -t "$SCRIPT_NAME" -p user.err "INTERNET_OUTAGE - Internet connectivity lost"
+    fi
+fi
+
+# Save current state
+echo "$CURRENT_STATE" > "$STATE_FILE"

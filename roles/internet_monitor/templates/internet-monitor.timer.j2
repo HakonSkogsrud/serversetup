@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Internet Connectivity Monitor every minute
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
