@@ -1,93 +1,58 @@
 #!/bin/bash
+#
+# Monitors Pi-hole DNS functionality and ad blocking.
+# Logs to systemd journal and sends Pushover alerts on failure.
+# This script is managed by Ansible.
 
-# --- Configuration ---
+SCRIPT_NAME="{{ pihole_health_script_name }}"
+
 # Pi-hole servers to check
 PIHOLE_MAIN="{{ pihole_health_main_ip }}"
 PIHOLE_BACKUP="{{ pihole_health_backup_ip }}"
 
 # Domains for testing
-PUBLIC_DOMAIN="google.com"  # A common public domain that should always resolve.
-BLOCKED_DOMAIN="flurry.com" # A common ad domain that should be blocked.
+PUBLIC_DOMAIN="google.com"
+BLOCKED_DOMAIN="flurry.com"
 
-# Log file location
-LOG_FILE="{{ pihole_health_log_file }}"
-SCRIPT_NAME="{{ pihole_health_script_name }}"
-
-# --- Absolute Command Paths (Updated with your system's paths) ---
-DIG_CMD="/usr/bin/dig"
-
-# Source logging library
-source /usr/local/lib/logging.sh
-
-# --- Dependencies ---
-# Ensure the send_pushover script is available.
+# Source pushover library
 if [ -f /usr/local/lib/send_pushover.sh ]; then
     source /usr/local/lib/send_pushover.sh
-else
-    log "ERROR" "Pushover script not found at /usr/local/lib/send_pushover.sh"
-    exit 1
 fi
 
-# Ensure the log file is writable.
-touch "$LOG_FILE" 2>/dev/null || {
-    log "WARNING" "Could not write to $LOG_FILE. Logging only to standard output."
-}
-
-# --- Health Check Function ---
-# Checks a single Pi-hole instance for public and blocked domain resolution.
+# Check a single Pi-hole instance
 check_pihole() {
     local pihole_ip=$1
     local pihole_name=$2
     local status_message=""
     local overall_status="HEALTHY"
 
-    log "INFO" "Starting health check for $pihole_name ($pihole_ip)..."
-
-    # --- Check 1: Public Domain Resolution ---
-    log "INFO" "Checking public domain resolution for '$PUBLIC_DOMAIN'..."
-    public_ip=$($DIG_CMD @"$pihole_ip" +short "$PUBLIC_DOMAIN")
+    # Check 1: Public domain resolution
+    public_ip=$(/usr/bin/dig @"$pihole_ip" +short "$PUBLIC_DOMAIN")
 
     if [ -z "$public_ip" ] || [ "$public_ip" == "0.0.0.0" ]; then
-        status_message+="Public DNS check FAILED. "
+        status_message+="Public DNS FAILED. "
         overall_status="UNHEALTHY"
-        log "ERROR" "Public DNS check for $pihole_name failed. Expected a valid IP, but got nothing or 0.0.0.0."
-    else
-        status_message+="Public DNS check OK. "
-        log "INFO" "Public DNS check for $pihole_name passed. Resolved to $public_ip."
+        logger -t "$SCRIPT_NAME" -p user.err "PIHOLE_DNS_FAILED - $pihole_name ($pihole_ip) cannot resolve public domains"
     fi
 
-    # --- Check 2: Blocked Domain Resolution ---
-    log "INFO" "Checking blocked domain resolution for '$BLOCKED_DOMAIN'..."
-    blocked_ip=$($DIG_CMD @"$pihole_ip" +short "$BLOCKED_DOMAIN")
+    # Check 2: Ad blocking
+    blocked_ip=$(/usr/bin/dig @"$pihole_ip" +short "$BLOCKED_DOMAIN")
 
     if [ "$blocked_ip" != "0.0.0.0" ]; then
-        # Handle cases where the command might return an empty string or an actual IP
-        local got_ip=${blocked_ip:-"nothing"}
-        status_message+="Ad blocking check FAILED (got $got_ip). "
+        status_message+="Ad blocking FAILED. "
         overall_status="UNHEALTHY"
-        log "ERROR" "Ad blocking check for $pihole_name failed. Expected 0.0.0.0, but got $got_ip."
-    else
-        status_message+="Ad blocking check OK. "
-        log "INFO" "Ad blocking check for $pihole_name passed."
+        logger -t "$SCRIPT_NAME" -p user.err "PIHOLE_BLOCKING_FAILED - $pihole_name ($pihole_ip) is not blocking ads properly"
     fi
 
-    # --- Send Notification ---
+    # Send Pushover alert if unhealthy
     if [ "$overall_status" != "HEALTHY" ]; then
-        log "ERROR" "Overall status for $pihole_name is UNHEALTHY. Sending high-priority notification."
-        send_pushover "${pushover_pihole:-}" "Pi-hole Alert: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0 "siren"
-        log "INFO" "Notification sent."
+        logger -t "$SCRIPT_NAME" -p user.err "PIHOLE_UNHEALTHY - $pihole_name ($pihole_ip) health check failed: $status_message"
+        send_pushover "${pushover_pihole:-}" "Pi-hole Alert: $pihole_name ($pihole_ip) is UNHEALTHY. $status_message" "Pi-hole Monitoring" 0 "siren"
     else
-        log "INFO" "Overall status for $pihole_name is HEALTHY."
-        # Optional: Uncomment to receive a notification even on success
-        : #log "INFO" "Sending low-priority success notification."
-        : #send_pushover "${pushover_pihole:-}" "Pi-hole Status: $pihole_name ($pihole_ip) is $overall_status. Details: $status_message" "Pi-hole Monitoring" 0 "bike"
+        logger -t "$SCRIPT_NAME" -p user.info "PIHOLE_HEALTHY - $pihole_name ($pihole_ip) is functioning correctly"
     fi
-    log "INFO" "Finished health check for $pihole_name."
 }
 
-
-# --- Main Execution ---
-log "INFO" "Starting Pi-hole health checks script."
+# Check both Pi-hole instances
 check_pihole "$PIHOLE_MAIN" "Main Pi-hole"
 check_pihole "$PIHOLE_BACKUP" "Backup Pi-hole"
-log "INFO" "All health checks complete. Script finished."

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Pi-hole Health Monitor every 30 minutes
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

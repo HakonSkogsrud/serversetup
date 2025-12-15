@@ -68,7 +68,8 @@
     - scheduled_update
     - scheduled_reboot
     - firewall
-    - pihole_health
+    - role: pihole_health
+      tags: pihole_health
     - nebula_sync
     - syncthing
     - jellyfin
