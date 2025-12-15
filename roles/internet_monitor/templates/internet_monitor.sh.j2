@@ -32,16 +32,20 @@ PREVIOUS_STATE=$(cat "$STATE_FILE" 2>/dev/null || echo "UNKNOWN")
 if check_internet; then
     CURRENT_STATE="UP"
 
-    # Log recovery if we were down
+    # Log recovery if we were down, otherwise log normal check
     if [ "$PREVIOUS_STATE" = "DOWN" ]; then
         logger -t "$SCRIPT_NAME" -p user.info "INTERNET_RECOVERY - Internet connectivity restored"
+    else
+        logger -t "$SCRIPT_NAME" -p user.info "INTERNET_CHECK_OK - Internet connectivity is up"
     fi
 else
     CURRENT_STATE="DOWN"
 
-    # Log outage if this is new or continuing
+    # Log outage (new or continuing)
     if [ "$PREVIOUS_STATE" != "DOWN" ]; then
         logger -t "$SCRIPT_NAME" -p user.err "INTERNET_OUTAGE - Internet connectivity lost"
+    else
+        logger -t "$SCRIPT_NAME" -p user.err "INTERNET_CHECK_DOWN - Internet connectivity still down"
     fi
 fi
 
