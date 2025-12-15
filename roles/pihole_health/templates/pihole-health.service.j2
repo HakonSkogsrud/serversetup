@@ -1,0 +1,15 @@
+[Unit]
+Description=Pi-hole Health Monitor
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ pihole_health_script_name }}.sh
+Environment="pushover_pihole={{ pushover_pihole }}"
+Environment="pushover_user={{ pushover_user }}"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ pihole_health_script_name }}
+
+[Install]
+WantedBy=multi-user.target

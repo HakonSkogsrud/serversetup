@@ -5,36 +5,6 @@
     state: present
   become: true
 
-- name: Ensure the script directory exists
-  ansible.builtin.file:
-    path: /usr/local/bin
-    state: directory
-    mode: "0755"
-
-- name: Ensure log file exists and has secure base permissions
-  ansible.builtin.file:
-    path: "{{ pihole_health_log_file }}"
-    state: touch # Creates the file if it doesn't exist
-    owner: root
-    group: root
-    mode: "0640" # Owner can read/write, group can read, others have no access
-  become: true
-
-- name: Install acl package for setting extended file permissions
-  ansible.builtin.package:
-    name: acl
-    state: present
-  become: true
-
-- name: Grant read access to the log file for user
-  ansible.posix.acl:
-    path: "{{ pihole_health_log_file }}"
-    entity: "{{ template.user }}"
-    etype: user
-    permissions: rw
-    state: present
-  become: true
-
 - name: Deploy the Pi-hole monitoring script
   ansible.builtin.template:
     src: pihole_health.sh.j2
@@ -43,9 +13,27 @@
     group: root
     mode: "0755"
 
-- name: Add cron job to run the Pi-hole check
-  ansible.builtin.cron:
-    name: "Check Pi-hole Status"
-    minute: "*/30"
-    job: "pushover_pihole='{{ pushover_pihole }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ pihole_health_script_name }}.sh"
-    user: root
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: pihole-health.service.j2
+    dest: "/etc/systemd/system/pihole-health.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: pihole-health.timer.j2
+    dest: "/etc/systemd/system/pihole-health.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start pihole health timer
+  ansible.builtin.systemd:
+    name: pihole-health.timer
+    enabled: true
+    state: started
+    daemon_reload: true
