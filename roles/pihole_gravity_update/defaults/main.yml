@@ -1,4 +1,2 @@
 ---
-# Logging configuration
-pihole_gravity_update_log_file: "/var/log/pihole_gravity_update.log"
 pihole_gravity_update_script_name: "pihole_gravity_update"
