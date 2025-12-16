@@ -1,37 +1,33 @@
 ---
-- name: Ensure the script directory exists
-  ansible.builtin.file:
-    path: /usr/local/bin
-    state: directory
-    mode: "0755"
-
-- name: Create and set permissions for the Immich backup log file
-  ansible.builtin.file:
-    path: "{{ immich_backup_log_file }}"
-    state: touch
-    owner: "{{ template.user }}"
-    group: "{{ template.user }}"
-    mode: "0644"
-
-- name: Create the Immich backup and notification script
+- name: Deploy the Immich backup script
   ansible.builtin.template:
     src: immich_backup.sh.j2
     dest: "/usr/local/bin/{{ immich_backup_script_name }}.sh"
+    owner: root
+    group: root
     mode: "0755"
 
-- name: Create Immich backup cron job
-  ansible.builtin.cron:
-    name: "Immich backup to SMB share"
-    minute: "0"
-    hour: "1"
-    day: "*"
-    month: "*"
-    weekday: "*"
-    job: "pushover_token_immich_dump='{{ pushover_token_immich_dump }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ immich_backup_script_name }}.sh"
-    user: "{{ template.user }}"
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: immich-backup.service.j2
+    dest: "/etc/systemd/system/immich-backup.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
 
-- name: Restart cron service to apply changes
-  ansible.builtin.service:
-    name: "{{ 'crond' if ansible_facts['os_family'] == 'RedHat' else 'cron' }}"
-    state: restarted
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: immich-backup.timer.j2
+    dest: "/etc/systemd/system/immich-backup.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start Immich backup timer
+  ansible.builtin.systemd:
+    name: immich-backup.timer
     enabled: true
+    state: started
+    daemon_reload: true

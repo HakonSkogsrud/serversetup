@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Immich Backup daily at 01:00
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target
