@@ -1,3 +1,0 @@
----
-tailnet_healthcheck_hosts:
-  - { name: "backupserver", ip: "{{ vms.backupserver.ip }}" }

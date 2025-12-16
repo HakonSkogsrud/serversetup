@@ -1,3 +1,0 @@
----
-- name: Tailnet healthcheck
-  ansible.builtin.import_tasks: tailnet_healthcheck.yml
