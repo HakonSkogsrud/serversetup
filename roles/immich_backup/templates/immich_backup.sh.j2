@@ -7,11 +7,15 @@
 SCRIPT_NAME="{{ immich_backup_script_name }}"
 BACKUP_DEST_DIR="/mnt/storage/smb/immich_backup"
 POSTGRES_CONTAINER="immich_postgres"
+PROJECT_DIR="{{ immich_backup_project_dir }}"
 
 logger -t "$SCRIPT_NAME" -p user.info "Starting Immich backup"
 
 # Ensure backup destination exists
 mkdir -p "$BACKUP_DEST_DIR/data"
+
+# Change to project directory
+cd "$PROJECT_DIR" || { logger -t "$SCRIPT_NAME" -p user.err "Failed to change to project directory: $PROJECT_DIR"; exit 1; }
 
 # Start services if not running
 logger -t "$SCRIPT_NAME" -p user.info "Ensuring services are running for DB dump"
