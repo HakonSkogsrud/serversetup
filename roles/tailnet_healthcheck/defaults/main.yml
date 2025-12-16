@@ -1,3 +1,0 @@
-tailnet_healthcheck_cron_minute: "*/15"
-tailnet_healthcheck_log_file: "/var/log/tailnet_healthcheck.log"
-tailnet_healthcheck_script_name: "tailnet_healthcheck"
