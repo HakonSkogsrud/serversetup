@@ -9,13 +9,6 @@ create_template_vm_template_search_domain: "local"
 # Path where to store the downloaded image on the Proxmox host
 create_template_vm_image_download_path: "/var/lib/vz/template/cache"
 
-# Cron schedule (default: Sunday at 3:00 AM)
-create_template_vm_cron_weekday: "0"
-create_template_vm_cron_hour: "3"
-create_template_vm_cron_minute: "0"
-
-# Logging configuration
-create_template_vm_log_file: "/var/log/create_template_vm.log"
 create_template_vm_script_name: "create_template_vm"
 
 # Checksum cache file to track when updates are needed

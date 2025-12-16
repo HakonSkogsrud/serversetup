@@ -1,0 +1,13 @@
+[Unit]
+Description=AlmaLinux Cloud Template VM Update
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ create_template_vm_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ create_template_vm_script_name }}
+
+[Install]
+WantedBy=multi-user.target
