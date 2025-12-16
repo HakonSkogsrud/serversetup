@@ -6,7 +6,8 @@
   roles:
     - create_template_vm
     - sanoid
-    - syncoid
+    - role: syncoid
+      tags: syncoid
     - scheduled_update
     - proxmox_config
     - tailscale_static_route
