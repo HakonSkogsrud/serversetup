@@ -1,24 +1,32 @@
-- name: Copy syncoid backup script to VM
+- name: Deploy the syncoid backup script
   ansible.builtin.template:
     src: syncoid.sh.j2
     dest: "/usr/bin/{{ syncoid_script_name }}.sh"
-    mode: "0775"
+    owner: root
+    group: root
+    mode: "0755"
 
-- name: Add syncoid backup script to crontab with Pushover tokens
-  ansible.builtin.cron:
-    name: "Run syncoid backup script"
-    minute: "0"
-    hour: "3"
-    weekday: "1" # 0 for Sunday, 1 for Monday, etc.
-    job: >-
-      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-      pushover_token_backup='{{ pushover_token_backup }}'
-      pushover_user='{{ pushover_user }}'
-      /usr/bin/{{ syncoid_script_name }}.sh
-    state: present
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: syncoid.service.j2
+    dest: "/etc/systemd/system/syncoid.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
 
-- name: Restart cron service
-  ansible.builtin.service:
-    name: cron
-    state: restarted
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: syncoid.timer.j2
+    dest: "/etc/systemd/system/syncoid.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start syncoid timer
+  ansible.builtin.systemd:
+    name: syncoid.timer
     enabled: true
+    state: started
+    daemon_reload: true

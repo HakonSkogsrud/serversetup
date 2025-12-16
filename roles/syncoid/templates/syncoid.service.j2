@@ -1,0 +1,13 @@
+[Unit]
+Description=Syncoid ZFS Backup to Remote Host
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/{{ syncoid_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ syncoid_script_name }}
+
+[Install]
+WantedBy=multi-user.target
