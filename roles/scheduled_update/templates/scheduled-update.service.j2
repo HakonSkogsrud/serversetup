@@ -1,0 +1,13 @@
+[Unit]
+Description=Scheduled System Package Update
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ scheduled_update_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ scheduled_update_script_name }}
+
+[Install]
+WantedBy=multi-user.target
