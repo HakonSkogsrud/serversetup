@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker Compose Auto-update
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ docker_auto_update_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ docker_auto_update_script_name }}
+
+[Install]
+WantedBy=multi-user.target
