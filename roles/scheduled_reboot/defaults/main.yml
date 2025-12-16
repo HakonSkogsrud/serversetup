@@ -1,16 +1,7 @@
 # roles/scheduled_reboot/defaults/main.yml
 ---
 # Default schedule: Thursday at 00:00 (Midnight)
-scheduled_reboot_cron_minute: "0"
-scheduled_reboot_cron_hour: "0"
-scheduled_reboot_cron_weekday: "4" # 0=Sunday, 1=Monday, ..., 4=Thursday
-scheduled_reboot_cron_dom: "*" # Day of Month
-scheduled_reboot_cron_month: "*" # Month
+# OnCalendar format: https://www.freedesktop.org/software/systemd/man/systemd.time.html
+scheduled_reboot_timer_calendar: "Thu *-*-* 00:00:00"
 
-# Enable or disable Pushover notifications for successful reboots
-# (Failure notifications are always sent)
-scheduled_reboot_notify: false
-
-# Logging configuration
-scheduled_reboot_log_file: "/var/log/scheduled_reboot.log"
 scheduled_reboot_script_name: "scheduled_reboot"

@@ -1,0 +1,14 @@
+[Unit]
+Description=System Reboot Notification
+Documentation=man:systemd.service(5)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/logger -t {{ scheduled_reboot_script_name }} -p user.info "System $$(hostname) has successfully rebooted"
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
