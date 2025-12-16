@@ -1,176 +1,66 @@
 #!/bin/bash
+#
+# Scheduled system package updates with service restart handling.
+# Logs to systemd journal for Grafana/Loki.
+# This script is managed by Ansible.
 
-# --- Configuration ---
-LOG_FILE="{{ scheduled_update_log_file }}"
 SCRIPT_NAME="{{ scheduled_update_script_name }}"
 
-# Source logging library
-source /usr/local/lib/logging.sh
+# Function to restart service if it needs updating
+restart_service_if_needed() {
+    local service_pattern="$1"
+    local service_name=$(systemctl list-units "$service_pattern" --state=running --no-legend 2>/dev/null | awk '{print $1}' | head -n1)
 
-# Ensure the log file is accessible
-touch "$LOG_FILE" 2>/dev/null || log "WARNING" "Could not access $LOG_FILE. Logging only to cron output."
+    if [ -z "$service_name" ]; then
+        return
+    fi
 
-log "INFO" "Starting package update script."
+    logger -t "$SCRIPT_NAME" -p user.info "Checking if $service_name needs restart..."
 
-{% if scheduled_update_notify %}
-# Source the Pushover script if it exists
-if [ -f /usr/local/lib/send_pushover.sh ]; then
-    source /usr/local/lib/send_pushover.sh
-    PUSHOVER_ENABLED=true
-else
-    log "WARNING" "Pushover script not found at /usr/local/lib/send_pushover.sh. Skipping notifications."
-    PUSHOVER_ENABLED=false
-fi
-{% else %}
-PUSHOVER_ENABLED=false
-log "INFO" "Pushover notifications disabled."
-{% endif %}
+    if command -v needs-restarting >/dev/null 2>&1; then
+        if needs-restarting -s 2>/dev/null | grep -q "$service_name"; then
+            logger -t "$SCRIPT_NAME" -p user.info "Restarting $service_name after update..."
+            systemctl restart "$service_name" && \
+                logger -t "$SCRIPT_NAME" -p user.info "Successfully restarted $service_name" || \
+                logger -t "$SCRIPT_NAME" -p user.warning "Failed to restart $service_name"
+        fi
+    elif command -v needrestart >/dev/null 2>&1; then
+        if needrestart -b 2>/dev/null | grep -q "NEEDRESTART-SVC: $service_name"; then
+            logger -t "$SCRIPT_NAME" -p user.info "Restarting $service_name after update..."
+            systemctl restart "$service_name" && \
+                logger -t "$SCRIPT_NAME" -p user.info "Successfully restarted $service_name" || \
+                logger -t "$SCRIPT_NAME" -p user.warning "Failed to restart $service_name"
+        fi
+    else
+        # Fallback: restart as precaution if tools unavailable
+        logger -t "$SCRIPT_NAME" -p user.info "Restarting $service_name as precaution..."
+        systemctl restart "$service_name"
+    fi
+}
 
-if command -v sudo >/dev/null 2>&1; then
-  SUDO="sudo"
-  log "INFO" "Sudo command found."
-else
-  SUDO=""
-  log "INFO" "Sudo command not found, running commands directly."
-fi
+logger -t "$SCRIPT_NAME" -p user.info "Starting package update"
 
+# Run updates based on package manager
 if command -v apt-get >/dev/null 2>&1; then
-  log "INFO" "Detected apt-get system. Running updates..."
-  $SUDO apt-get update -y
-  if [ $? -eq 0 ]; then
-    log "INFO" "Package list updated. Running upgrades..."
-    $SUDO apt-get upgrade -y
-    if [ $? -ne 0 ]; then
-      log "ERROR" "APT upgrade failed."
-      [ "$PUSHOVER_ENABLED" = true ] && send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) failed during apt upgrade" "System update FAILED" 0 "siren"
-      exit 1
-    fi
-  else
-    log "ERROR" "APT update failed."
-    [ "$PUSHOVER_ENABLED" = true ] && send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) failed during apt update" "System update FAILED" 0 "siren"
-    exit 1
-  fi
+    apt-get update -y && apt-get upgrade -y
+    UPDATE_STATUS=$?
 elif command -v dnf >/dev/null 2>&1; then
-  log "INFO" "Detected dnf system. Running upgrade..."
-  $SUDO dnf upgrade -y
-  if [ $? -ne 0 ]; then
-    log "ERROR" "DNF upgrade failed."
-    [ "$PUSHOVER_ENABLED" = true ] && send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) failed during dnf upgrade" "System update FAILED" 0 "siren"
+    dnf upgrade -y
+    UPDATE_STATUS=$?
+else
+    logger -t "$SCRIPT_NAME" -p user.err "No supported package manager found"
     exit 1
-  fi
-else
-  log "ERROR" "No supported package manager (apt-get or dnf) found. Aborting."
-  [ "$PUSHOVER_ENABLED" = true ] && send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) failed: No package manager found" "System update FAILED" 0 "siren"
-  exit 1
 fi
 
-log "INFO" "Package update completed successfully."
-
-# Check if tailscale service is running and restart if needed
-if systemctl is-active --quiet tailscaled.service; then
-  log "INFO" "Detected running Tailscale service: tailscaled.service"
-
-  # Check if tailscale needs restart after update
-  if command -v dnf >/dev/null 2>&1; then
-    if command -v needs-restarting >/dev/null 2>&1; then
-      if needs-restarting -s 2>/dev/null | grep -q "tailscaled.service"; then
-        log "INFO" "Restarting tailscaled.service after update..."
-        $SUDO systemctl restart tailscaled.service
-        if [ $? -eq 0 ]; then
-          log "INFO" "Tailscale service restarted successfully."
-        else
-          log "WARNING" "Failed to restart Tailscale service."
-        fi
-      else
-        log "INFO" "Tailscale service does not need restart."
-      fi
-    else
-      # Fallback: always restart after dnf upgrade to be safe
-      log "INFO" "needs-restarting not available. Restarting Tailscale as precaution..."
-      $SUDO systemctl restart tailscaled.service
-      log "INFO" "Tailscale service restarted."
-    fi
-  elif command -v apt-get >/dev/null 2>&1; then
-    # For Debian/Ubuntu systems, check with needrestart or just restart
-    if command -v needrestart >/dev/null 2>&1; then
-      if needrestart -b 2>/dev/null | grep -q "NEEDRESTART-SVC: tailscaled.service"; then
-        log "INFO" "Restarting tailscaled.service after update..."
-        $SUDO systemctl restart tailscaled.service
-        if [ $? -eq 0 ]; then
-          log "INFO" "Tailscale service restarted successfully."
-        else
-          log "WARNING" "Failed to restart Tailscale service."
-        fi
-      else
-        log "INFO" "Tailscale service does not need restart."
-      fi
-    else
-      # Fallback: always restart after apt upgrade to be safe
-      log "INFO" "needrestart not available. Restarting Tailscale as precaution..."
-      $SUDO systemctl restart tailscaled.service
-      log "INFO" "Tailscale service restarted."
-    fi
-  fi
-else
-  log "INFO" "Tailscale service not running. Skipping Tailscale restart."
+if [ $UPDATE_STATUS -ne 0 ]; then
+    logger -t "$SCRIPT_NAME" -p user.err "Package update failed"
+    exit 1
 fi
 
-# Check if syncthing service is running and restart if needed
-SYNCTHING_SERVICE=$(systemctl list-units "syncthing@*.service" --state=running --no-legend 2>/dev/null | awk '{print $1}' | head -n1)
-if [ -n "$SYNCTHING_SERVICE" ]; then
-  log "INFO" "Detected running Syncthing service: $SYNCTHING_SERVICE"
+logger -t "$SCRIPT_NAME" -p user.info "Package update completed successfully"
 
-  # Check if syncthing package was updated
-  if command -v dnf >/dev/null 2>&1; then
-    if dnf list updates syncthing 2>/dev/null | grep -q syncthing; then
-      log "INFO" "Syncthing has updates available but wasn't updated. Checking if restart needed..."
-    fi
-    # Check if syncthing needs restart after update
-    if command -v needs-restarting >/dev/null 2>&1; then
-      if needs-restarting -s 2>/dev/null | grep -q "$SYNCTHING_SERVICE"; then
-        log "INFO" "Restarting $SYNCTHING_SERVICE after update..."
-        $SUDO systemctl restart "$SYNCTHING_SERVICE"
-        if [ $? -eq 0 ]; then
-          log "INFO" "Syncthing service restarted successfully."
-        else
-          log "WARNING" "Failed to restart Syncthing service."
-        fi
-      else
-        log "INFO" "Syncthing service does not need restart."
-      fi
-    else
-      # Fallback: always restart after dnf upgrade to be safe
-      log "INFO" "needs-restarting not available. Restarting Syncthing as precaution..."
-      $SUDO systemctl restart "$SYNCTHING_SERVICE"
-      log "INFO" "Syncthing service restarted."
-    fi
-  elif command -v apt-get >/dev/null 2>&1; then
-    # For Debian/Ubuntu systems, check with needrestart or just restart
-    if command -v needrestart >/dev/null 2>&1; then
-      if needrestart -b 2>/dev/null | grep -q "NEEDRESTART-SVC: $SYNCTHING_SERVICE"; then
-        log "INFO" "Restarting $SYNCTHING_SERVICE after update..."
-        $SUDO systemctl restart "$SYNCTHING_SERVICE"
-        if [ $? -eq 0 ]; then
-          log "INFO" "Syncthing service restarted successfully."
-        else
-          log "WARNING" "Failed to restart Syncthing service."
-        fi
-      else
-        log "INFO" "Syncthing service does not need restart."
-      fi
-    else
-      # Fallback: always restart after apt upgrade to be safe
-      log "INFO" "needrestart not available. Restarting Syncthing as precaution..."
-      $SUDO systemctl restart "$SYNCTHING_SERVICE"
-      log "INFO" "Syncthing service restarted."
-    fi
-  fi
-else
-  log "INFO" "No enabled Syncthing service found. Skipping Syncthing restart."
-fi
+# Restart services if needed
+restart_service_if_needed "tailscaled.service"
+restart_service_if_needed "syncthing@*.service"
 
-if [ "$PUSHOVER_ENABLED" = true ]; then
-    send_pushover "${pushover_token_update:-}" "Update on machine $(hostname) successful" "System update" 0 "bike"
-    log "INFO" "Success notification sent."
-fi
-log "INFO" "Script finished."
+logger -t "$SCRIPT_NAME" -p user.info "Script finished"

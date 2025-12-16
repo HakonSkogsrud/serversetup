@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Scheduled System Package Update daily
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target
