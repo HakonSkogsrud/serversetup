@@ -1,2 +1,3 @@
 ---
 immich_backup_script_name: "immich_backup"
+immich_backup_project_dir: "/home/{{ template.user }}/immich-app"
