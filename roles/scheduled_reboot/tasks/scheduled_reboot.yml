@@ -1,45 +1,40 @@
 ---
-- name: Ensure the script directory exists
-  ansible.builtin.file:
-    path: /usr/local/bin
-    state: directory
-    mode: "0755"
-
-- name: Ensure log file exists with proper permissions
-  ansible.builtin.file:
-    path: "{{ scheduled_reboot_log_file }}"
-    state: touch
-    mode: "0666"
+- name: Deploy reboot notification systemd service unit
+  ansible.builtin.template:
+    src: scheduled-reboot-notification.service.j2
+    dest: "/etc/systemd/system/scheduled-reboot-notification.service"
     owner: root
     group: root
+    mode: "0644"
+  notify: Reload systemd
 
-- name: Create the reboot notification script
-  ansible.builtin.template:
-    src: scheduled_reboot.sh.j2
-    dest: "/usr/local/bin/{{ scheduled_reboot_script_name }}.sh"
-    mode: "0755"
-
-- name: Add a cron job to run the reboot notification script at startup
-  ansible.builtin.cron:
-    name: "Notify on reboot"
-    special_time: reboot
-    # Since we injected variables into the script above, the cron job is cleaner
-    job: "/usr/local/bin/{{ scheduled_reboot_script_name }}.sh"
-    user: root
-
-- name: Schedule a weekly reboot
-  ansible.builtin.cron:
-    name: "Weekly reboot"
-    minute: "{{ scheduled_reboot_cron_minute }}"
-    hour: "{{ scheduled_reboot_cron_hour }}"
-    weekday: "{{ scheduled_reboot_cron_weekday }}"
-    day: "{{ scheduled_reboot_cron_dom }}"
-    month: "{{ scheduled_reboot_cron_month }}"
-    job: "/sbin/reboot"
-    user: root
-
-- name: Restart cron service to apply changes
-  ansible.builtin.service:
-    name: "{{ 'crond' if ansible_facts['os_family'] == 'RedHat' else 'cron' }}"
-    state: restarted
+- name: Enable reboot notification service to run at boot
+  ansible.builtin.systemd:
+    name: scheduled-reboot-notification.service
     enabled: true
+    daemon_reload: true
+
+- name: Deploy scheduled reboot systemd service unit
+  ansible.builtin.template:
+    src: scheduled-reboot.service.j2
+    dest: "/etc/systemd/system/scheduled-reboot.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy scheduled reboot systemd timer unit
+  ansible.builtin.template:
+    src: scheduled-reboot.timer.j2
+    dest: "/etc/systemd/system/scheduled-reboot.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start scheduled reboot timer
+  ansible.builtin.systemd:
+    name: scheduled-reboot.timer
+    enabled: true
+    state: started
+    daemon_reload: true

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Scheduled System Reboot weekly
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar={{ scheduled_reboot_timer_calendar }}
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

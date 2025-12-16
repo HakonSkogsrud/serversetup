@@ -1,0 +1,10 @@
+[Unit]
+Description=Scheduled System Reboot
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/reboot
+
+[Install]
+WantedBy=multi-user.target
