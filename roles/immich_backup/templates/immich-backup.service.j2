@@ -1,0 +1,16 @@
+[Unit]
+Description=Immich Backup to SMB Share
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+User={{ template.user }}
+Group={{ template.user }}
+WorkingDirectory=/home/{{ template.user }}/immich-app
+ExecStart=/usr/local/bin/{{ immich_backup_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ immich_backup_script_name }}
+
+[Install]
+WantedBy=multi-user.target

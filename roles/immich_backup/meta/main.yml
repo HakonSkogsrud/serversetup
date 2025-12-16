@@ -1,4 +1,0 @@
----
-dependencies:
-  - role: logging_config
-  - role: pushover_config

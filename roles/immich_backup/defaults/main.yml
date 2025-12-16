@@ -1,8 +1,2 @@
 ---
-# Logging configuration
-immich_backup_log_file: "/var/log/immich_backup.log"
 immich_backup_script_name: "immich_backup"
-
-# Enable or disable Pushover notifications for successful backups
-# (Failure notifications are always sent)
-immich_backup_notify: false
