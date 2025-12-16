@@ -4,10 +4,10 @@
   vars_files:
     - ../secrets.yml
   roles:
-    - create_template_vm
+    - role: create_template_vm
+      tags: create_template_vm
     - sanoid
-    - role: syncoid
-      tags: syncoid
+    - syncoid
     - scheduled_update
     - proxmox_config
     - tailscale_static_route

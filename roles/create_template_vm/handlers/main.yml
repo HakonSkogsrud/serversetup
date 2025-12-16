@@ -1,4 +1,4 @@
 ---
-# Handlers for create_template_vm role
-# Note: With the cron-based approach, handlers are no longer needed.
-# The script runs automatically via cron and handles its own execution.
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
