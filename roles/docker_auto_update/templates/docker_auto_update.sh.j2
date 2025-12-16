@@ -1,24 +1,12 @@
 #!/bin/bash
+#
+# Docker Compose auto-update script.
+# Logs to systemd journal for Grafana/Loki.
+# This script is managed by Ansible.
 
-# Configuration
-LOG_FILE="{{ docker_auto_update_log_file }}"
 SCRIPT_NAME="{{ docker_auto_update_script_name }}"
 
-# Source logging library
-source /usr/local/lib/logging.sh
-
-touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Logging may fail." >&2; }
-
-log "INFO" "Starting Docker auto-update script."
-
-if [ -f /usr/local/lib/send_pushover.sh ]; then
-    source /usr/local/lib/send_pushover.sh
-    PUSHOVER_ENABLED=true
-    log "INFO" "Pushover script sourced."
-else
-    log "WARNING" "Pushover script not found at /usr/local/lib/send_pushover.sh."
-    PUSHOVER_ENABLED=false
-fi
+logger -t "$SCRIPT_NAME" -p user.info "Starting Docker auto-update"
 
 docker_auto_update_compose_paths=(
 {% for path in docker_auto_update_compose_paths -%}
@@ -32,17 +20,13 @@ FAILED_APPS=""
 UPDATED_APPS=""
 
 if [ "${{ '{#' }}docker_auto_update_compose_paths[@]}" -eq 0 ]; then
-    log "ERROR" "No Docker Compose paths configured. Exiting."
-    # Always send failure notifications
-    if [ "$PUSHOVER_ENABLED" = true ]; then
-        send_pushover "${pushover_docker:-}" "Docker auto-update on $(hostname): No compose paths configured" "Docker Update - Configuration Error" 0 "siren"
-    fi
+    logger -t "$SCRIPT_NAME" -p user.err "No Docker Compose paths configured"
     exit 1
 fi
 
 for compose_path in "${docker_auto_update_compose_paths[@]}"; do
     if [ ! -f "$compose_path" ]; then
-        log "ERROR" "Docker Compose file not found: $compose_path"
+        logger -t "$SCRIPT_NAME" -p user.err "Docker Compose file not found: $compose_path"
         FAILURE_COUNT=$((FAILURE_COUNT + 1))
         FAILED_APPS="${FAILED_APPS}
 - $compose_path (file not found)"
@@ -52,74 +36,51 @@ for compose_path in "${docker_auto_update_compose_paths[@]}"; do
     compose_dir=$(dirname "$compose_path")
     app_name=$(basename "$compose_dir")
 
-    log "INFO" "Processing: $app_name at $compose_path"
+    logger -t "$SCRIPT_NAME" -p user.info "Processing: $app_name"
 
     cd "$compose_dir" || {
-        log "ERROR" "Could not change to directory: $compose_dir"
+        logger -t "$SCRIPT_NAME" -p user.err "Could not change to directory: $compose_dir"
         FAILURE_COUNT=$((FAILURE_COUNT + 1))
         FAILED_APPS="${FAILED_APPS}
 - $app_name (directory access failed)"
         continue
     }
 
-    log "INFO" "Running docker compose pull for $app_name..."
-    if docker compose pull >> "$LOG_FILE" 2>&1; then
-        log "INFO" "Pull successful for $app_name"
+    logger -t "$SCRIPT_NAME" -p user.info "Running docker compose pull for $app_name"
+    if docker compose pull 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+        logger -t "$SCRIPT_NAME" -p user.info "Pull successful for $app_name"
 
-        log "INFO" "Running docker compose up -d for $app_name..."
-        if docker compose up -d >> "$LOG_FILE" 2>&1; then
-            log "INFO" "Update successful for $app_name"
+        logger -t "$SCRIPT_NAME" -p user.info "Running docker compose up -d for $app_name"
+        if docker compose up -d 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+            logger -t "$SCRIPT_NAME" -p user.info "Update successful for $app_name"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
             UPDATED_APPS="${UPDATED_APPS}
 - $app_name"
         else
-            log "ERROR" "docker compose up -d failed for $app_name"
+            logger -t "$SCRIPT_NAME" -p user.err "docker compose up -d failed for $app_name"
             FAILURE_COUNT=$((FAILURE_COUNT + 1))
             FAILED_APPS="${FAILED_APPS}
 - $app_name (compose up failed)"
         fi
     else
-        log "ERROR" "docker compose pull failed for $app_name"
+        logger -t "$SCRIPT_NAME" -p user.err "docker compose pull failed for $app_name"
         FAILURE_COUNT=$((FAILURE_COUNT + 1))
         FAILED_APPS="${FAILED_APPS}
 - $app_name (pull failed)"
     fi
 done
 
-log "INFO" "Docker auto-update completed. Success: $SUCCESS_COUNT, Failures: $FAILURE_COUNT"
+logger -t "$SCRIPT_NAME" -p user.info "Docker auto-update completed. Success: $SUCCESS_COUNT, Failures: $FAILURE_COUNT"
 
 if [ "$FAILURE_COUNT" -eq 0 ]; then
-    MESSAGE="Docker auto-update on $(hostname) completed successfully.
-
-Updated apps ($SUCCESS_COUNT):${UPDATED_APPS}"
-{% if docker_auto_update_notify | default(true) %}
-    # Send success notification only when enabled
-    if [ "$PUSHOVER_ENABLED" = true ]; then
-        send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - Success" 0 "bike"
-        log "INFO" "Success notification sent."
-    fi
-{% else %}
-    log "INFO" "Pushover notifications for successful updates disabled."
-{% endif %}
+    logger -t "$SCRIPT_NAME" -p user.info "All updates completed successfully. Updated apps: $SUCCESS_COUNT"
 else
-    MESSAGE="Docker auto-update on $(hostname) completed with errors.
-
-Successful: $SUCCESS_COUNT
-Failed: $FAILURE_COUNT
-
-Failed apps:${FAILED_APPS}"
-    if [ "$SUCCESS_COUNT" -gt 0 ]; then
-        MESSAGE="${MESSAGE}
-
-Successful apps:${UPDATED_APPS}"
-    fi
-    # Always send failure notifications
-    if [ "$PUSHOVER_ENABLED" = true ]; then
-        send_pushover "${pushover_docker:-}" "$MESSAGE" "Docker Update - PARTIAL FAILURE" 0 "siren"
-        log "WARNING" "Failure notification sent."
+    logger -t "$SCRIPT_NAME" -p user.warning "Completed with errors. Successful: $SUCCESS_COUNT, Failed: $FAILURE_COUNT"
+    if [ -n "$FAILED_APPS" ]; then
+        logger -t "$SCRIPT_NAME" -p user.warning "Failed apps:${FAILED_APPS}"
     fi
 fi
 
-log "INFO" "Script finished."
+logger -t "$SCRIPT_NAME" -p user.info "Script finished"
 
 exit "$FAILURE_COUNT"
