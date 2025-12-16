@@ -1,35 +1,33 @@
 ---
-- name: Ensure the script directory exists
-  ansible.builtin.file:
-    path: /usr/local/bin
-    state: directory
-    mode: "0755"
-
-- name: Ensure log file exists with proper permissions
-  ansible.builtin.file:
-    path: "{{ pihole_gravity_update_log_file }}"
-    state: touch
-    mode: "0666"
-    owner: root
-    group: root
-
-- name: Create the Pi-hole gravity update script
+- name: Deploy the Pi-hole gravity update script
   ansible.builtin.template:
     src: pihole_gravity_update.sh.j2
     dest: "/usr/local/bin/{{ pihole_gravity_update_script_name }}.sh"
+    owner: root
+    group: root
     mode: "0755"
 
-- name: Add a cron job to run the gravity update script weekly
-  ansible.builtin.cron:
-    name: "Weekly Pi-hole gravity update"
-    job: "pushover_gravity='{{ pushover_gravity }}' pushover_user='{{ pushover_user }}' /usr/local/bin/{{ pihole_gravity_update_script_name }}.sh"
-    user: root
-    weekday: "0"
-    hour: "3"
-    minute: "0"
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: pihole-gravity-update.service.j2
+    dest: "/etc/systemd/system/pihole-gravity-update.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
 
-- name: Restart cron service to apply changes
-  ansible.builtin.service:
-    name: "{{ 'crond' if ansible_facts['os_family'] == 'RedHat' else 'cron' }}"
-    state: restarted
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: pihole-gravity-update.timer.j2
+    dest: "/etc/systemd/system/pihole-gravity-update.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start Pi-hole gravity update timer
+  ansible.builtin.systemd:
+    name: pihole-gravity-update.timer
     enabled: true
+    state: started
+    daemon_reload: true

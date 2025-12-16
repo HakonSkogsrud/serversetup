@@ -1,35 +1,18 @@
 #!/bin/bash
+#
+# Pi-hole gravity update script.
+# Logs to systemd journal for Grafana/Loki.
+# This script is managed by Ansible.
 
-# --- Configuration ---
-LOG_FILE="{{ pihole_gravity_update_log_file }}"
 SCRIPT_NAME="{{ pihole_gravity_update_script_name }}"
 
-# Source logging library
-source /usr/local/lib/logging.sh
+logger -t "$SCRIPT_NAME" -p user.info "Starting Pi-hole update"
 
-touch "$LOG_FILE" 2>/dev/null || { echo "Warning: Could not access $LOG_FILE. Logging may fail." >&2; }
-
-log "INFO" "Starting Pi-hole update."
-
-if [ -f /usr/local/lib/send_pushover.sh ]; then
-    source /usr/local/lib/send_pushover.sh
-    log "INFO" "Pushover script sourced."
+if sudo /usr/local/bin/pihole -up 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+    logger -t "$SCRIPT_NAME" -p user.info "Pi-hole update completed successfully"
 else
-    log "WARNING" "Pushover script not found at /usr/local/lib/send_pushover.sh. Notifications will be skipped."
-    send_pushover() {
-        log "WARNING" "Pushover notification not sent because send_pushover.sh is missing."
-    }
-fi
-
-if sudo /usr/local/bin/pihole -up >> "$LOG_FILE" 2>&1; then
-    log "INFO" "Pi-hole update completed successfully."
-    send_pushover "${pushover_gravity:-}" "Pi-hole update completed successfully on $(hostname)." "Pi-hole Update" 0 "bike"
-    log "INFO" "Success notification sent."
-else
-    log "ERROR" "Pi-hole update FAILED."
-    send_pushover "${pushover_gravity:-}" "Pi-hole update FAILED on $(hostname). Check log file $LOG_FILE for details." "Pi-hole Update FAILED" 0 "siren"
-    log "INFO" "Failure notification sent."
+    logger -t "$SCRIPT_NAME" -p user.err "Pi-hole update FAILED"
     exit 1
 fi
 
-log "INFO" "Pi-hole update script finished."
+logger -t "$SCRIPT_NAME" -p user.info "Pi-hole update script finished"
