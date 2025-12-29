@@ -1,7 +1,8 @@
 ---
-- name: Update apt cache (required before package installation)
+- name: Update apt cache
   ansible.builtin.apt:
     update_cache: true
+    cache_valid_time: 3600
 
 - name: Install sanoid package
   ansible.builtin.apt:
@@ -12,14 +13,15 @@
   ansible.builtin.file:
     path: /etc/sanoid
     state: directory
-    mode: "0755" # Standard directory permissions
+    mode: "0755"
 
-- name: Create sanoid configuration file (/etc/sanoid/sanoid.conf) using blockinfile
+- name: Create sanoid configuration file
   ansible.builtin.blockinfile:
     path: /etc/sanoid/sanoid.conf
+    create: true
     owner: root
     group: root
-    mode: "0644" # Standard config file permissions
+    mode: "0644"
     marker: "# {mark} ANSIBLE MANAGED BLOCK FOR SANOID"
     block: |
       [storage/smb]
@@ -36,14 +38,29 @@
           autosnap = yes
           autoprune = yes
 
-- name: Enable sanoid timer service (starts on boot)
-  ansible.builtin.systemd:
-    name: sanoid.timer
-    enabled: true
-    state: started
+- name: Create systemd override directory for sanoid
+  ansible.builtin.file:
+    path: /etc/systemd/system/sanoid.service.d
+    state: directory
+    mode: "0755"
 
-- name: Start sanoid timer service immediately
+- name: Add health monitoring to sanoid service via override
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/sanoid.service.d/monitoring.conf
+    content: |
+      [Service]
+      # Run the monitor check after snapshots are taken
+      ExecStartPost=/usr/sbin/sanoid --monitor-snapshots
+      # Ensure consistent logging for Loki
+      SyslogIdentifier=sanoid
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Flush handlers to apply systemd reload immediately
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start sanoid timer
   ansible.builtin.systemd:
     name: sanoid.timer
-    state: started
     enabled: true
+    state: started
