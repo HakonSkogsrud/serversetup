@@ -100,3 +100,5 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
         logger -t "$SCRIPT_NAME" -p user.warning "Pool '$current_pool' is not ONLINE, skipping"
     fi
 done
+
+logger -t "$SCRIPT_NAME" -p user.info "Syncoid backup completed successfully"
