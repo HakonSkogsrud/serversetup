@@ -4,8 +4,7 @@
   vars_files:
     - ../secrets.yml
   roles:
-    - role: create_template_vm
-      tags: create_template_vm
+    - create_template_vm
     - sanoid
     - syncoid
     - scheduled_update
