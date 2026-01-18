@@ -1,0 +1,5 @@
+---
+echovault_version: "latest"
+echovault_port: 8000
+echovault_data_dir: "/home/{{ template.user }}/echovault"
+echovault_storage_path: "/mnt/storage/smb/echovault-data"

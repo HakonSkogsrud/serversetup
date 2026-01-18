@@ -5,6 +5,7 @@
       - python3.12-pip
       - python3.12-devel
       - git
+      - podman
     state: present
 
 - name: Generate registration token from GitHub API
