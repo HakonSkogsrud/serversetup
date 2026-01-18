@@ -1,0 +1,47 @@
+---
+- name: Create EchoVault base directory
+  ansible.builtin.file:
+    path: "{{ echovault_data_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Create EchoVault storage data directory
+  ansible.builtin.file:
+    path: "{{ echovault_storage_path }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Deploy EchoVault docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ echovault_data_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart echovault
+
+- name: Configure firewalld for EchoVault
+  ansible.posix.firewalld:
+    port: "{{ echovault_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+
+- name: Start EchoVault container
+  ansible.builtin.shell:
+    cmd: sg docker -c 'docker compose up -d'
+    chdir: "{{ echovault_data_dir }}"
+  become: true
+  become_user: "{{ template.user }}"
+  register: echovault_compose_up
+  changed_when: "'Started' in echovault_compose_up.stderr or 'Creating' in echovault_compose_up.stderr"
+  args:
+    executable: /bin/bash

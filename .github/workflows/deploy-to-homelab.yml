@@ -22,12 +22,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Clean previous run artifacts
+        run: |
+          rm -rf ~/.ansible/collections/ansible_collections/{community,ansible}
+          rm -rf ~/.ansible/tmp/*
+          rm -rf /tmp/ansible-*
+          # Kill any hanging ansible-galaxy processes
+          pkill -9 -f ansible-galaxy || true
+
+
       - name: Install Python dependencies
         run: pip3.12 install -r requirements.txt
 
       - name: Install Ansible Collections
         run: |
-          rm -rf ~/.ansible/collections/ansible_collections/{community,ansible}
           ansible-galaxy collection install -r requirements-collections.yml --force
         timeout-minutes: 5
 

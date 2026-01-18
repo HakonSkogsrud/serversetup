@@ -1,0 +1,6 @@
+---
+- name: Restart echovault
+  community.docker.docker_compose_v2:
+    project_src: "{{ echovault_data_dir }}"
+    state: restarted
+  become: true
