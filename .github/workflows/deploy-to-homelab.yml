@@ -6,6 +6,10 @@ on:
       - "**.yml"
       - "**.yaml"
       - "inventory/**"
+    exclude:
+      - playbooks/fedora.yml
+      - secrets.yml
+      - README.md
 
   workflow_dispatch:
 
