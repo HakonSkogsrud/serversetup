@@ -9,145 +9,243 @@
     - scheduled_update
 
   tasks:
-    # --- VSCodium Installation ---
-    - name: Import VSCodium GPG key
-      ansible.builtin.rpm_key:
-        state: present
-        key: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
+    # =============================================================================
+    # REPOSITORY CONFIGURATION
+    # =============================================================================
 
-    - name: Add VSCodium DNF repository
-      ansible.builtin.yum_repository:
-        name: gitlab.com_paulcarroty_vscodium_repo
-        description: download.vscodium.com
-        baseurl: https://download.vscodium.com/rpms/
-        enabled: true
-        gpgcheck: true
-        repo_gpgcheck: true
-        gpgkey: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
-        metadata_expire: 1h
-        file: vscodium
+    - name: Configure third-party repositories
+      block:
+        - name: Setup VSCodium repository
+          block:
+            - name: Import VSCodium GPG key
+              ansible.builtin.rpm_key:
+                state: present
+                key: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
 
-    # --- RPM Fusion Installation ---
-    - name: Add RPM Fusion repo gpg keys
-      ansible.builtin.rpm_key:
-        key: "{{ item }}"
-        state: present
-      with_items:
-        - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-2020"
-        - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-2020"
+            - name: Add VSCodium DNF repository
+              ansible.builtin.yum_repository:
+                name: gitlab.com_paulcarroty_vscodium_repo
+                description: download.vscodium.com
+                baseurl: https://download.vscodium.com/rpms/
+                enabled: true
+                gpgcheck: true
+                repo_gpgcheck: true
+                gpgkey: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
+                metadata_expire: 1h
+                file: vscodium
 
-    - name: Install the RPM Fusion repo packages
-      ansible.builtin.dnf:
-        name:
-          - "http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
-          - "http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
-        state: present
-        disable_gpg_check: true # GPG keys are imported separately, but the packages themselves aren't signed in the same way
+        - name: Setup VS Code repository
+          block:
+            - name: Import Microsoft GPG key
+              ansible.builtin.rpm_key:
+                state: present
+                key: https://packages.microsoft.com/keys/microsoft.asc
 
-    # --- Brave Browser Installation ---
-    - name: Add Brave browser GPG key
-      ansible.builtin.rpm_key:
-        state: present
-        key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+            - name: Add VS Code DNF repository
+              ansible.builtin.yum_repository:
+                name: code
+                description: Visual Studio Code
+                baseurl: https://packages.microsoft.com/yumrepos/vscode
+                enabled: true
+                gpgcheck: true
+                gpgkey: https://packages.microsoft.com/keys/microsoft.asc
 
-    - name: Add Brave browser repository
-      ansible.builtin.yum_repository:
-        name: brave-browser
-        description: Brave Browser
-        baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
-        enabled: true
-        gpgcheck: true
-        gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+        - name: Setup RPM Fusion repositories
+          block:
+            - name: Add RPM Fusion repo GPG keys
+              ansible.builtin.rpm_key:
+                key: "{{ item }}"
+                state: present
+              loop:
+                - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-2020"
+                - "https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-2020"
 
-    # --- Consolidated Package Installation ---
-    - name: Install core packages, browsers, and tools
-      ansible.builtin.dnf:
-        name:
-          - codium
-          - brave-browser
-          - vim
-          - vlc
-          - uv
-          - git
-          - intel-media-driver
-          - gh
-          - samba
-          - fish
-        state: present
-        update_cache: true # Good practice after adding new repos
+            - name: Install the RPM Fusion repo packages
+              ansible.builtin.dnf:
+                name:
+                  - "http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+                  - "http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+                state: present
+                disable_gpg_check: true
 
-    - name: Update all system packages
-      ansible.builtin.dnf:
-        name: "*"
-        state: latest
+        - name: Setup Brave browser repository
+          block:
+            - name: Add Brave browser GPG key
+              ansible.builtin.rpm_key:
+                state: present
+                key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 
-    # --- Multimedia Setup ---
-    - name: Install multimedia group
-      ansible.builtin.dnf:
-        name: "@multimedia"
-        state: present
-        update_cache: true
+            - name: Add Brave browser repository
+              ansible.builtin.yum_repository:
+                name: brave-browser
+                description: Brave Browser
+                baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+                enabled: true
+                gpgcheck: true
+                gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 
-    - name: Swap ffmpeg-free for full ffmpeg from RPM Fusion
-      ansible.builtin.dnf:
-        name: ffmpeg
-        state: present
-        allowerasing: true
+        - name: Setup eza COPR repository
+          ansible.builtin.command: dnf copr enable alternateved/eza -y
+          args:
+            creates: /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:alternateved:eza.repo
 
-    - name: Upgrade multimedia packages
-      ansible.builtin.dnf:
-        name: "@multimedia"
-        state: latest
-        exclude: "PackageKit-gstreamer-plugin"
-        install_weak_deps: false
+      tags: repositories
 
-    - name: Install sound and video group
-      ansible.builtin.dnf:
-        name: "@sound-and-video"
-        state: present
+    # =============================================================================
+    # PACKAGE INSTALLATION
+    # =============================================================================
 
-    - name: Create Samba credentials file
-      ansible.builtin.template:
-        dest: /etc/samba/credentials
-        src: /dev/null # Create an empty file first with correct permissions
-        owner: root
-        group: root
-        mode: "0600"
-        force: no # Do not overwrite if it exists
+    - name: Install system packages
+      block:
+        - name: Install core packages, browsers, and development tools
+          ansible.builtin.dnf:
+            name:
+              - codium
+              - code
+              - brave-browser
+              - vim
+              - emacs
+              - git
+              - gh
+              - uv
+              - bat
+              - stow
+              - eza
+              - fish
+              - samba
+              - syncthing
+              - vlc
+              - intel-media-driver
+            state: present
+            update_cache: true
 
-    - name: Add username and password to Samba credentials file
-      ansible.builtin.lineinfile:
-        path: /etc/samba/credentials
-        regexp: "^{{ item.key }}="
-        line: "{{ item.key }}={{ item.value }}"
-        state: present
-        owner: root
-        group: root
-        mode: "0600"
-      loop:
-        - { key: "username", value: "haaksk" }
-        - { key: "password", value: "{{ smb_user_password }}" }
-      no_log: true # Prevent password from being logged'
+        - name: Update all system packages
+          ansible.builtin.dnf:
+            name: "*"
+            state: latest
 
-    - name: Add SMB share to fstab for automounting
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        regexp: '^//10\.0\.0\.79/share'
-        line: "//10.0.0.79/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0"
-        state: present
-        backup: yes
+      tags: packages
 
-    # --- Git Configuration and Code Repositories ---
-    - name: Configure Git global user name for haaksk
-      community.general.git_config:
-        name: user.name
-        scope: global
-        value: "Håkon Skogsrud"
-      become_user: haaksk
+    # =============================================================================
+    # MULTIMEDIA CONFIGURATION
+    # =============================================================================
 
-    - name: Configure Git global user email for haaksk
-      community.general.git_config:
-        name: user.email
-        scope: global
-        value: "haaksk@gmail.com"
-      become_user: haaksk
+    - name: Configure multimedia support
+      block:
+        - name: Install multimedia group
+          ansible.builtin.dnf:
+            name: "@multimedia"
+            state: present
+            update_cache: true
+
+        - name: Swap ffmpeg-free for full ffmpeg from RPM Fusion
+          ansible.builtin.dnf:
+            name: ffmpeg
+            state: present
+            allowerasing: true
+
+        - name: Upgrade multimedia packages
+          ansible.builtin.dnf:
+            name: "@multimedia"
+            state: latest
+            exclude: "PackageKit-gstreamer-plugin"
+            install_weak_deps: false
+
+        - name: Install sound and video group
+          ansible.builtin.dnf:
+            name: "@sound-and-video"
+            state: present
+
+      tags: multimedia
+
+    # =============================================================================
+    # NETWORK SHARES CONFIGURATION
+    # =============================================================================
+
+    - name: Configure Samba network share
+      block:
+        - name: Create Samba credentials file
+          ansible.builtin.template:
+            dest: /etc/samba/credentials
+            src: /dev/null
+            owner: root
+            group: root
+            mode: "0600"
+            force: false
+
+        - name: Add username and password to Samba credentials file
+          ansible.builtin.lineinfile:
+            path: /etc/samba/credentials
+            regexp: "^{{ item.key }}="
+            line: "{{ item.key }}={{ item.value }}"
+            state: present
+            owner: root
+            group: root
+            mode: "0600"
+          loop:
+            - { key: "username", value: "haaksk" }
+            - { key: "password", value: "{{ samba_user_password }}" }
+          no_log: true
+
+        - name: Add SMB share to fstab for automounting
+          ansible.builtin.lineinfile:
+            path: /etc/fstab
+            regexp: '^//10\.0\.0\.79/share'
+            line: "//10.0.0.79/share /mnt/smbshare cifs credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,x-systemd.automount,x-systemd.mount-timeout=30,_netdev 0 0"
+            state: present
+            backup: true
+
+      tags: samba
+
+    # =============================================================================
+    # USER CONFIGURATION
+    # =============================================================================
+
+    - name: Configure user environment
+      become: false
+      block:
+        - name: Setup dotfiles
+          block:
+            - name: Clone dotfiles repository
+              ansible.builtin.git:
+                repo: https://github.com/hakonskogsrud/config-files
+                dest: ~/.dotfiles
+                update: true
+
+            - name: Apply dotfiles with stow
+              ansible.builtin.shell: |
+                cd ~/.dotfiles
+                stow -v --target=$HOME --adopt .
+              args:
+                creates: ~/.config/.stow-applied
+
+        - name: Install Nerd Fonts
+          block:
+            - name: Create fonts directory
+              ansible.builtin.file:
+                path: ~/.local/share/fonts
+                state: directory
+                mode: "0755"
+
+            - name: Download AdwaitaMono Nerd Font
+              ansible.builtin.unarchive:
+                src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/AdwaitaMono.zip
+                dest: ~/.local/share/fonts
+                remote_src: true
+                creates: ~/.local/share/fonts/AdwaitaMono*.ttf
+
+            - name: Download Hack Nerd Font
+              ansible.builtin.unarchive:
+                src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/Hack.zip
+                dest: ~/.local/share/fonts
+                remote_src: true
+                creates: ~/.local/share/fonts/Hack*.ttf
+
+            - name: Rebuild font cache
+              ansible.builtin.shell: fc-cache -fv ~/.local/share/fonts
+              args:
+                creates: ~/.local/share/fonts/.font-cache-updated
+              register: font_cache_result
+              changed_when: font_cache_result.rc == 0
+
+      tags: user
