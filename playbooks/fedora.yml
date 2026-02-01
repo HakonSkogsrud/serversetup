@@ -106,9 +106,11 @@
               - vim
               - emacs
               - git
+              - cmake
               - gh
               - uv
               - bat
+              - libtool
               - stow
               - eza
               - fish
