@@ -6,11 +6,9 @@ on:
       - "**.yml"
       - "**.yaml"
       - "inventory/**"
-    paths-ignore:
-      - "playbooks/fedora.yml"
-      - "secrets.yml"
-      - "requirements-collections.yml"
-      - "README.md"
+      - "!playbooks/fedora.yml"
+      - "!secrets.yml"
+      - "!requirements-collections.yml"
 
   workflow_dispatch:
 
