@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# CouchDB backup script: backs up CouchDB data directory to SMB share.
+# Logs to systemd journal for Grafana/Loki.
+# This script is managed by Ansible.
+
+SCRIPT_NAME="{{ couchdb_backup_script_name }}"
+BACKUP_DEST_DIR="{{ couchdb_backup_dest_dir }}"
+PROJECT_DIR="{{ couchdb_backup_project_dir }}"
+COUCHDB_CONTAINER="couchdb"
+STORAGE_PATH="/mnt/storage/smb/couchdb/data"
+
+logger -t "$SCRIPT_NAME" -p user.info "Starting CouchDB backup"
+
+# Ensure backup destination exists
+mkdir -p "$BACKUP_DEST_DIR"
+
+# Check if CouchDB is running
+if ! docker ps --format '{% raw %}{{.Names}}{% endraw %}' | grep -q "^${COUCHDB_CONTAINER}$"; then
+    logger -t "$SCRIPT_NAME" -p user.warning "CouchDB container not running, attempting to start"
+    cd "$PROJECT_DIR" || { logger -t "$SCRIPT_NAME" -p user.err "Failed to change to project directory: $PROJECT_DIR"; exit 1; }
+    docker compose up -d || { logger -t "$SCRIPT_NAME" -p user.err "Failed to start CouchDB"; exit 1; }
+    sleep 10
+fi
+
+# Create backup archive
+logger -t "$SCRIPT_NAME" -p user.info "Creating backup archive"
+if [ -d "$STORAGE_PATH" ]; then
+    tar -czf "$BACKUP_DEST_DIR/couchdb-backup.tar.gz" -C "$(dirname "$STORAGE_PATH")" "$(basename "$STORAGE_PATH")"
+    TAR_STATUS=$?
+    
+    if [ $TAR_STATUS -eq 0 ]; then
+        logger -t "$SCRIPT_NAME" -p user.info "Backup completed successfully"
+        # Keep last 7 backups
+        cd "$BACKUP_DEST_DIR" || exit 0
+        ls -t couchdb-backup-*.tar.gz 2>/dev/null | tail -n +8 | xargs -r rm --
+    else
+        logger -t "$SCRIPT_NAME" -p user.err "Backup failed with status $TAR_STATUS"
+        exit 1
+    fi
+else
+    logger -t "$SCRIPT_NAME" -p user.err "CouchDB data directory not found: $STORAGE_PATH"
+    exit 1
+fi
+
+# Also create a timestamped backup
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+cp "$BACKUP_DEST_DIR/couchdb-backup.tar.gz" "$BACKUP_DEST_DIR/couchdb-backup-$TIMESTAMP.tar.gz"
+
+exit 0

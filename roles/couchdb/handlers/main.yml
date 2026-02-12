@@ -1,0 +1,10 @@
+---
+- name: Restart couchdb
+  ansible.builtin.shell:
+    cmd: sg docker -c 'docker compose up -d --force-recreate'
+    chdir: "{{ couchdb_data_dir }}"
+  become: true
+  become_user: "{{ template.user }}"
+  changed_when: true
+  args:
+    executable: /bin/bash

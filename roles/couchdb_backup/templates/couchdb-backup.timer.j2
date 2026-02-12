@@ -1,0 +1,11 @@
+[Unit]
+Description=Run CouchDB Backup daily at 02:00
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+---
+couchdb_version: "latest"
+couchdb_port: 5984
+couchdb_data_dir: "/home/{{ template.user }}/couchdb"
+couchdb_storage_path: "/mnt/storage/smb/couchdb"
+couchdb_admin_user: "admin"
+# Override couchdb_admin_password in secrets.yml or host_vars
+couchdb_admin_password: "{{ couchdb_password }}"
+
+# Backup settings
+couchdb_backup_path: "/mnt/storage/smb/couchdb_backup"

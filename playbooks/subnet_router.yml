@@ -39,6 +39,7 @@
     - ../secrets.yml
   roles:
     - tailscale_subnet_router
+    - tailscale_serve
     - scheduled_reboot
     - scheduled_update
     - promtail

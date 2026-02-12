@@ -1,0 +1,57 @@
+---
+- name: Create CouchDB base directory
+  ansible.builtin.file:
+    path: "{{ couchdb_data_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Create CouchDB storage data directory
+  ansible.builtin.file:
+    path: "{{ couchdb_storage_path }}/data"
+    state: directory
+    mode: "0755"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+  become: true
+
+- name: Deploy CouchDB configuration with CORS enabled
+  ansible.builtin.template:
+    src: local.ini.j2
+    dest: "{{ couchdb_data_dir }}/local.ini"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart couchdb
+
+- name: Deploy CouchDB docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ couchdb_data_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  become: true
+  notify: Restart couchdb
+
+- name: Configure firewalld for CouchDB
+  ansible.posix.firewalld:
+    port: "{{ couchdb_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+
+- name: Start CouchDB container
+  ansible.builtin.shell:
+    cmd: sg docker -c 'docker compose up -d'
+    chdir: "{{ couchdb_data_dir }}"
+  become: true
+  become_user: "{{ template.user }}"
+  register: couchdb_compose_up
+  changed_when: "'Started' in couchdb_compose_up.stderr or 'Creating' in couchdb_compose_up.stderr"
+  args:
+    executable: /bin/bash

@@ -1,0 +1,4 @@
+---
+couchdb_backup_script_name: "couchdb_backup"
+couchdb_backup_project_dir: "/home/{{ template.user }}/couchdb"
+couchdb_backup_dest_dir: "/mnt/storage/smb/couchdb_backup"
