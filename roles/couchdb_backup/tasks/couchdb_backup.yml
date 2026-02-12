@@ -1,0 +1,33 @@
+---
+- name: Deploy the CouchDB backup script
+  ansible.builtin.template:
+    src: couchdb_backup.sh.j2
+    dest: "/usr/local/bin/{{ couchdb_backup_script_name }}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: couchdb-backup.service.j2
+    dest: "/etc/systemd/system/couchdb-backup.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: couchdb-backup.timer.j2
+    dest: "/etc/systemd/system/couchdb-backup.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start CouchDB backup timer
+  ansible.builtin.systemd:
+    name: couchdb-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

@@ -1,0 +1,16 @@
+[Unit]
+Description=CouchDB Backup to SMB Share
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+User={{ template.user }}
+Group={{ template.user }}
+WorkingDirectory={{ couchdb_backup_project_dir }}
+ExecStart=/usr/local/bin/{{ couchdb_backup_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ couchdb_backup_script_name }}
+
+[Install]
+WantedBy=multi-user.target

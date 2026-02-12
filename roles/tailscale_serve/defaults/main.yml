@@ -1,0 +1,5 @@
+---
+# Tailscale serve configuration
+tailscale_serve_https_port: 443
+tailscale_serve_backend_url: "http://{{ vms.services.ip }}:5984"
+tailscale_serve_path: "/"

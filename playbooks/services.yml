@@ -1,3 +1,15 @@
+- name: Backup couchdb before recreating VM
+  hosts: services
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  tasks:
+    - name: Take backup of current couchdb
+      ansible.builtin.include_tasks:
+        file: "{{ playbook_dir }}/../roles/couchdb/tasks/backup.yml"
+      when: force_recreate | default(false) | bool
+
 - name: Create services VM
   hosts: proxmox
   become: false
@@ -63,6 +75,7 @@
     docker_auto_update_compose_paths:
       - "/home/{{ template.user }}/jellyfin/docker-compose.yml"
       - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
+      - "/home/{{ template.user }}/couchdb/docker-compose.yml"
     promtail_docker_installed: true
   roles:
     - scheduled_update
@@ -72,6 +85,9 @@
     - nebula_sync
     - syncthing
     - jellyfin
+    - couchdb
+    - role: couchdb_backup
+      tags: couchdb_backup
     - docker_auto_update
     - promtail
     - role: echovault

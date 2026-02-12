@@ -1,0 +1,15 @@
+---
+- name: Configure Tailscale serve for HTTPS proxy
+  ansible.builtin.command:
+    cmd: >
+      tailscale serve --bg
+      --https={{ tailscale_serve_https_port }}
+      --set-path={{ tailscale_serve_path }}
+      {{ tailscale_serve_backend_url }}
+  register: tailscale_serve_result
+  changed_when: true
+  become: true
+
+- name: Display Tailscale serve configuration
+  ansible.builtin.debug:
+    msg: "Tailscale HTTPS proxy configured: https://<hostname>.ts.net:{{ tailscale_serve_https_port }}{{ tailscale_serve_path }} -> {{ tailscale_serve_backend_url }}"

@@ -1,0 +1,6 @@
+---
+- name: Restore couchdb backup if available
+  ansible.builtin.import_tasks: restore.yml
+
+- name: Install couchdb
+  ansible.builtin.import_tasks: couchdb.yml
