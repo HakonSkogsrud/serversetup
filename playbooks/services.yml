@@ -85,7 +85,8 @@
     - nebula_sync
     - syncthing
     - jellyfin
-    - couchdb
+    - role: couchdb
+      tags: couchdb
     - role: couchdb_backup
       tags: couchdb_backup
     - docker_auto_update
