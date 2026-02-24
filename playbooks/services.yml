@@ -6,8 +6,9 @@
     - ../secrets.yml
   tasks:
     - name: Take backup of current couchdb
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/../roles/couchdb/tasks/backup.yml"
+      ansible.builtin.include_role:
+        name: couchdb
+        tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
 - name: Create services VM
