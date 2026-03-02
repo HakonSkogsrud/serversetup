@@ -1,0 +1,9 @@
+:{{ caddy_docker_port }} {
+	handle_path /couch* {
+		reverse_proxy {{ vms.services.ip }}:{{couchdb_port}}
+	}
+
+	handle {
+		respond "caddy in running in docker"
+	}
+}

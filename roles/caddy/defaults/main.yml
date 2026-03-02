@@ -1,0 +1,4 @@
+---
+caddy_dir: /home/haaksk/caddy
+caddy_port: 8080
+caddy_docker_port: 80
