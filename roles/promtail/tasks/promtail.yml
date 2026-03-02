@@ -11,10 +11,20 @@
     - /var/lib/promtail
   become: true
 
+- name: fetch latest version of promtail from github api
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/grafana/loki/releases/latest
+    return_content: yes
+  register: github_api_output
+
+- name: set version variable
+  ansible.builtin.set_fact:
+    latest_tag: "{{ github_api_output.json.tag_name }}"
+
 - name: Download Promtail binary
   ansible.builtin.get_url:
-    url: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
-    dest: "/tmp/promtail-{{ promtail_version }}.zip"
+    url: "https://github.com/grafana/loki/releases/download/{{ latest_tag }}/promtail-linux-amd64.zip"
+    dest: "/tmp/promtail-{{ latest_tag }}.zip"
     mode: "0644"
   become: true
 
@@ -24,20 +34,30 @@
     state: present
   become: true
 
-- name: Extract Promtail binary
+- name: Extract Promtail binary to /tmp
   ansible.builtin.unarchive:
-    src: "/tmp/promtail-{{ promtail_version }}.zip"
-    dest: "{{ promtail_install_dir }}"
+    src: "/tmp/promtail-{{ latest_tag }}.zip"
+    dest: "/tmp"                # Extracting to /tmp is safer and always exists
+    remote_src: true
+  become: true
+
+- name: Move and Rename Promtail binary to final destination
+  ansible.builtin.copy:
+    src: "/tmp/promtail-linux-amd64" 
+    dest: "{{ promtail_install_dir }}/promtail"
     remote_src: true
     mode: "0755"
     owner: root
     group: root
   become: true
 
-- name: Rename Promtail binary
-  ansible.builtin.command:
-    cmd: "mv {{ promtail_install_dir }}/promtail-linux-amd64 {{ promtail_install_dir }}/promtail"
-    creates: "{{ promtail_install_dir }}/promtail"
+- name: Clean up temporary files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/promtail-{{ latest_tag }}.zip"
+    - "/tmp/promtail-linux-amd64"
   become: true
 
 - name: Deploy Promtail configuration
@@ -67,3 +87,4 @@
     state: started
     daemon_reload: true
   become: true
+

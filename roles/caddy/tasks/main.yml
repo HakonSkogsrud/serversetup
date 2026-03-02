@@ -1,0 +1,7 @@
+---
+- name: read couchdb vars to get port
+  ansible.builtin.include_vars:
+      file: "../../couchdb/defaults/main.yml"
+
+- name: setup caddy
+  ansible.builtin.include_tasks: caddy.yml

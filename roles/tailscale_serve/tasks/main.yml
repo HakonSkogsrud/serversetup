@@ -1,3 +1,7 @@
 ---
+- name: include caddy vars
+  ansible.builtin.include_vars:
+    file: "../../caddy/defaults/main.yml"
+
 - name: Configure Tailscale HTTPS proxy
   ansible.builtin.import_tasks: tailscale_serve.yml

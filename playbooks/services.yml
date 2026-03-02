@@ -77,6 +77,7 @@
       - "/home/{{ template.user }}/jellyfin/docker-compose.yml"
       - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
       - "/home/{{ template.user }}/couchdb/docker-compose.yml"
+      - "/home/{{ template.user }}/caddy/docker-compose.yml"
     promtail_docker_installed: true
   roles:
     - scheduled_update
@@ -86,11 +87,10 @@
     - nebula_sync
     - syncthing
     - jellyfin
-    - role: couchdb
-      tags: couchdb
-    - role: couchdb_backup
-      tags: couchdb_backup
+    - couchdb
+    - couchdb_backup
     - docker_auto_update
     - promtail
-    - role: echovault
-      tags: echovault
+    - echovault
+    - role: caddy
+      tags: caddy

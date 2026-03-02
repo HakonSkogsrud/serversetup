@@ -1,0 +1,37 @@
+---
+- name: ensure caddy dir exists
+  ansible.builtin.file:
+    state: directory
+    path: "{{ caddy_dir }}"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
+- name: copy docker-compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ caddy_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
+- name: copy caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_dir }}/Caddyfile"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
+- name: open firewall
+  ansible.posix.firewalld:
+    port: "{{ caddy_port }}/tcp"
+    state: enabled
+    permanent: true
+    immediate: true
+  become: true
+
+- name: start caddy
+  community.docker.docker_compose_v2:
+    project_src: "{{ caddy_dir }}"
+  register: output
