@@ -3,7 +3,13 @@
 		reverse_proxy {{ vms.services.ip }}:{{couchdb_port}}
 	}
 
+	handle /vaultwarden* {
+		reverse_proxy {{ vms.services.ip }}:{{ vaultwarden_port }}
+	}
+
 	handle {
 		respond "caddy in running in docker"
 	}
+
+
 }

@@ -1,0 +1,34 @@
+---
+- name: Get current VM config for PCI check
+  ansible.builtin.command:
+    cmd: "/usr/bin/pvesh get /nodes/{{ inventory_hostname }}/qemu/{{ newid }}/config --output-format json"
+  register: post_vm_config
+  changed_when: false
+  become: true
+
+- name: Add UHD Graphics PCI Passthrough
+  ansible.builtin.command:
+    cmd: "qm set {{ newid }} --hostpci0 mapping=uhdgraphics"
+  when:
+    - "'mapping=uhdgraphics' not in (post_vm_config.stdout | from_json).hostpci0 | default('')"
+  register: pci_passthrough_added
+  become: true
+  changed_when: true
+
+- name: Cold Boot VM to apply PCI Passthrough # noqa: no-handler
+  ansible.builtin.shell: |
+    qm stop {{ newid }} && sleep 5 && qm start {{ newid }}
+  when: pci_passthrough_added.changed
+  become: true
+  changed_when: true
+
+- name: Wait for VM to come back up after PCI reboot # noqa: no-handler
+  ansible.builtin.wait_for:
+    host: "{{ ipaddr }}"
+    port: 22
+    state: started
+    search_regex: OpenSSH
+    delay: 10
+    timeout: 300
+  delegate_to: localhost
+  when: pci_passthrough_added.changed

@@ -1,0 +1,9 @@
+---
+- name: check if vaultwarden directory exists
+  ansible.builtin.stat:
+    path: "{{ vaultwarden_dir }}"
+  register: vaultwarden_dir_exists
+ 
+- name: restore from backup if dir does not exists
+  ansible.builtin.import_tasks: restore.yml
+  when: not vaultwarden_dir_exists.stat.exists
