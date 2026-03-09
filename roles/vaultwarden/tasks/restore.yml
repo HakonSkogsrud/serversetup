@@ -24,6 +24,31 @@
     immediate: true
   become: true
 
+- name: Register newest vaultwarden folder to a variable
+  shell: "set -o pipefail && ls -d vw_*/ | tail -1 | cut -f1 -d'/'"
+  args:
+    chdir: "{{ vaultwarden_backup_dir }}"
+  register: newest_folder
+
+- name: debug
+  ansible.builtin.debug:
+    var: newest_folder.stdout
+
+- name: restore files
+  ansible.posix.synchronize:
+    src: "{{ vaultwarden_backup_dir }}/{{ newest_folder.stdout }}/"
+    dest: "{{ vaultwarden_dir }}/vw-data"
+    archive: true
+  delegate_to: services
+
+- name: Fix ownership so Vaultwarden can write to the DB
+  ansible.builtin.file:
+    path: "{{ vaultwarden_dir }}/vw-data"
+    owner: "1000"
+    group: "1000"
+    recurse: true
+  become: true
+
 - name: start vaultwarden
   community.docker.docker_compose_v2:
     project_src: "{{ vaultwarden_dir }}"
