@@ -1,0 +1,30 @@
+---
+
+- name: ensure directory exists
+  ansible.builtin.file:
+    state: directory
+    path: "{{ vaultwarden_dir }}"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
+- name: copy docker compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ vaultwarden_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
+- name: open firewall port
+  ansible.posix.firewalld:
+    port: "{{ vaultwarden_port }}/tcp"
+    state: enabled
+    permanent: true
+    immediate: true
+  become: true
+
+- name: start vaultwarden
+  community.docker.docker_compose_v2:
+    project_src: "{{ vaultwarden_dir }}"
+  register: output

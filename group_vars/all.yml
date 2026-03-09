@@ -6,6 +6,7 @@ vms:
     ip: 100.104.43.26
   services:
     ip: 10.0.0.44
+    vmid: 4001
   pihole:
     ip: 10.0.0.77
   subnet_router:

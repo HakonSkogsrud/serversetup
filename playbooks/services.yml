@@ -11,61 +11,37 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
+    - name: Take backup of vaultwarden database
+      ansible.builtin.include_role:
+        role: vaultwarden_backup
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
 - name: Create services VM
   hosts: proxmox
   become: false
   vars_files:
     - ../secrets.yml
   vars:
-    newid: 4001
+    newid: "{{ vms.services.vmid }}"
     ipaddr: "{{ vms.services.ip }}"
   roles:
     - role: create_vm
       vars:
         create_vm_name: services
-        create_vm_newid: 4001
+        create_vm_newid: "{{ vms.services.vmid }}"
         create_vm_ipaddr: "{{ vms.services.ip }}"
         create_vm_balloon: 2000
         create_vm_cores: 1
-        create_vm_memory: 10000
+        create_vm_memory: 13000
         create_vm_sockets: 1
-        create_vm_disk_size: 20G
+        create_vm_disk_size: 50G
         create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
   post_tasks:
-    - name: Get current VM config for PCI check
-      ansible.builtin.command:
-        cmd: "/usr/bin/pvesh get /nodes/{{ inventory_hostname }}/qemu/{{ newid }}/config --output-format json"
-      register: post_vm_config
-      changed_when: false
-      become: true
-
-    - name: Add UHD Graphics PCI Passthrough
-      ansible.builtin.command:
-        cmd: "qm set {{ newid }} --hostpci0 mapping=uhdgraphics"
-      when:
-        - "'mapping=uhdgraphics' not in (post_vm_config.stdout | from_json).hostpci0 | default('')"
-      register: pci_passthrough_added
-      become: true
-      changed_when: true
-
-    - name: Cold Boot VM to apply PCI Passthrough # noqa: no-handler
-      ansible.builtin.shell: |
-        qm stop {{ newid }} && sleep 5 && qm start {{ newid }}
-      when: pci_passthrough_added.changed
-      become: true
-      changed_when: true
-
-    - name: Wait for VM to come back up after PCI reboot # noqa: no-handler
-      ansible.builtin.wait_for:
-        host: "{{ ipaddr }}"
-        port: 22
-        state: started
-        search_regex: OpenSSH
-        delay: 10
-        timeout: 300
-      delegate_to: localhost
-      when: pci_passthrough_added.changed
+    - name: add pcie passthrough
+      ansible.builtin.include_tasks:
+        file: ../misc_tasks/services_pcie_passthrough.yml
 
 - name: Configure services
   hosts: services
@@ -78,6 +54,7 @@
       - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
       - "/home/{{ template.user }}/couchdb/docker-compose.yml"
       - "/home/{{ template.user }}/caddy/docker-compose.yml"
+      - "/home/{{ template.user }}/vaultwarden/docker-compose.yml"
     promtail_docker_installed: true
   roles:
     - scheduled_update
@@ -88,9 +65,13 @@
     - syncthing
     - jellyfin
     - couchdb
-    - couchdb_backup
+    - role: couchdb_backup
+      tags: couchdb_backup
     - docker_auto_update
     - promtail
     - echovault
-    - role: caddy
-      tags: caddy
+    - caddy
+    - role: vaultwarden
+      tags: vaultwarden
+    - role: vaultwarden_backup
+      tags: vaultwarden_backup

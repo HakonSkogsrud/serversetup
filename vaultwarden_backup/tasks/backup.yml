@@ -1,0 +1,11 @@
+---
+
+- name: ensure script exists
+  ansible.builtin.stat:
+    path: "/usr/local/bin/{{ vaultwarden_backup_script_name}}.sh"
+  register: vaultwarden_backup_script_exists
+
+- name: run script
+  ansible.builtin.command:
+    cmd: "/usr/local/bin/{{ vaultwarden_backup_script_name}}.sh"
+  when: vaultwarden_backup_script_exists.stat.exists is true

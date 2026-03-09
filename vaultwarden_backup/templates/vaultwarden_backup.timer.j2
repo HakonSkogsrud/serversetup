@@ -1,0 +1,11 @@
+[unit]
+Description=Run vaultwarden backup
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,38 @@
+---
+- name: ensure sqlite is installed
+  ansible.builtin.package:
+    name: sqlite
+    state: present
+
+- name: copy backup script
+  ansible.builtin.template:
+    src: vaultwarden_backup.sh.j2
+    dest: "/usr/local/bin/{{ vaultwarden_backup_script_name}}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: copy systemd service unit
+  ansible.builtin.template:
+    src: vaultwarden_backup.service.j2
+    dest: "/etc/systemd/system/vaultwarden_backup.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: copy systemd timer unit
+  ansible.builtin.template:
+    src: vaultwarden_backup.timer.j2
+    dest: "/etc/systemd/system/vaultwarden_backup.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: enable and start vaultwarden backup timer
+  ansible.builtin.systemd:
+    name: vaultwarden_backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

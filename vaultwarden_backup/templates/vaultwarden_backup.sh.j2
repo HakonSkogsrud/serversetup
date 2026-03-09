@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+# Configuration
+SCRIPT_NAME="{{ vaultwarden_backup_script_name }}"
+DATA_DIR="{{ vaultwarden_backup_data_dir }}"
+BACKUP_ROOT="{{ vaultwarden_backup_dir }}"
+BACKUP_PATH="$BACKUP_ROOT/vw_$(date +%Y%m%d_%H%M%S)"
+KEEP_COUNT=30
+
+# Notify
+logger -t "$SCRIPT_NAME" "Starting vaultwarden backup to $BACKUP_PATH"
+
+# 1. Create backup directory and safely copy Database
+mkdir -p "$BACKUP_PATH"
+sqlite3 "$DATA_DIR/db.sqlite3" ".backup '$BACKUP_PATH/db.sqlite3'"
+
+# 2. Copy essential keys and configuration (required for recovery)
+cp -p "$DATA_DIR/rsa_key.pem" "$BACKUP_PATH/"
+[ -f "$DATA_DIR/config.json" ] && cp -p "$DATA_DIR/config.json" "$BACKUP_PATH/"
+[ -d "$DATA_DIR/attachments" ] && cp -rp "$DATA_DIR/attachments" "$BACKUP_PATH/"
+
+# 3. Cleanup: Sort by date and keep only the 30 most recent backups
+# 'tail -n +31' skips the first 30 (newest) and returns the rest for deletion
+cd "$BACKUP_ROOT"
+ls -1dt vw_*/ | tail -n +$((KEEP_COUNT + 1)) | xargs rm -rf 2>/dev/null || true
+
+logger -t "$SCRIPT_NAME" "Backup completed. Kept last $KEEP_COUNT backups."

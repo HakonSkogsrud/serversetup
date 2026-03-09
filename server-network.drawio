@@ -102,7 +102,7 @@
                 <mxCell id="vm_subnet" value="VM: Subnet Router&#xa;Advertises: 10.0.0.0/24&#xa;Masquerade: Yes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;strokeWidth=2;" parent="1" vertex="1">
                     <mxGeometry x="690" y="450" width="200" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="link_static_route" value="Static Route&#xa;100.64.0.0/10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=3;" parent="1" source="pve1_os" target="vm_subnet" edge="1">
+                <mxCell id="link_static_route" value="Static Route&#xa;100.64.0.0/10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=3;" parent="1" source="pve1_os" target="vm_subnet" edge="1">sta
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
