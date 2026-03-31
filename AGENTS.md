@@ -192,6 +192,19 @@ dependencies:
 | `vms.<name>.ip` | - | VM IP address |
 | `vms.<name>.vmid` | - | Proxmox VM ID |
 
+### Variable Naming Convention
+
+All role variables must be prefixed with the role name:
+
+```yaml
+# Wrong
+uptimekuma_push_url: "..."
+
+# Correct
+syncoid_uptimekuma_push_url: "..."
+sanoid_uptimekuma_push_url: "..."
+```
+
 ### Docker Auto-Update
 
 Services tracked by `docker_auto_update_compose_paths` are checked for updates weekly.

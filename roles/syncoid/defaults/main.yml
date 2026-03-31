@@ -1,2 +1,3 @@
 ---
 syncoid_script_name: "syncoid"
+syncoid_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/wVfLYNbwTazxByoc1WBxZNOIdBg8vHaZ?status=up&msg=OK&ping="

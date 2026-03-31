@@ -1,3 +1,3 @@
 ---
 sanoid_push_script_name: sanoid-push
-uptimekuma_push_url: "http://10.0.0.44:3001/api/push/yms9ULV1x1RvJsdNz9PLfnb9B1VpgCEg?status=up&msg=OK&ping="
+sanoid_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/yms9ULV1x1RvJsdNz9PLfnb9B1VpgCEg?status=up&msg=OK&ping="
