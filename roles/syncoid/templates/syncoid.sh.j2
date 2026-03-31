@@ -102,3 +102,6 @@ for current_pool in "${POSSIBLE_POOLS[@]}"; do
 done
 
 logger -t "$SCRIPT_NAME" -p user.info "Syncoid backup completed successfully"
+
+# Push to UptimeKuma
+curl -s -m 10 -o /dev/null "{{ syncoid_uptimekuma_push_url }}"
