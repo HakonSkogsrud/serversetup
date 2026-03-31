@@ -1,3 +1,4 @@
 ---
 immich_backup_script_name: "immich_backup"
 immich_backup_project_dir: "/home/{{ template.user }}/immich-app"
+immich_backup_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/O4a2DOtymz7AJRxaGMJJJVh3VS2Zp6dK?status=up&msg=OK&ping="
