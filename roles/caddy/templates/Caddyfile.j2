@@ -7,6 +7,10 @@
 		reverse_proxy {{ vms.services.ip }}:{{ vaultwarden_port }}
 	}
 
+	handle /uptime* {
+		reverse_proxy 127.0.0.1:3001
+	}
+
 	handle {
 		respond "caddy in running in docker"
 	}

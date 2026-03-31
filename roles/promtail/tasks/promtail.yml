@@ -11,20 +11,10 @@
     - /var/lib/promtail
   become: true
 
-- name: fetch latest version of promtail from github api
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/grafana/loki/releases/latest
-    return_content: yes
-  register: github_api_output
-
-- name: set version variable
-  ansible.builtin.set_fact:
-    latest_tag: "{{ github_api_output.json.tag_name }}"
-
 - name: Download Promtail binary
   ansible.builtin.get_url:
-    url: "https://github.com/grafana/loki/releases/download/{{ latest_tag }}/promtail-linux-amd64.zip"
-    dest: "/tmp/promtail-{{ latest_tag }}.zip"
+    url: "https://github.com/grafana/loki/releases/download/{{ promtail_version }}/promtail-linux-amd64.zip"
+    dest: "/tmp/promtail-{{ promtail_version }}.zip"
     mode: "0644"
   become: true
 
@@ -36,8 +26,8 @@
 
 - name: Extract Promtail binary to /tmp
   ansible.builtin.unarchive:
-    src: "/tmp/promtail-{{ latest_tag }}.zip"
-    dest: "/tmp"                # Extracting to /tmp is safer and always exists
+    src: "/tmp/promtail-{{ promtail_version }}.zip"
+    dest: "/tmp"
     remote_src: true
   become: true
 
@@ -56,7 +46,7 @@
     path: "{{ item }}"
     state: absent
   loop:
-    - "/tmp/promtail-{{ latest_tag }}.zip"
+    - "/tmp/promtail-{{ promtail_version }}.zip"
     - "/tmp/promtail-linux-amd64"
   become: true
 
