@@ -233,11 +233,27 @@ Services tracked by `docker_auto_update_compose_paths` are checked for updates w
 
 ### UptimeKuma v2
 
-- Docker deployment on services VM
+- Docker deployment on services VM (image: `louislam/uptime-kuma:2`)
+- Port: 3001 (bound to all interfaces for access)
 - Data: `/home/haaksk/uptimekuma/data`
-- Backup: tar.gz to `/mnt/storage/smb/uptimekuma/`
-- Push monitors: Sanoid calls push URL every 15 min
-- Heartbeat interval must exceed Sanoid's run frequency
+- Backup: tar.gz to `/mnt/storage/smb/uptimekuma/` via systemd timer (daily @ 01:00)
+- Backup script stops container, creates tar.gz, restarts container
+- Firewalld: port 3001/tcp opened
+
+#### Push Monitors
+
+Services push to UptimeKuma after completing:
+
+| Service | Role Variable | Interval |
+|---------|---------------|----------|
+| Sanoid | `sanoid_uptimekuma_push_url` | Every 15 min (snapshots) |
+| Syncoid | `syncoid_uptimekuma_push_url` | After replication completes |
+
+Heartbeat interval should be ~25 min (longer than Sanoid's 15 min run).
+
+#### Restore on VM Recreation
+
+Pre-play backs up to `/mnt/storage/smb/uptimekuma/`. Configure services play checks if data dir exists — if missing, restores from latest backup.
 
 ## Deployment Commands
 
