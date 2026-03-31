@@ -1,3 +1,0 @@
----
-- name: Setup proxmox specific stuff
-  ansible.builtin.import_tasks: pushover_config.yml
