@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Monitors Pi-hole DNS functionality and ad blocking.
-# Logs to systemd journal and sends Pushover alerts on failure.
+# Logs to systemd journal on failure.
 # This script is managed by Ansible.
 
 SCRIPT_NAME="{{ pihole_health_script_name }}"
@@ -13,11 +13,6 @@ PIHOLE_BACKUP="{{ pihole_health_backup_ip }}"
 # Domains for testing
 PUBLIC_DOMAIN="google.com"
 BLOCKED_DOMAIN="flurry.com"
-
-# Source pushover library
-if [ -f /usr/local/lib/send_pushover.sh ]; then
-    source /usr/local/lib/send_pushover.sh
-fi
 
 # Check a single Pi-hole instance
 check_pihole() {
@@ -44,10 +39,8 @@ check_pihole() {
         logger -t "$SCRIPT_NAME" -p user.err "PIHOLE_BLOCKING_FAILED - $pihole_name ($pihole_ip) is not blocking ads properly"
     fi
 
-    # Send Pushover alert if unhealthy
     if [ "$overall_status" != "HEALTHY" ]; then
         logger -t "$SCRIPT_NAME" -p user.err "PIHOLE_UNHEALTHY - $pihole_name ($pihole_ip) health check failed: $status_message"
-        send_pushover "${pushover_pihole:-}" "Pi-hole Alert: $pihole_name ($pihole_ip) is UNHEALTHY. $status_message" "Pi-hole Monitoring" 0 "siren"
     else
         logger -t "$SCRIPT_NAME" -p user.info "PIHOLE_HEALTHY - $pihole_name ($pihole_ip) is functioning correctly"
     fi
