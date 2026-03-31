@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart uptimekuma
+  ansible.builtin.shell:
+    cmd: >
+      cd /home/{{ template.user }}/uptimekuma
+      && docker compose up -d

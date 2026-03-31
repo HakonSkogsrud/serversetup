@@ -1,10 +1,16 @@
-- name: Backup couchdb before recreating VM
+- name: Backup services before any changes
   hosts: services
   become: true
   gather_facts: false
   vars_files:
     - ../secrets.yml
   tasks:
+    - name: Take backup of uptimekuma
+      ansible.builtin.include_role:
+        name: uptimekuma
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
     - name: Take backup of current couchdb
       ansible.builtin.include_role:
         name: couchdb
@@ -55,6 +61,7 @@
       - "/home/{{ template.user }}/couchdb/docker-compose.yml"
       - "/home/{{ template.user }}/caddy/docker-compose.yml"
       - "/home/{{ template.user }}/vaultwarden/docker-compose.yml"
+      - "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
     promtail_docker_installed: true
   roles:
     - scheduled_update
@@ -75,3 +82,5 @@
       tags: vaultwarden
     - role: vaultwarden_backup
       tags: vaultwarden_backup
+    - role: uptimekuma
+      tags: uptimekuma

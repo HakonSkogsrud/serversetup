@@ -1,0 +1,15 @@
+[Unit]
+Description=UptimeKuma backup to smb share
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/bin/{{ uptimekuma_script_name }}.sh
+StandardError=journal
+StandardOutput=journal
+SyslogIdentifier={{ uptimekuma_script_name }}
+
+[Install]
+WantedBy=multi-user.target
