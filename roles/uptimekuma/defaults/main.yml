@@ -1,0 +1,4 @@
+---
+uptimekuma_data_dir: /home/haaksk/uptimekuma/data
+uptimekuma_backup_dir: /mnt/storage/smb/uptimekuma
+uptimekuma_script_name: uptimekuma_backup

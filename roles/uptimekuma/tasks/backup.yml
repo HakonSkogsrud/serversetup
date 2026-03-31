@@ -1,0 +1,21 @@
+---
+- name: stop uptimekuma container
+  ansible.builtin.shell:
+    cmd: >
+      cd /home/{{ template.user }}/uptimekuma
+      && docker compose stop
+    changed_when: true
+
+- name: create backup of uptimekuma data directory
+  ansible.builtin.shell:
+    cmd: >
+      tar -czf {{ uptimekuma_backup_dir }}/uptimekuma_$(date +%Y%m%d_%H%M%S).tar.gz
+      -C {{ uptimekuma_data_dir | dirname }} {{ uptimekuma_data_dir | basename }}
+    changed_when: true
+
+- name: start uptimekuma container
+  ansible.builtin.shell:
+    cmd: >
+      cd /home/{{ template.user }}/uptimekuma
+      && docker compose start
+    changed_when: true

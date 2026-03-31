@@ -1,0 +1,15 @@
+---
+- name: check if uptimekuma data directory exists
+  ansible.builtin.stat:
+    path: "{{ uptimekuma_data_dir }}"
+  register: uptimekuma_data_exists
+
+- name: restore uptimekuma if data dir missing
+  ansible.builtin.include_tasks: restore.yml
+  when: not uptimekuma_data_exists.stat.exists
+
+- name: setup uptimekuma
+  ansible.builtin.include_tasks: uptimekuma.yml
+
+- name: setup uptimekuma backup
+  ansible.builtin.include_tasks: uptimekuma_backup.yml

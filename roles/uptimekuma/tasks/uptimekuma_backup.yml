@@ -1,0 +1,41 @@
+---
+- name: ensure backup directory exists
+  ansible.builtin.file:
+    path: "{{ uptimekuma_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: copy backup script
+  ansible.builtin.template:
+    src: uptimekuma_backup.sh.j2
+    dest: "/usr/local/bin/{{ uptimekuma_script_name }}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: copy systemd service unit
+  ansible.builtin.template:
+    src: uptimekuma_backup.service.j2
+    dest: "/etc/systemd/system/{{ uptimekuma_script_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: copy systemd timer unit
+  ansible.builtin.template:
+    src: uptimekuma_backup.timer.j2
+    dest: "/etc/systemd/system/{{ uptimekuma_script_name }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: enable and start uptimekuma backup timer
+  ansible.builtin.systemd:
+    name: "{{ uptimekuma_script_name }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true

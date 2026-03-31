@@ -1,0 +1,32 @@
+---
+- name: ensure uptimekuma directory exists
+  ansible.builtin.file:
+    path: "{{ uptimekuma_data_dir }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
+- name: copy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  notify: Restart uptimekuma
+
+- name: start uptimekuma container
+  ansible.builtin.shell:
+    cmd: >
+      cd /home/{{ template.user }}/uptimekuma
+      && docker compose up -d
+    creates: "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
+
+- name: Configure firewalld for UptimeKuma
+  ansible.posix.firewalld:
+    port: "3001/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
