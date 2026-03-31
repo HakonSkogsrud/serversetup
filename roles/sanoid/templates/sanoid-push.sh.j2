@@ -1,2 +1,11 @@
 #!/bin/bash
-curl -s -m 10 -o /dev/null "{{ sanoid_uptimekuma_push_url }}"
+
+SCRIPT_NAME="{{ sanoid_push_script_name }}"
+HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ sanoid_uptimekuma_push_url }}")
+CURL_EXIT_CODE=$?
+
+if [ $CURL_EXIT_CODE -eq 0 ]; then
+	logger -t "$SCRIPT_NAME" -p user.info "Uptime Kuma push completed with HTTP status $HTTP_STATUS"
+else
+	logger -t "$SCRIPT_NAME" -p user.warning "Uptime Kuma push failed with curl exit code $CURL_EXIT_CODE and HTTP status $HTTP_STATUS"
+fi
