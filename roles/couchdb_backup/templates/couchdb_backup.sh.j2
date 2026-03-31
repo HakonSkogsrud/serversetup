@@ -30,7 +30,6 @@ if [ -d "$STORAGE_PATH" ]; then
     TAR_STATUS=$?
     
     if [ $TAR_STATUS -eq 0 ]; then
-        logger -t "$SCRIPT_NAME" -p user.info "Backup completed successfully"
         # Keep last 7 backups
         cd "$BACKUP_DEST_DIR" || exit 0
         ls -t couchdb-backup-*.tar.gz 2>/dev/null | tail -n +8 | xargs -r rm --
@@ -45,6 +44,19 @@ fi
 
 # Also create a timestamped backup
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-cp "$BACKUP_DEST_DIR/couchdb-backup.tar.gz" "$BACKUP_DEST_DIR/couchdb-backup-$TIMESTAMP.tar.gz"
+cp "$BACKUP_DEST_DIR/couchdb-backup.tar.gz" "$BACKUP_DEST_DIR/couchdb-backup-$TIMESTAMP.tar.gz" || {
+    logger -t "$SCRIPT_NAME" -p user.err "Failed to create timestamped backup"
+    exit 1
+}
+
+logger -t "$SCRIPT_NAME" -p user.info "Backup completed successfully"
+HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ couchdb_backup_uptimekuma_push_url }}")
+CURL_EXIT_CODE=$?
+
+if [ $CURL_EXIT_CODE -eq 0 ]; then
+    logger -t "$SCRIPT_NAME" -p user.info "Uptime Kuma push completed with HTTP status $HTTP_STATUS"
+else
+    logger -t "$SCRIPT_NAME" -p user.warning "Uptime Kuma push failed with curl exit code $CURL_EXIT_CODE and HTTP status $HTTP_STATUS"
+fi
 
 exit 0
