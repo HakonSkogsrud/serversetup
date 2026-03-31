@@ -14,6 +14,14 @@
     state: directory
     mode: "0755" # Standard directory permissions
 
+- name: Copy sanoid push script
+  ansible.builtin.template:
+    src: sanoid-push.sh.j2
+    dest: "/usr/local/bin/{{ sanoid_push_script_name }}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Create sanoid configuration file (/etc/sanoid/sanoid.conf) using blockinfile
   ansible.builtin.blockinfile:
     path: /etc/sanoid/sanoid.conf
@@ -35,6 +43,7 @@
           yearly = 1
           autosnap = yes
           autoprune = yes
+          post_snapshot_script = /usr/local/bin/{{ sanoid_push_script_name }}.sh
 
 - name: Enable sanoid timer service (starts on boot)
   ansible.builtin.systemd:
