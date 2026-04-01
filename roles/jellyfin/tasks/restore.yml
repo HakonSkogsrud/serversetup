@@ -1,0 +1,26 @@
+---
+- name: Check if jellyfin backup exists on storage
+  ansible.builtin.stat:
+    path: "{{ jellyfin_backup_dir }}/jellyfin_config.tar.gz"
+  register: jellyfin_backup_exists
+
+- name: Restore jellyfin config from backup
+  when: jellyfin_backup_exists.stat.exists
+  block:
+    - name: Ensure jellyfin directory exists
+      ansible.builtin.file:
+        path: "{{ jellyfin_dir }}"
+        state: directory
+        owner: "{{ template.user }}"
+        group: media
+        mode: "0755"
+      become: true
+
+    - name: Extract jellyfin backup
+      ansible.builtin.unarchive:
+        src: "{{ jellyfin_backup_dir }}/jellyfin_config.tar.gz"
+        dest: "{{ jellyfin_dir }}"
+        remote_src: true
+        owner: "{{ template.user }}"
+        group: media
+      become: true

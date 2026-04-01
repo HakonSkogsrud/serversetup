@@ -52,22 +52,7 @@
     group: media
   become: true
 
-# --- 5. Restore Config (Nuke & Pave Magic) ---
-- name: Restore Jellyfin Configuration
-  ansible.builtin.unarchive:
-    src: jellyfin_config.tar.gz # Decrypts automatically if vaulted
-    dest: "/home/{{ template.user }}/jellyfin/"
-    owner: "{{ template.user }}"
-    group: media # Maps to 1001
-  become: true
-
-- name: Remove conflicting .jellyfin-config marker
-  ansible.builtin.file:
-    path: "/home/{{ template.user }}/jellyfin/config/.jellyfin-config"
-    state: absent
-  become: true
-
-- name: Create cache directory
+# --- 5. Create cache directory
   ansible.builtin.file:
     path: "/home/{{ template.user }}/jellyfin/cache"
     state: directory
