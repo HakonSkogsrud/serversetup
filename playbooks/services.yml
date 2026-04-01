@@ -5,12 +5,6 @@
   vars_files:
     - ../secrets.yml
   tasks:
-    - name: Take backup of jellyfin config
-      ansible.builtin.include_role:
-        name: jellyfin
-        tasks_from: backup.yml
-      when: force_recreate | default(false) | bool
-
     - name: Take backup of syncthing config
       ansible.builtin.include_role:
         name: syncthing
@@ -68,7 +62,6 @@
     - ../secrets.yml
   vars:
     docker_auto_update_compose_paths:
-      - "/home/{{ template.user }}/jellyfin/docker-compose.yml"
       - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
       - "/home/{{ template.user }}/couchdb/docker-compose.yml"
       - "/home/{{ template.user }}/caddy/docker-compose.yml"
@@ -82,7 +75,6 @@
     - pihole_health
     - nebula_sync
     - syncthing
-    - jellyfin
     - couchdb
     - role: couchdb_backup
       tags: couchdb_backup
