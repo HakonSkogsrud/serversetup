@@ -3,7 +3,7 @@ gateway: 10.0.0.138
 
 vms:
   backupserver:
-    ip: 100.104.43.26
+    ip: 100.80.220.101
   services:
     ip: 10.0.0.44
     vmid: 4001
