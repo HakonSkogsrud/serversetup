@@ -12,17 +12,7 @@
       changed_when: true
       register: tailscale_installation_result
   rescue:
-    - name: Clean APT cache on failure
-      ansible.builtin.apt:
-        clean: true
-      when: ansible_facts['os_family'] == "Debian"
-
-    - name: Update APT cache after cleaning
-      ansible.builtin.apt:
-        update_cache: true
-      when: ansible_facts['os_family'] == "Debian"
-
-    - name: Retry Tailscale install script after cache cleanup
+    - name: Retry Tailscale install script after failure
       ansible.builtin.command: bash -o pipefail /tmp/install.sh
       changed_when: true
 
