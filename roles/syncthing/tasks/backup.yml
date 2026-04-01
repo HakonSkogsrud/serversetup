@@ -1,0 +1,19 @@
+---
+- name: Ensure syncthing backup directory exists
+  ansible.builtin.file:
+    path: "{{ syncthing_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Copy syncthing config.xml to backup location
+  ansible.builtin.copy:
+    src: "{{ syncthing_config_dir }}/config.xml"
+    dest: "{{ syncthing_backup_dir }}/config.xml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0600"
+  become: true

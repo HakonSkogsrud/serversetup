@@ -1,0 +1,27 @@
+---
+- name: Check if syncthing config.xml backup exists
+  ansible.builtin.stat:
+    path: "{{ syncthing_backup_dir }}/config.xml"
+  register: syncthing_config_backup
+
+- name: Restore syncthing config.xml from backup
+  when: syncthing_config_backup.stat.exists
+  block:
+    - name: Ensure syncthing config directory exists
+      ansible.builtin.file:
+        path: "{{ syncthing_config_dir }}"
+        state: directory
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        mode: "0750"
+      become: true
+
+    - name: Copy config.xml from backup to config directory
+      ansible.builtin.copy:
+        src: "{{ syncthing_backup_dir }}/config.xml"
+        dest: "{{ syncthing_config_dir }}/config.xml"
+        remote_src: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        mode: "0600"
+      become: true

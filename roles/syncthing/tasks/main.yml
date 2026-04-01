@@ -1,3 +1,12 @@
 ---
+- name: Check if syncthing config.xml exists
+  ansible.builtin.stat:
+    path: "{{ syncthing_config_dir }}/config.xml"
+  register: syncthing_config_exists
+
+- name: Restore syncthing config if missing
+  ansible.builtin.include_tasks: restore.yml
+  when: not syncthing_config_exists.stat.exists
+
 - name: Setup syncthing
   ansible.builtin.import_tasks: syncthing.yml
