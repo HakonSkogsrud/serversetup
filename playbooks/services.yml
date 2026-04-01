@@ -5,6 +5,12 @@
   vars_files:
     - ../secrets.yml
   tasks:
+    - name: Take backup of jellyfin config
+      ansible.builtin.include_role:
+        name: jellyfin
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
     - name: Take backup of syncthing config
       ansible.builtin.include_role:
         name: syncthing

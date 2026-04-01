@@ -1,0 +1,3 @@
+---
+jellyfin_dir: "/home/{{ template.user }}/jellyfin"
+jellyfin_backup_dir: /mnt/storage/smb/jellyfin
