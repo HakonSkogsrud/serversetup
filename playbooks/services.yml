@@ -5,6 +5,12 @@
   vars_files:
     - ../secrets.yml
   tasks:
+    - name: Take backup of syncthing config
+      ansible.builtin.include_role:
+        name: syncthing
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
     - name: Take backup of uptimekuma
       ansible.builtin.include_role:
         name: uptimekuma
