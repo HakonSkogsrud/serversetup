@@ -50,11 +50,6 @@
         create_vm_disk_size: 50G
         create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
-  post_tasks:
-    - name: add pcie passthrough
-      ansible.builtin.include_tasks:
-        file: ../misc_tasks/services_pcie_passthrough.yml
-
 - name: Configure services
   hosts: services
   become: true
