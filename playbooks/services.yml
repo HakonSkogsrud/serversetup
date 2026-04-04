@@ -29,6 +29,12 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
+    - name: Take backup of grafana
+      ansible.builtin.include_role:
+        name: grafana
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
 - name: Create services VM
   hosts: proxmox
   become: false
@@ -43,11 +49,11 @@
         create_vm_name: services
         create_vm_newid: "{{ vms.services.vmid }}"
         create_vm_ipaddr: "{{ vms.services.ip }}"
-        create_vm_balloon: 2000
-        create_vm_cores: 1
-        create_vm_memory: 13000
+        create_vm_balloon: 5000
+        create_vm_cores: 3
+        create_vm_memory: 18000
         create_vm_sockets: 1
-        create_vm_disk_size: 50G
+        create_vm_disk_size: 100G
         create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
 
 - name: Configure services
@@ -62,6 +68,8 @@
       - "/home/{{ template.user }}/caddy/docker-compose.yml"
       - "/home/{{ template.user }}/vaultwarden/docker-compose.yml"
       - "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
+      - "/home/{{ template.user }}/loki/docker-compose.yml"
+      - "/home/{{ template.user }}/grafana/docker-compose.yml"
     promtail_docker_installed: true
   roles:
     - scheduled_update
@@ -71,15 +79,15 @@
     - nebula_sync
     - syncthing
     - couchdb
-    - role: couchdb_backup
-      tags: couchdb_backup
+    - couchdb_backup
     - docker_auto_update
     - promtail
     - echovault
     - caddy
-    - role: vaultwarden
-      tags: vaultwarden
-    - role: vaultwarden_backup
-      tags: vaultwarden_backup
-    - role: uptimekuma
-      tags: uptimekuma
+    - aultwarden
+    - vaultwarden_backup
+    - uptimekuma
+    - role: loki
+      tags: loki
+    - role: grafana
+      tags: grafana

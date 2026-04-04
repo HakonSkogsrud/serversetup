@@ -20,11 +20,9 @@ vms:
   pihole-secondary:
     ip: 10.0.0.82
   loki:
-    ip: 10.0.0.83
-    vmid: 4007
+    ip: 10.0.0.44
   grafana:
-    ip: 10.0.0.84
-    vmid: 4008
+    ip: 10.0.0.44
   subnet-router-secondary:
     ip: 10.0.0.85
     vmid: 4009
