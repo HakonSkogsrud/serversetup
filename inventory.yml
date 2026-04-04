@@ -34,12 +34,6 @@ all:
         backupserver:
           ansible_host: "{{ vms.backupserver.ip }}"
           ansible_user: "{{ template.user }}"
-        loki:
-          ansible_user: "{{ template.user }}"
-          ansible_host: "{{ vms.loki.ip }}"
-        grafana:
-          ansible_user: "{{ template.user }}"
-          ansible_host: "{{ vms.grafana.ip }}"
     proxmox_servers:
       hosts:
         proxmox:
