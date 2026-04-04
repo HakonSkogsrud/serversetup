@@ -4,7 +4,7 @@
   become: true
   gather_facts: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   tasks:
     - name: Take backup of current pihole
       ansible.builtin.include_tasks:
@@ -15,7 +15,7 @@
   hosts: proxmox
   become: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - role: create_vm
       vars:
@@ -36,7 +36,7 @@
     ansible_host_key_checking: false
     scheduled_reboot_notify: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - mount_virtiofs
     - scheduled_update

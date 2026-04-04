@@ -3,7 +3,7 @@
   hosts: backupserver
   become: true
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   vars:
     tailscale_node_hostname: backupserver
     scheduled_reboot_notify: false

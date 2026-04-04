@@ -3,7 +3,7 @@
   hosts: proxmox
   become: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - role: create_vm
       vars:
@@ -20,7 +20,7 @@
   hosts: github-runner
   become: true
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   vars:
     gitlab_runner_url: "http://{{ vms.github_runner.ip }}"
     gitlab_runner_executor: "docker"

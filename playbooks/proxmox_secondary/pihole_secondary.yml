@@ -3,7 +3,7 @@
   hosts: proxmox2
   become: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - role: create_vm
       vars:
@@ -26,7 +26,7 @@
     pihole_ipv6_ula_address: "fd00:abcd::27"
     scheduled_reboot_notify: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - scheduled_update
     - scheduled_reboot

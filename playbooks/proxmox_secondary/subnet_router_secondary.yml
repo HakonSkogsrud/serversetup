@@ -3,7 +3,7 @@
   hosts: proxmox2
   become: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - role: create_vm
       vars:
@@ -37,7 +37,7 @@
     scheduled_reboot_notify: false
     tailscale_subnet_router_hostname: subnet-router-secondary
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - tailscale_subnet_router
     - tailscale_serve
