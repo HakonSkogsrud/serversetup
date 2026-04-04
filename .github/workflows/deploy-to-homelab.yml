@@ -47,35 +47,35 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Run Backupserver
-        run: ansible-playbook playbooks/backupserver/backupserver.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
-
-      - name: Run Immich
-        run: ansible-playbook playbooks/proxmox_primary/immich.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
-
-      - name: Run Pihole
-        run: ansible-playbook playbooks/proxmox_primary/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
-
-      - name: Run Pihole-secondary
-        run: ansible-playbook playbooks/proxmox_secondary/pihole_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
-
-      - name: Run Proxmox
+      - name: "[Proxmox Primary] Proxmox"
         run: ansible-playbook playbooks/proxmox_primary/proxmox.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
-      - name: Run Proxmox2
-        run: ansible-playbook playbooks/proxmox_secondary/proxmox2.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+      - name: "[Proxmox Primary] Immich"
+        run: ansible-playbook playbooks/proxmox_primary/immich.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
-      - name: Run Samba
+      - name: "[Proxmox Primary] Pihole"
+        run: ansible-playbook playbooks/proxmox_primary/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+
+      - name: "[Proxmox Primary] Samba"
         run: ansible-playbook playbooks/proxmox_primary/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
-      - name: Run Services
+      - name: "[Proxmox Primary] Services"
         run: ansible-playbook playbooks/proxmox_primary/services.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
-      - name: Run Subnet Router
+      - name: "[Proxmox Primary] Subnet Router"
         run: ansible-playbook playbooks/proxmox_primary/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
-      - name: Run Subnet Router secondary
+      - name: "[Proxmox Secondary] Proxmox2"
+        run: ansible-playbook playbooks/proxmox_secondary/proxmox2.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+
+      - name: "[Proxmox Secondary] Pihole Secondary"
+        run: ansible-playbook playbooks/proxmox_secondary/pihole_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+
+      - name: "[Proxmox Secondary] Subnet Router Secondary"
         run: ansible-playbook playbooks/proxmox_secondary/subnet_router_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+
+      - name: "[Backupserver] Backupserver"
+        run: ansible-playbook playbooks/backupserver/backupserver.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: Notify success via Pushover
         if: success()
