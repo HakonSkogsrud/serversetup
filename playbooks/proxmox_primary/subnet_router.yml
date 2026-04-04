@@ -3,7 +3,7 @@
   hosts: proxmox
   become: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - role: create_vm
       vars:
@@ -36,7 +36,7 @@
     ansible_host_key_checking: false
     scheduled_reboot_notify: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - tailscale_subnet_router
     - tailscale_serve

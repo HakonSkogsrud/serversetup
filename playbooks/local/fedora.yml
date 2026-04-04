@@ -3,7 +3,7 @@
   hosts: fedora
   become: true
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
 
   roles:
     - scheduled_update

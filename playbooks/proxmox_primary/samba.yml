@@ -3,7 +3,7 @@
   hosts: proxmox
   become: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   roles:
     - role: create_vm
       vars:
@@ -21,7 +21,7 @@
   hosts: samba
   become: true
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   vars:
     scheduled_reboot_notify: false
   roles:

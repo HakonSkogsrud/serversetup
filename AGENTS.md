@@ -98,7 +98,7 @@ For services that need backup before VM recreation:
   become: true
   gather_facts: false
   vars_files:
-    - ../secrets.yml
+    - ../../secrets.yml
   tasks:
     - name: Backup service
       ansible.builtin.include_role:
