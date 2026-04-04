@@ -5,6 +5,5 @@
 
 - name: Restart uptimekuma
   ansible.builtin.shell:
-    cmd: >
-      cd /home/{{ template.user }}/uptimekuma
-      && docker compose up -d
+    cmd: docker compose up -d
+    chdir: "{{ uptimekuma_data_dir | dirname }}"

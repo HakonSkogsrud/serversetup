@@ -5,7 +5,7 @@ set -e
 SCRIPT_NAME="{{ uptimekuma_script_name }}"
 DATA_DIR="{{ uptimekuma_data_dir }}"
 BACKUP_ROOT="{{ uptimekuma_backup_dir }}"
-BACKUP_PATH="$BACKUP_ROOT/uk_$(date +%Y%m%d_%H%M%S).tar.gz"
+BACKUP_PATH="$BACKUP_ROOT/uptimekuma_$(date +%Y%m%d_%H%M%S).tar.gz"
 KEEP_COUNT=7
 
 # Notify
@@ -23,6 +23,6 @@ docker compose -f "{{ uptimekuma_data_dir }}/../docker-compose.yml" start uptime
 
 # Cleanup: Sort by date and keep only the most recent backups
 cd "$BACKUP_ROOT"
-ls -1dt uk_*.tar.gz | tail -n +$((KEEP_COUNT + 1)) | xargs rm -f 2>/dev/null || true
+ls -1dt uptimekuma_*.tar.gz | tail -n +$((KEEP_COUNT + 1)) | xargs rm -f 2>/dev/null || true
 
 logger -t "$SCRIPT_NAME" "Backup completed: $BACKUP_PATH"
