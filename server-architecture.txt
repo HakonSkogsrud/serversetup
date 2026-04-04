@@ -11,8 +11,9 @@
 │  │  ├── immich (← virtiofs)                                       │  │
 │  │  ├── pihole (primary)                                          │  │
 │  │  ├── Github-runner                                             │  │
-│  │  ├── loki + grafana                                            │  │
-│  │  ├── services (Syncthing, Jellyfin, Nebula, etc.)              │  │
+│  │  ├── loki                                                      │  │
+│  │  ├── services (Docker: Syncthing, Nebula, Grafana,             │  │
+│  │  │             Loki, CouchDB, Vaultwarden, UptimeKuma, …)      │  │
 │  │  └── subnet-router (Tailscale)                                 │  │
 │  └────────────────────────────────────────────────────────────────┘  │
 │                                │                                     │
@@ -37,3 +38,14 @@
 │  ├── Connects: Primary, Secondary, Offsite Backup                    │
 │  └── Remote Devices (Phones/Laptops) → Access Photos/Samba           │
 └──────────────────────────────────────────────────────────────────────┘
+
+Architecture Features:
+  • ZFS snapshots via Sanoid
+  • Offsite backups to Backupserver via Syncoid
+  • Specialized VMs for services (Pihole, Samba, etc.)
+  • VMs cloned from Alma Linux template using Ansible
+  • VM configuration automation via Ansible
+  • Shared storage for VMs via virtiofs
+  • Full LAN access via Tailscale subnet router
+  • Secondary offline backup via external drive
+  • Redundant DNS and subnet router with secondary Proxmox server
