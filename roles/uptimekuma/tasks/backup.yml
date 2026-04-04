@@ -1,21 +1,27 @@
 ---
-- name: stop uptimekuma container
-  ansible.builtin.shell:
-    cmd: >
-      cd /home/{{ template.user }}/uptimekuma
-      && docker compose stop
-    changed_when: true
+- name: Check if uptimekuma data directory exists
+  ansible.builtin.stat:
+    path: "{{ uptimekuma_data_dir }}"
+  register: uptimekuma_backup_data_exists
 
-- name: create backup of uptimekuma data directory
-  ansible.builtin.shell:
-    cmd: >
-      tar -czf {{ uptimekuma_backup_dir }}/uptimekuma_$(date +%Y%m%d_%H%M%S).tar.gz
-      -C {{ uptimekuma_data_dir | dirname }} {{ uptimekuma_data_dir | basename }}
-    changed_when: true
+- name: Backup uptimekuma
+  when: uptimekuma_backup_data_exists.stat.exists
+  block:
+    - name: stop uptimekuma container
+      ansible.builtin.shell:
+        cmd: docker compose stop
+        chdir: "{{ uptimekuma_data_dir | dirname }}"
+      changed_when: true
 
-- name: start uptimekuma container
-  ansible.builtin.shell:
-    cmd: >
-      cd /home/{{ template.user }}/uptimekuma
-      && docker compose start
-    changed_when: true
+    - name: create backup of uptimekuma data directory
+      ansible.builtin.shell:
+        cmd: >
+          tar -czf {{ uptimekuma_backup_dir }}/uptimekuma_$(date +%Y%m%d_%H%M%S).tar.gz
+          -C {{ uptimekuma_data_dir | dirname }} {{ uptimekuma_data_dir | basename }}
+      changed_when: true
+
+    - name: start uptimekuma container
+      ansible.builtin.shell:
+        cmd: docker compose start
+        chdir: "{{ uptimekuma_data_dir | dirname }}"
+      changed_when: true
