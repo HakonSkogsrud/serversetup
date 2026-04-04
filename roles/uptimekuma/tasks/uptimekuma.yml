@@ -10,7 +10,7 @@
 - name: copy docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
+    dest: "{{ uptimekuma_data_dir | dirname }}/docker-compose.yml"
     owner: "{{ template.user }}"
     group: "{{ template.user }}"
     mode: "0644"
@@ -18,10 +18,9 @@
 
 - name: start uptimekuma container
   ansible.builtin.shell:
-    cmd: >
-      cd /home/{{ template.user }}/uptimekuma
-      && docker compose up -d
-    creates: "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
+    cmd: docker compose up -d
+    chdir: "{{ uptimekuma_data_dir | dirname }}"
+    creates: "{{ uptimekuma_data_dir | dirname }}/docker-compose.yml"
 
 - name: Configure firewalld for UptimeKuma
   ansible.posix.firewalld:

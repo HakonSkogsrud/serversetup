@@ -1,23 +1,39 @@
 ---
 - name: Find newest uptimekuma backup
   ansible.builtin.shell:
-    cmd: "ls -t uk_*.tar.gz 2>/dev/null | head -1"
+    cmd: "ls -t uptimekuma_*.tar.gz 2>/dev/null | head -1"
     chdir: "{{ uptimekuma_backup_dir }}"
   register: newest_backup
   failed_when: false
+
+- name: Check if uptimekuma compose file exists
+  ansible.builtin.stat:
+    path: "{{ uptimekuma_data_dir | dirname }}/docker-compose.yml"
+  register: uptimekuma_compose_file
 
 - name: Restore uptimekuma data
   when: newest_backup.stdout | length > 0
   block:
     - name: Stop uptimekuma container
       ansible.builtin.shell:
-        cmd: "cd /home/{{ template.user }}/uptimekuma && docker compose stop"
+        cmd: docker compose stop
+        chdir: "{{ uptimekuma_data_dir | dirname }}"
       changed_when: true
+      when: uptimekuma_compose_file.stat.exists
+
+    - name: Ensure uptimekuma parent directory exists
+      ansible.builtin.file:
+        path: "{{ uptimekuma_data_dir | dirname }}"
+        state: directory
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        mode: "0755"
+      become: true
 
     - name: Extract backup to data directory
       ansible.builtin.unarchive:
         src: "{{ uptimekuma_backup_dir }}/{{ newest_backup.stdout }}"
-        dest: "{{ uptimekuma_data_dir }}"
+        dest: "{{ uptimekuma_data_dir | dirname }}"
         remote_src: true
         owner: "{{ template.user }}"
         group: "{{ template.user }}"
@@ -25,5 +41,7 @@
 
     - name: Start uptimekuma container
       ansible.builtin.shell:
-        cmd: "cd /home/{{ template.user }}/uptimekuma && docker compose start"
+        cmd: docker compose start
+        chdir: "{{ uptimekuma_data_dir | dirname }}"
       changed_when: true
+      when: uptimekuma_compose_file.stat.exists
