@@ -8,7 +8,7 @@
   tasks:
     - name: Take backup of current pihole
       ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/../roles/pihole/tasks/backup.yml"
+        file: "{{ playbook_dir }}/../../roles/pihole/tasks/backup.yml"
       when: force_recreate | default(false) | bool
 
 - name: Create pihole VM
