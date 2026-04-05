@@ -84,10 +84,8 @@
     - promtail
     - echovault
     - caddy
-    - aultwarden
+    - vaultwarden
     - vaultwarden_backup
     - uptimekuma
-    - role: loki
-      tags: loki
-    - role: grafana
-      tags: grafana
+    - loki
+    - grafana
