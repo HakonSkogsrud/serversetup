@@ -23,6 +23,7 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
+
     - name: Take backup of vaultwarden database
       ansible.builtin.include_role:
         role: vaultwarden_backup
@@ -89,3 +90,4 @@
     - uptimekuma
     - loki
     - grafana
+
