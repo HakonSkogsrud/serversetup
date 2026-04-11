@@ -16,7 +16,7 @@ logger -t "$SCRIPT_NAME" -p user.info "Starting CouchDB backup"
 mkdir -p "$BACKUP_DEST_DIR"
 
 # Check if CouchDB is running
-if ! docker ps --format '{{.Names}}' | grep -q "^${COUCHDB_CONTAINER}$"; then
+if ! docker ps --format '{% raw %}{{.Names}}{% endraw %}' | grep -q "^${COUCHDB_CONTAINER}$"; then
     logger -t "$SCRIPT_NAME" -p user.warning "CouchDB container not running, attempting to start"
     cd "$PROJECT_DIR" || { logger -t "$SCRIPT_NAME" -p user.err "Failed to change to project directory: $PROJECT_DIR"; exit 1; }
     docker compose up -d || { logger -t "$SCRIPT_NAME" -p user.err "Failed to start CouchDB"; exit 1; }
