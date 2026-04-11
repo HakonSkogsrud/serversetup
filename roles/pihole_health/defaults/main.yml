@@ -1,2 +1,4 @@
 ---
 pihole_health_script_name: "pihole_health"
+pihole_health_main_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/OBtlU2LcKdwWvKfOJuSo7uZlHgoOsMCR?status=up&msg=OK&ping="
+pihole_health_secondary_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/o5Kx6HBn8qezvcTBWBRc2HeyZXtIyBf9?status=up&msg=OK&ping="

@@ -10,14 +10,34 @@ SCRIPT_NAME="{{ pihole_health_script_name }}"
 PIHOLE_MAIN="{{ pihole_health_main_ip }}"
 PIHOLE_BACKUP="{{ pihole_health_backup_ip }}"
 
+# UptimeKuma push URLs
+PIHOLE_MAIN_PUSH_URL="{{ pihole_health_main_uptimekuma_push_url }}"
+PIHOLE_BACKUP_PUSH_URL="{{ pihole_health_secondary_uptimekuma_push_url }}"
+
 # Domains for testing
 PUBLIC_DOMAIN="google.com"
 BLOCKED_DOMAIN="flurry.com"
+
+# Push result to UptimeKuma (only on success; missing push triggers down state via timeout)
+push_uptimekuma() {
+    local push_url=$1
+    local pihole_name=$2
+
+    HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$push_url")
+    CURL_EXIT_CODE=$?
+
+    if [ $CURL_EXIT_CODE -eq 0 ]; then
+        logger -t "$SCRIPT_NAME" -p user.info "Uptime Kuma push for $pihole_name completed with HTTP status $HTTP_STATUS"
+    else
+        logger -t "$SCRIPT_NAME" -p user.warning "Uptime Kuma push for $pihole_name failed with curl exit code $CURL_EXIT_CODE and HTTP status $HTTP_STATUS"
+    fi
+}
 
 # Check a single Pi-hole instance
 check_pihole() {
     local pihole_ip=$1
     local pihole_name=$2
+    local push_url=$3
     local status_message=""
     local overall_status="HEALTHY"
 
@@ -43,9 +63,10 @@ check_pihole() {
         logger -t "$SCRIPT_NAME" -p user.err "PIHOLE_UNHEALTHY - $pihole_name ($pihole_ip) health check failed: $status_message"
     else
         logger -t "$SCRIPT_NAME" -p user.info "PIHOLE_HEALTHY - $pihole_name ($pihole_ip) is functioning correctly"
+        push_uptimekuma "$push_url" "$pihole_name"
     fi
 }
 
 # Check both Pi-hole instances
-check_pihole "$PIHOLE_MAIN" "Main Pi-hole"
-check_pihole "$PIHOLE_BACKUP" "Backup Pi-hole"
+check_pihole "$PIHOLE_MAIN" "Main Pi-hole" "$PIHOLE_MAIN_PUSH_URL"
+check_pihole "$PIHOLE_BACKUP" "Backup Pi-hole" "$PIHOLE_BACKUP_PUSH_URL"
