@@ -5,8 +5,8 @@
 # This script is managed by Ansible.
 
 SCRIPT_NAME="{{ couchdb_backup_script_name }}"
-BACKUP_DEST_DIR="{{ couchdb_backup_dest_dir }}"
-PROJECT_DIR="{{ couchdb_backup_project_dir }}"
+BACKUP_DEST_DIR="{{ couchdb_backup_path }}"
+PROJECT_DIR="{{ couchdb_data_dir }}"
 COUCHDB_CONTAINER="couchdb"
 STORAGE_PATH="/mnt/storage/smb/couchdb/data"
 
@@ -16,7 +16,7 @@ logger -t "$SCRIPT_NAME" -p user.info "Starting CouchDB backup"
 mkdir -p "$BACKUP_DEST_DIR"
 
 # Check if CouchDB is running
-if ! docker ps --format '{% raw %}{{.Names}}{% endraw %}' | grep -q "^${COUCHDB_CONTAINER}$"; then
+if ! docker ps --format '{{.Names}}' | grep -q "^${COUCHDB_CONTAINER}$"; then
     logger -t "$SCRIPT_NAME" -p user.warning "CouchDB container not running, attempting to start"
     cd "$PROJECT_DIR" || { logger -t "$SCRIPT_NAME" -p user.err "Failed to change to project directory: $PROJECT_DIR"; exit 1; }
     docker compose up -d || { logger -t "$SCRIPT_NAME" -p user.err "Failed to start CouchDB"; exit 1; }
@@ -28,7 +28,7 @@ logger -t "$SCRIPT_NAME" -p user.info "Creating backup archive"
 if [ -d "$STORAGE_PATH" ]; then
     tar -czf "$BACKUP_DEST_DIR/couchdb-backup.tar.gz" -C "$(dirname "$STORAGE_PATH")" "$(basename "$STORAGE_PATH")"
     TAR_STATUS=$?
-    
+
     if [ $TAR_STATUS -eq 0 ]; then
         # Keep last 7 backups
         cd "$BACKUP_DEST_DIR" || exit 0

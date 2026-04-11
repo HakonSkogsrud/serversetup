@@ -9,3 +9,5 @@ couchdb_admin_password: "{{ couchdb_password }}"
 
 # Backup settings
 couchdb_backup_path: "/mnt/storage/smb/couchdb_backup"
+couchdb_backup_script_name: "couchdb_backup"
+couchdb_backup_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/Jqldd4qNWb9fiXgWv9GFhpnIMw8L94lF?status=up&msg=OK&ping="

@@ -4,3 +4,6 @@
 
 - name: Install couchdb
   ansible.builtin.import_tasks: couchdb.yml
+
+- name: Setup couchdb backup
+  ansible.builtin.import_tasks: couchdb_backup.yml

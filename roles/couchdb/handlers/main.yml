@@ -1,4 +1,8 @@
 ---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
 - name: Restart couchdb
   ansible.builtin.shell:
     cmd: sg docker -c 'docker compose up -d --force-recreate'

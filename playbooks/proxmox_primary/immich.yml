@@ -47,8 +47,6 @@
   roles:
     - scheduled_reboot
     - scheduled_update
-    - role: immich_backup
-      tags: immich_backup
     - immich
     - docker_auto_update
     - promtail

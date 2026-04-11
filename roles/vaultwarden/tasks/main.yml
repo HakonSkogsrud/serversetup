@@ -1,8 +1,4 @@
 ---
-- name: import vaultwarden_backup vars
-  ansible.builtin.include_vars:
-      file: "../../vaultwarden_backup/defaults/main.yml"
-
 - name: check if vaultwarden directory exists
   ansible.builtin.stat:
     path: "{{ vaultwarden_dir }}/vw_data"
@@ -11,3 +7,6 @@
 - name: restore from backup if dir does not exists
   ansible.builtin.import_tasks: restore.yml
   when: not vaultwarden_dir_exists.stat.exists
+
+- name: setup vaultwarden backup
+  ansible.builtin.import_tasks: vaultwarden_backup.yml
