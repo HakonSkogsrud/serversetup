@@ -1,5 +1,0 @@
----
-couchdb_backup_script_name: "couchdb_backup"
-couchdb_backup_project_dir: "/home/{{ template.user }}/couchdb"
-couchdb_backup_dest_dir: "/mnt/storage/smb/couchdb_backup"
-couchdb_backup_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/J2wchwOPt1UzMh1ekXD96k1yB4oKzAlG?status=up&msg=OK&ping="

@@ -2,3 +2,8 @@ vaultwarden_url: https://subnet-router.tailb21d47.ts.net/vaultwarden
 vaultwarden_port: 8100
 vaultwarden_dir: /home/haaksk/vaultwarden
 
+# Backup settings
+vaultwarden_backup_dir: /mnt/storage/smb/vaultwarden
+vaultwarden_backup_script_name: vaultwarden_backup
+vaultwarden_backup_data_dir: /home/haaksk/vaultwarden/vw-data
+

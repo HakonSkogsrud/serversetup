@@ -1,3 +1,0 @@
-vaultwarden_backup_dir: /mnt/storage/smb/vaultwarden
-vaultwarden_backup_script_name: vaultwarden_backup
-vaultwarden_backup_data_dir: /home/haaksk/vaultwarden/vw-data

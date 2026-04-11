@@ -1,3 +1,0 @@
----
-- name: Immich daily backup
-  ansible.builtin.import_tasks: immich_backup.yml

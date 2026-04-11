@@ -7,7 +7,7 @@
 - name: copy backup script
   ansible.builtin.template:
     src: vaultwarden_backup.sh.j2
-    dest: "/usr/local/bin/{{ vaultwarden_backup_script_name}}.sh"
+    dest: "/usr/local/bin/{{ vaultwarden_backup_script_name }}.sh"
     owner: root
     group: root
     mode: "0755"

@@ -1,3 +1,6 @@
 ---
 - name: Restore immich from database dump
   ansible.builtin.import_tasks: immich.yml
+
+- name: Setup immich backup
+  ansible.builtin.import_tasks: immich_backup.yml

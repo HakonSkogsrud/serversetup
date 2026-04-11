@@ -1,3 +1,0 @@
----
-- name: CouchDB daily backup
-  ansible.builtin.import_tasks: couchdb_backup.yml

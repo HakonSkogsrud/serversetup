@@ -7,7 +7,7 @@
 SCRIPT_NAME="{{ immich_backup_script_name }}"
 BACKUP_DEST_DIR="/mnt/storage/smb/immich_backup"
 POSTGRES_CONTAINER="immich_postgres"
-PROJECT_DIR="{{ immich_backup_project_dir }}"
+PROJECT_DIR="{{ immich_project_dir }}"
 
 logger -t "$SCRIPT_NAME" -p user.info "Starting Immich backup"
 

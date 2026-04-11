@@ -26,7 +26,7 @@
 
     - name: Take backup of vaultwarden database
       ansible.builtin.include_role:
-        role: vaultwarden_backup
+        name: vaultwarden
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
@@ -80,13 +80,11 @@
     - nebula_sync
     - syncthing
     - couchdb
-    - couchdb_backup
     - docker_auto_update
     - promtail
     - echovault
     - caddy
     - vaultwarden
-    - vaultwarden_backup
     - uptimekuma
     - loki
     - grafana
