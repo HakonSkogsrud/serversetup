@@ -55,6 +55,15 @@
         group: "{{ template.user }}"
       become: true
 
+    - name: Fix ownership of restored Grafana data
+      ansible.builtin.file:
+        path: "{{ grafana_data_dir }}/data"
+        state: directory
+        recurse: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
     - name: Copy backup to persistent storage
       ansible.builtin.copy:
         src: "/tmp/grafana-backup.tar.gz"
