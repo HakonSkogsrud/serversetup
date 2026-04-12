@@ -1,0 +1,42 @@
+---
+- name: Check if pihole backup directory exists
+  ansible.builtin.stat:
+    path: "{{ pihole_docker_backup_dir }}"
+  register: pihole_docker_backup_dir_exists
+
+- name: Find newest pihole backup
+  ansible.builtin.shell:
+    cmd: "ls -t pihole_*.tar.gz 2>/dev/null | head -1"
+    chdir: "{{ pihole_docker_backup_dir }}"
+  register: pihole_docker_newest_backup
+  failed_when: false
+  when: pihole_docker_backup_dir_exists.stat.exists
+
+- name: Restore pihole data
+  when:
+    - pihole_docker_backup_dir_exists.stat.exists
+    - pihole_docker_newest_backup.stdout | length > 0
+  block:
+    - name: Ensure pihole base directory exists
+      ansible.builtin.file:
+        path: "{{ pihole_docker_base_dir }}"
+        state: directory
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        mode: "0755"
+      become: true
+
+    - name: Remove existing pihole data directory before restore
+      ansible.builtin.file:
+        path: "{{ pihole_docker_data_dir }}"
+        state: absent
+      become: true
+
+    - name: Extract backup to base directory
+      ansible.builtin.unarchive:
+        src: "{{ pihole_docker_backup_dir }}/{{ pihole_docker_newest_backup.stdout }}"
+        dest: "{{ pihole_docker_base_dir }}"
+        remote_src: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true

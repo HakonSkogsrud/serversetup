@@ -19,6 +19,8 @@ vms:
     ip: 10.0.0.81
   pihole-secondary:
     ip: 10.0.0.82
+  pihole-docker-test:
+    ip: 10.0.0.86
   loki:
     ip: 10.0.0.44
   grafana:
