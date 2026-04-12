@@ -13,3 +13,5 @@ create_template_vm_script_name: "create_template_vm"
 
 # Checksum cache file to track when updates are needed
 create_template_vm_checksum_cache_file: "/var/lib/vz/template/cache/.alma_checksum_cache"
+
+create_template_vm_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/NXqJQyHSMTHrQKWCxE6297xZIrLNkt5h?status=up&msg=OK&ping="

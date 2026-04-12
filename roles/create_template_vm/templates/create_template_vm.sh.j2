@@ -211,3 +211,11 @@ save_checksum "$remote_checksum"
 logger -t "$SCRIPT_NAME" -p user.info "Checksum cached for future comparisons"
 
 logger -t "$SCRIPT_NAME" -p user.info "Template VM creation script completed successfully"
+
+# Push to UptimeKuma
+HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ create_template_vm_uptimekuma_push_url }}")
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    logger -t "$SCRIPT_NAME" -p user.info "UptimeKuma push successful"
+else
+    logger -t "$SCRIPT_NAME" -p user.warning "UptimeKuma push failed (HTTP $HTTP_STATUS)"
+fi
