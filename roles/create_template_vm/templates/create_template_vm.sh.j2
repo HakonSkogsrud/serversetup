@@ -180,6 +180,12 @@ logger -t "$SCRIPT_NAME" -p user.info "Cached checksum: ${cached_checksum:-none}
 
 if [[ "$remote_checksum" == "$cached_checksum" ]]; then
     logger -t "$SCRIPT_NAME" -p user.info "Checksums match - no update needed"
+    HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ create_template_vm_uptimekuma_push_url }}")
+    if [ "$HTTP_STATUS" -eq 200 ]; then
+        logger -t "$SCRIPT_NAME" -p user.info "UptimeKuma push successful"
+    else
+        logger -t "$SCRIPT_NAME" -p user.warning "UptimeKuma push failed (HTTP $HTTP_STATUS)"
+    fi
     exit 0
 fi
 
