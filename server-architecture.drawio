@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="NewServerSetupArchitecture" name="New Server Architecture">
-        <mxGraphModel dx="1080" dy="724" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" background="#FFFFFF" math="0" shadow="0">
+        <mxGraphModel dx="1199" dy="880" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" background="#FFFFFF" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -100,9 +100,6 @@
                 <mxCell id="90" value="immich" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
                     <mxGeometry x="460" y="345" width="100" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="91" value="pihole (primary)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#388e3c;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
-                    <mxGeometry x="340" y="345" width="100" height="30" as="geometry"/>
-                </mxCell>
                 <mxCell id="93" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#000000;exitPerimeter=0;" parent="1" source="11" target="89" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="340" y="190" as="sourcePoint"/>
@@ -173,31 +170,34 @@
                     <mxGeometry y="-20" width="470" height="100" as="geometry"/>
                 </mxCell>
                 <mxCell id="99" value="Syncthing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="20" y="40" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="20" y="32" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="101" value="Nebula" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="110" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="110" y="-9" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="102" value="Grafana" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="200" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="200" y="-8" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="146" value="couchdb" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="110" y="40" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="110" y="31" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="144" value="loki" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#388e3c;fontSize=11;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="20" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="20" y="-9" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="151" value="etc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="380" y="40" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="380" y="35" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="152" value="caddy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="290" y="40" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="290" y="34" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="154" value="vaultwarden" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="290" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="290" y="-8" width="70" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="155" value="uptimekuma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2d7600;fontSize=10;fontColor=#000000;" parent="125" vertex="1">
-                    <mxGeometry x="380" width="70" height="30" as="geometry"/>
+                    <mxGeometry x="380" y="-7" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="91" value="pihole (primary)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#388e3c;fontSize=11;fontColor=#000000;" parent="125" vertex="1">
+                    <mxGeometry x="190" y="33" width="90" height="22" as="geometry"/>
                 </mxCell>
                 <mxCell id="161" value="" style="endArrow=classic;html=1;rounded=0;dashed=1;strokeColor=#ad1457;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="86" target="152" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
