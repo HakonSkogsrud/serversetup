@@ -51,3 +51,11 @@ fi
 
 # Save current state
 echo "$CURRENT_STATE" > "$STATE_FILE"
+
+# Push to UptimeKuma on successful connectivity check
+if [ "$CURRENT_STATE" = "UP" ]; then
+    HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ internet_monitor_uptimekuma_push_url }}")
+    if [ "$HTTP_STATUS" -ne 200 ]; then
+        logger -t "$SCRIPT_NAME" -p user.warning "UptimeKuma push failed (HTTP $HTTP_STATUS)"
+    fi
+fi
