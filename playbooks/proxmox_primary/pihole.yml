@@ -7,8 +7,9 @@
     - ../../secrets.yml
   tasks:
     - name: Take backup of current pihole
-      ansible.builtin.include_tasks:
-        file: "{{ playbook_dir }}/../../roles/pihole/tasks/backup.yml"
+      ansible.builtin.include_role:
+        name: pihole_docker
+        tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
 - name: Create pihole VM
@@ -34,15 +35,13 @@
   become: true
   vars:
     ansible_host_key_checking: false
-    scheduled_reboot_notify: false
   vars_files:
     - ../../secrets.yml
   roles:
     - mount_virtiofs
     - scheduled_update
     - scheduled_reboot
-    - pihole
-    - pihole_gravity_update
+    - pihole_docker
     - role: internet_monitor
       tags: internet_monitor
     - promtail
