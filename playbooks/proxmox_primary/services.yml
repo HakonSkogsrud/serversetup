@@ -85,10 +85,8 @@
     - scheduled_reboot
     - firewall
     - pihole_health
-    - nebula_sync
     - pihole_docker
-    - role: syncthing
-      tags: syncthing
+    - syncthing
     - couchdb
     - docker_auto_update
     - promtail
@@ -98,3 +96,4 @@
     - uptimekuma
     - loki
     - grafana
+    - nebula_sync
