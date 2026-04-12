@@ -1,3 +1,3 @@
-nebula_sync_main_ip: "{{ vms.pihole.ip }}"
+nebula_sync_main_ip: "{{ vms.services.ip }}"
 nebula_sync_backup_ip: "{{ vms['pihole-secondary'].ip }}"
 nebula_sync_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/fLPIxjbqTDryHGSCPoSxngDwFH0iib38?status=up&msg=OK&ping="

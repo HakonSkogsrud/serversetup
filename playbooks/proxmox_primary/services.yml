@@ -36,6 +36,12 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
+    - name: Take backup of pihole
+      ansible.builtin.include_role:
+        name: pihole_docker
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
 - name: Create services VM
   hosts: proxmox
   become: false
@@ -65,6 +71,7 @@
   vars:
     docker_auto_update_compose_paths:
       - "/home/{{ template.user }}/nebula-sync/docker-compose.yml"
+      - "/home/{{ template.user }}/pihole/docker-compose.yml"
       - "/home/{{ template.user }}/couchdb/docker-compose.yml"
       - "/home/{{ template.user }}/caddy/docker-compose.yml"
       - "/home/{{ template.user }}/vaultwarden/docker-compose.yml"
@@ -78,6 +85,7 @@
     - firewall
     - pihole_health
     - nebula_sync
+    - pihole_docker
     - syncthing
     - couchdb
     - docker_auto_update
