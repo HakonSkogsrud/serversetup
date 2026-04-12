@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-ansible:
+  deploy:
     runs-on: self-hosted
     env:
       ANSIBLE_CONFIG: ./ansible.cfg
@@ -52,9 +52,6 @@ jobs:
 
       - name: "[Proxmox Primary] Immich"
         run: ansible-playbook playbooks/proxmox_primary/immich.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
-
-      - name: "[Proxmox Primary] Pihole"
-        run: ansible-playbook playbooks/proxmox_primary/pihole.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: "[Proxmox Primary] Samba"
         run: ansible-playbook playbooks/proxmox_primary/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
