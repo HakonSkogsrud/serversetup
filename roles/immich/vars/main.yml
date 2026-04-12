@@ -1,4 +1,12 @@
 immich_project_dir: "/home/{{ template.user }}/immich-app"
+immich_upload_location: "./library"
+immich_db_data_location: "./postgres"
+immich_version: "release"
+immich_db_password: "postgres"
+immich_db_username: "postgres"
+immich_db_database_name: "immich"
+immich_thumbs_dir: "/mnt/storage/smb/immich_data/thumbs"
+immich_encoded_video_dir: "/mnt/storage/smb/immich_data/encoded-video"
 immich_backup_data_dir: /mnt/storage/smb/immich_backup/data/
 immich_backup_dump: /mnt/storage/smb/immich_backup/immich_db.sql.gz
 immich_backup_script_name: "immich_backup"

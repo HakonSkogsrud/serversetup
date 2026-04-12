@@ -14,7 +14,40 @@
     src: "{{ immich_backup_data_dir }}"
     dest: "{{ immich_project_dir }}"
     archive: true
+    rsync_opts:
+      - "--exclude=library/thumbs"
+      - "--exclude=library/encoded-video"
+      - "--exclude=library/thumbs.pre-migration-backup"
+      - "--exclude=library/encoded-video.pre-migration-backup"
   delegate_to: "{{ inventory_hostname }}"
+
+- name: Deploy Immich compose files after restore sync
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ template.user }}"
+    group: docker
+    mode: "{{ item.mode }}"
+  become: true
+  loop:
+    - src: docker-compose.yml.j2
+      dest: "{{ immich_project_dir }}/docker-compose.yml"
+      mode: "0644"
+    - src: .env.j2
+      dest: "{{ immich_project_dir }}/.env"
+      mode: "0640"
+
+- name: Ensure Immich shared storage directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: docker
+    mode: "0755"
+  become: true
+  loop:
+    - "{{ immich_thumbs_dir }}"
+    - "{{ immich_encoded_video_dir }}"
 
 - name: Ensure Immich library subdirectories exist
   ansible.builtin.file:
@@ -45,10 +78,22 @@
   loop:
     - "upload"
     - "library"
-    - "thumbs"
-    - "encoded-video"
     - "profile"
     - "backups"
+
+- name: Create .immich marker files for shared storage directories
+  ansible.builtin.file:
+    path: "{{ item }}/.immich"
+    state: touch
+    owner: "{{ template.user }}"
+    group: docker
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+  become: true
+  loop:
+    - "{{ immich_thumbs_dir }}"
+    - "{{ immich_encoded_video_dir }}"
 
 - name: Pull latest Docker images
   community.docker.docker_compose_v2_pull:

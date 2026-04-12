@@ -37,11 +37,19 @@ fi
 logger -t "$SCRIPT_NAME" -p user.info "Stopping services for data sync"
 docker compose down || logger -t "$SCRIPT_NAME" -p user.warning "Failed to stop services cleanly"
 
+# Remove stale directories that are now stored permanently on SMB.
+rm -rf "$BACKUP_DEST_DIR/data/library/thumbs" "$BACKUP_DEST_DIR/data/library/encoded-video"
+rm -rf "$BACKUP_DEST_DIR/data/library/thumbs.pre-migration-backup" "$BACKUP_DEST_DIR/data/library/encoded-video.pre-migration-backup"
+
 # Sync data
 logger -t "$SCRIPT_NAME" -p user.info "Syncing data folders"
 rsync -avh --delete \
     --exclude 'postgres' \
     --exclude 'library/backups' \
+    --exclude 'library/thumbs' \
+    --exclude 'library/encoded-video' \
+    --exclude 'library/thumbs.pre-migration-backup' \
+    --exclude 'library/encoded-video.pre-migration-backup' \
     . "$BACKUP_DEST_DIR/data/"
 RSYNC_STATUS=$?
 
