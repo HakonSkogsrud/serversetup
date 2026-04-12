@@ -1,5 +1,5 @@
 ---
-promtail_loki_url: "http://{{ vms.loki.ip }}:3100/loki/api/v1/push"
+promtail_loki_url: "http://{{ vms.services.ip }}:3100/loki/api/v1/push"
 promtail_port: 9080
 promtail_install_dir: "/usr/local/bin"
 promtail_config_dir: "/etc/promtail"
