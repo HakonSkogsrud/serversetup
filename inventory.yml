@@ -22,9 +22,6 @@ all:
           ansible_host: 127.0.0.1
           ansible_connection: local
           ansible_user: "{{ template.user }}"
-        pihole:
-          ansible_user: "{{ template.user }}"
-          ansible_host: "{{ vms.pihole.ip }}"
         pihole-secondary:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms['pihole-secondary'].ip }}"

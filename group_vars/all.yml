@@ -7,8 +7,6 @@ vms:
   services:
     ip: 10.0.0.44
     vmid: 4001
-  pihole:
-    ip: 10.0.0.77
   subnet_router:
     ip: 10.0.0.78
   samba:
