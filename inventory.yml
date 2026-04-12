@@ -25,9 +25,6 @@ all:
         pihole-secondary:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms['pihole-secondary'].ip }}"
-        pihole-docker-test:
-          ansible_user: "{{ template.user }}"
-          ansible_host: "{{ vms['pihole-docker-test'].ip }}"
         subnet-router-secondary:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms['subnet-router-secondary'].ip }}"
