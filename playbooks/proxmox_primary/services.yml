@@ -78,6 +78,7 @@
       - "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
       - "/home/{{ template.user }}/loki/docker-compose.yml"
       - "/home/{{ template.user }}/grafana/docker-compose.yml"
+      - "/home/{{ template.user }}/syncthing/docker-compose.yml"
     promtail_docker_installed: true
   roles:
     - scheduled_update
@@ -86,7 +87,8 @@
     - pihole_health
     - nebula_sync
     - pihole_docker
-    - syncthing
+    - role: syncthing
+      tags: syncthing
     - couchdb
     - docker_auto_update
     - promtail
@@ -96,4 +98,3 @@
     - uptimekuma
     - loki
     - grafana
-

@@ -1,0 +1,7 @@
+---
+- name: Restart syncthing
+  become: true
+  community.docker.docker_compose_v2:
+    project_src: "/home/{{ template.user }}/syncthing"
+    state: present
+    recreate: always
