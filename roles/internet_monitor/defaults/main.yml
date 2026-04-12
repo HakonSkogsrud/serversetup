@@ -1,6 +1,8 @@
 ---
 internet_monitor_script_name: "internet_monitor"
 
+internet_monitor_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/KGoz5V00E7VxUwAvFZyC6jeC1lxYBGyW?status=up&msg=OK&ping="
+
 # Multiple targets to ping - if all fail, internet is down
 internet_monitor_targets:
   - name: "Cloudflare DNS"
