@@ -1,0 +1,19 @@
+---
+pihole_docker_base_dir: "/home/{{ template.user }}/pihole"
+pihole_docker_compose_file: "{{ pihole_docker_base_dir }}/docker-compose.yml"
+pihole_docker_data_dir: "/home/{{ template.user }}/pihole/etc-pihole"
+pihole_docker_config_file: "{{ pihole_docker_data_dir }}/pihole.toml"
+pihole_docker_backup_dir: "/mnt/storage/smb/pihole_docker"
+
+pihole_docker_image: "pihole/pihole:2026.04.0"
+
+pihole_docker_interface: "eth0"
+pihole_docker_ipv4_address: "{{ ansible_facts[pihole_docker_interface]['ipv4']['address'] }}"
+
+pihole_docker_timezone: "Europe/Oslo"
+
+pihole_docker_upstream_dns_1: "9.9.9.9"
+pihole_docker_upstream_dns_2: "149.112.112.112"
+
+pihole_docker_password: "{{ pihole_password }}"
+

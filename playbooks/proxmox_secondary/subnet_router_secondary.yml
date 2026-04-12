@@ -34,7 +34,6 @@
 
   vars:
     ansible_host_key_checking: false
-    scheduled_reboot_notify: false
     tailscale_subnet_router_hostname: subnet-router-secondary
   vars_files:
     - ../../secrets.yml

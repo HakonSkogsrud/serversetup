@@ -1,0 +1,12 @@
+---
+- name: Check if pihole config exists
+  ansible.builtin.stat:
+    path: "{{ pihole_docker_config_file }}"
+  register: pihole_docker_config_exists
+
+- name: Restore pihole if config is missing
+  ansible.builtin.include_tasks: restore.yml
+  when: not pihole_docker_config_exists.stat.exists
+
+- name: Setup pihole
+  ansible.builtin.include_tasks: pihole.yml

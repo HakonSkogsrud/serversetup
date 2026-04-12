@@ -1,0 +1,17 @@
+services:
+  pihole:
+    image: "{{ pihole_docker_image }}"
+    container_name: pihole
+    network_mode: host
+    environment:
+      TZ: "{{ pihole_docker_timezone }}"
+      FTLCONF_webserver_api_password: "{{ pihole_docker_password }}"
+      FTLCONF_LOCAL_IPV4: "{{ pihole_docker_ipv4_address }}"
+      FTLCONF_dns_upstreams: "{{ pihole_docker_upstream_dns_1 }};{{ pihole_docker_upstream_dns_2 }}"
+      FTLCONF_dns_interface: "{{ pihole_docker_interface }}"
+      FTLCONF_dns_listeningMode: "single"
+    volumes:
+      - ./etc-pihole:/etc/pihole
+    restart: unless-stopped
+    cap_add:
+      - SYS_NICE

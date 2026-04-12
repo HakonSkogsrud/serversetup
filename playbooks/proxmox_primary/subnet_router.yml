@@ -34,7 +34,6 @@
 
   vars:
     ansible_host_key_checking: false
-    scheduled_reboot_notify: false
   vars_files:
     - ../../secrets.yml
   roles:

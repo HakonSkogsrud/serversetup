@@ -1,0 +1,37 @@
+---
+- name: Ensure pihole directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+  loop:
+    - "{{ pihole_docker_base_dir }}"
+    - "{{ pihole_docker_data_dir }}"
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ pihole_docker_compose_file }}"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  notify: Restart pihole
+
+- name: Start pihole container
+  community.docker.docker_compose_v2:
+    project_src: "{{ pihole_docker_base_dir }}"
+    state: present
+  become: true
+
+- name: Configure firewalld for pihole
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - "53/tcp"
+    - "53/udp"
+    - "80/tcp"
