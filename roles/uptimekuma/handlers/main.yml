@@ -4,6 +4,7 @@
     daemon_reload: true
 
 - name: Restart uptimekuma
-  ansible.builtin.shell:
-    cmd: docker compose up -d
-    chdir: "{{ uptimekuma_data_dir | dirname }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ uptimekuma_data_dir | dirname }}"
+    state: present
+  become: true

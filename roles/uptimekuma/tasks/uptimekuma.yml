@@ -17,10 +17,10 @@
   notify: Restart uptimekuma
 
 - name: start uptimekuma container
-  ansible.builtin.shell:
-    cmd: docker compose up -d
-    chdir: "{{ uptimekuma_data_dir | dirname }}"
-    creates: "{{ uptimekuma_data_dir | dirname }}/docker-compose.yml"
+  community.docker.docker_compose_v2:
+    project_src: "{{ uptimekuma_data_dir | dirname }}"
+    state: present
+  become: true
 
 - name: Configure firewalld for UptimeKuma
   ansible.posix.firewalld:
