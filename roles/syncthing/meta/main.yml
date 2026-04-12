@@ -1,2 +1,3 @@
 dependencies:
   - { role: mount_virtiofs }
+  - { role: docker }

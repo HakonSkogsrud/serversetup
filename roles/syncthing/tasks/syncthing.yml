@@ -1,45 +1,81 @@
 ---
-- name: Ensure EPEL repository is enabled
-  become: true # Use become (sudo) for system-level tasks
-  ansible.builtin.dnf:
-    name: epel-release
-    state: present
+- name: Stop and disable legacy syncthing systemd service
+  become: true
+  ansible.builtin.systemd:
+    name: "syncthing@{{ template.user }}.service"
+    enabled: false
+    state: stopped
+  failed_when: false
 
-- name: Install Syncthing package
+- name: Remove syncthing dnf package if installed
   become: true
   ansible.builtin.dnf:
     name: syncthing
-    state: present
+    state: absent
 
-- name: Create Syncthing configuration directory for user
+- name: Ensure syncthing config directory exists
   become: true
   ansible.builtin.file:
-    path: "/home/{{ template.user }}/.config/syncthing"
+    path: "{{ syncthing_config_dir }}"
     state: directory
     owner: "{{ template.user }}"
     group: "{{ template.user }}"
     mode: "0750"
 
-- name: Copy existing Syncthing configuration for
+- name: Copy syncthing certs into config directory
   become: true
   ansible.builtin.copy:
     src: syncthing_config/
-    dest: "/home/{{ template.user }}/.config/syncthing/"
+    dest: "{{ syncthing_config_dir }}/"
     owner: "{{ template.user }}"
     group: "{{ template.user }}"
     mode: "0600"
 
-- name: Enable and start the Syncthing service for user
+- name: Copy docker-compose.yml
   become: true
-  ansible.builtin.systemd:
-    name: "syncthing@{{ template.user }}.service"
-    enabled: true
-    state: started
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "/home/{{ template.user }}/syncthing/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  notify: Restart syncthing
 
-- name: Allow Syncthing GUI port through the firewall
+- name: Start syncthing container
+  become: true
+  community.docker.docker_compose_v2:
+    project_src: "/home/{{ template.user }}/syncthing"
+    state: present
+
+- name: Allow syncthing GUI port through firewall
   become: true
   ansible.posix.firewalld:
     port: 8384/tcp
     permanent: true
     state: enabled
     immediate: true
+
+- name: Allow syncthing sync port TCP through firewall
+  become: true
+  ansible.posix.firewalld:
+    port: 22000/tcp
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Allow syncthing sync port UDP through firewall
+  become: true
+  ansible.posix.firewalld:
+    port: 22000/udp
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Allow syncthing local discovery port through firewall
+  become: true
+  ansible.posix.firewalld:
+    port: 21027/udp
+    permanent: true
+    state: enabled
+    immediate: true
+

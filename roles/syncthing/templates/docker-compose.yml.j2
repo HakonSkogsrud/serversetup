@@ -1,0 +1,20 @@
+services:
+  syncthing:
+    image: syncthing/syncthing:latest
+    container_name: syncthing
+    restart: unless-stopped
+    hostname: "{{ inventory_hostname }}"
+    ports:
+      - "8384:8384/tcp"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    volumes:
+      - ./config:/var/syncthing/config
+      - /mnt/storage/smb/Sync:/mnt/storage/smb/Sync
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8384/rest/noauth/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
