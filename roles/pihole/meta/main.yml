@@ -1,3 +1,0 @@
-dependencies:
-  - { role: firewall }
-  - { role: pihole_gravity_update }
