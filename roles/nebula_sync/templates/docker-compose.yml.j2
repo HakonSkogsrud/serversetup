@@ -11,3 +11,5 @@ services:
       - FULL_SYNC=true
       - RUN_GRAVITY=true
       - CRON=15 * * * *
+      - WEBHOOK_SYNC_SUCCESS_URL={{ nebula_sync_uptimekuma_push_url }}
+      - WEBHOOK_SYNC_SUCCESS_METHOD=GET
