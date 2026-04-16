@@ -47,26 +47,32 @@ for compose_path in "${docker_auto_update_compose_paths[@]}"; do
     }
 
     logger -t "$SCRIPT_NAME" -p user.info "Running docker compose pull for $app_name"
-    if docker compose pull 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+    pull_failed=0
+    if ! docker compose pull 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+        logger -t "$SCRIPT_NAME" -p user.err "docker compose pull failed for $app_name, will still ensure container is running"
+        pull_failed=1
+    else
         logger -t "$SCRIPT_NAME" -p user.info "Pull successful for $app_name"
+    fi
 
-        logger -t "$SCRIPT_NAME" -p user.info "Running docker compose up -d for $app_name"
-        if docker compose up -d 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+    logger -t "$SCRIPT_NAME" -p user.info "Running docker compose up -d for $app_name"
+    if docker compose up -d 2>&1 | logger -t "$SCRIPT_NAME" -p user.info; then
+        if [ "$pull_failed" -eq 0 ]; then
             logger -t "$SCRIPT_NAME" -p user.info "Update successful for $app_name"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
             UPDATED_APPS="${UPDATED_APPS}
 - $app_name"
         else
-            logger -t "$SCRIPT_NAME" -p user.err "docker compose up -d failed for $app_name"
+            logger -t "$SCRIPT_NAME" -p user.warning "Pull failed but container is running for $app_name"
             FAILURE_COUNT=$((FAILURE_COUNT + 1))
             FAILED_APPS="${FAILED_APPS}
-- $app_name (compose up failed)"
+- $app_name (pull failed, running on existing image)"
         fi
     else
-        logger -t "$SCRIPT_NAME" -p user.err "docker compose pull failed for $app_name"
+        logger -t "$SCRIPT_NAME" -p user.err "docker compose up -d failed for $app_name"
         FAILURE_COUNT=$((FAILURE_COUNT + 1))
         FAILED_APPS="${FAILED_APPS}
-- $app_name (pull failed)"
+- $app_name (compose up failed)"
     fi
 done
 
