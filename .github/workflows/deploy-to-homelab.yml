@@ -1,15 +1,5 @@
 name: Deploy to Homelab
 on:
-  push:
-    branches: [main]
-    paths:
-      - "**.yml"
-      - "**.yaml"
-      - "inventory/**"
-      - "!playbooks/local/fedora.yml"
-      - "!secrets.yml"
-      - "!requirements-collections.yml"
-
   workflow_dispatch:
 
 jobs:

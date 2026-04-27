@@ -5,3 +5,4 @@
 *hcl
 *lock
 .terraform/
+.vscode/

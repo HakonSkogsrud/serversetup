@@ -13,4 +13,11 @@
         ]
     },
     "ansible.python.interpreterPath": "/home/haaksk/Code/serversetup/.venv/bin/python",
+    "chat.tools.terminal.autoApprove": {
+        "git blame": true,
+        "git describe": true,
+        "git clone": true,
+        "git fetch": true,
+        "awk": true
+    },
 }
