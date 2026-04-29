@@ -69,6 +69,8 @@
         src: "/tmp/grafana-backup.tar.gz"
         dest: "{{ grafana_backup_path }}/grafana-backup.tar.gz"
         mode: "0644"
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
         remote_src: true
       when: not grafana_backup_is_remote | bool
 

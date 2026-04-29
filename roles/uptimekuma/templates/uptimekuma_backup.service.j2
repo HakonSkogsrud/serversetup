@@ -4,8 +4,8 @@ Documentation=man:systemd.service(5)
 
 [Service]
 Type=oneshot
-User=root
-Group=root
+User={{ template.user }}
+Group={{ template.user }}
 ExecStart=/usr/local/bin/{{ uptimekuma_script_name }}.sh
 StandardError=journal
 StandardOutput=journal

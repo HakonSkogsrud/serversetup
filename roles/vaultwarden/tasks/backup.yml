@@ -8,4 +8,5 @@
 - name: run script
   ansible.builtin.command:
     cmd: "/usr/local/bin/{{ vaultwarden_backup_script_name }}.sh"
+  become_user: "{{ template.user }}"
   when: vaultwarden_backup_script_exists.stat.exists is true

@@ -60,6 +60,8 @@
         src: "/tmp/couchdb-backup.tar.gz"
         dest: "{{ couchdb_backup_path }}/couchdb-backup.tar.gz"
         mode: "0644"
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
         remote_src: true
       when: not couchdb_backup_is_remote | bool
 
