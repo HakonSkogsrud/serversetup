@@ -10,3 +10,9 @@
     cmd: "/usr/local/bin/{{ vaultwarden_backup_script_name }}.sh"
   become_user: "{{ template.user }}"
   when: vaultwarden_backup_script_exists.stat.exists is true
+
+- name: fix ownership of backup files
+  ansible.builtin.shell:
+    cmd: chown -R {{ template.user }}:{{ template.user }} {{ vaultwarden_backup_dir }}
+  when: vaultwarden_backup_script_exists.stat.exists is true
+  changed_when: true

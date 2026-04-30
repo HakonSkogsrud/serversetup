@@ -3,8 +3,8 @@
   ansible.builtin.file:
     path: "{{ uptimekuma_backup_dir }}"
     state: directory
-    owner: root
-    group: root
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
     mode: "0755"
 
 - name: copy backup script
