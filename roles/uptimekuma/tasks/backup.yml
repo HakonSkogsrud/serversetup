@@ -19,6 +19,7 @@
       ansible.builtin.shell:
         cmd: docker compose stop
         chdir: "{{ uptimekuma_data_dir | dirname }}"
+      become_user: "{{ template.user }}"
       changed_when: true
 
     - name: create backup of uptimekuma data directory
@@ -26,6 +27,7 @@
         cmd: >
           tar -czf {{ uptimekuma_backup_dir }}/uptimekuma_$(date +%Y%m%d_%H%M%S).tar.gz
           -C {{ uptimekuma_data_dir | dirname }} {{ uptimekuma_data_dir | basename }}
+      become_user: "{{ template.user }}"
       changed_when: true
 
     - name: fix ownership of backup files
@@ -37,4 +39,5 @@
       ansible.builtin.shell:
         cmd: docker compose start
         chdir: "{{ uptimekuma_data_dir | dirname }}"
+      become_user: "{{ template.user }}"
       changed_when: true
