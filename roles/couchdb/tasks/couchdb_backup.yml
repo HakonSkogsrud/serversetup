@@ -1,4 +1,12 @@
 ---
+- name: Ensure backup directory exists with correct ownership
+  ansible.builtin.file:
+    path: "{{ couchdb_backup_path }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
 - name: Deploy the CouchDB backup script
   ansible.builtin.template:
     src: couchdb_backup.sh.j2

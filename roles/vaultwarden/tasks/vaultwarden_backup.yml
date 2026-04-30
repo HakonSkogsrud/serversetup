@@ -1,4 +1,12 @@
 ---
+- name: Ensure backup directory exists with correct ownership
+  ansible.builtin.file:
+    path: "{{ vaultwarden_backup_dir }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0755"
+
 - name: ensure sqlite is installed
   ansible.builtin.package:
     name: sqlite

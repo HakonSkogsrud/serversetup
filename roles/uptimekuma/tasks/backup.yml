@@ -7,6 +7,14 @@
 - name: Backup uptimekuma
   when: uptimekuma_backup_data_exists.stat.exists
   block:
+    - name: Ensure backup directory exists with correct ownership
+      ansible.builtin.file:
+        path: "{{ uptimekuma_backup_dir }}"
+        state: directory
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        mode: "0755"
+
     - name: stop uptimekuma container
       ansible.builtin.shell:
         cmd: docker compose stop
