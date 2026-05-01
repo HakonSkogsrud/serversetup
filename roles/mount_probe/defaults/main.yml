@@ -1,0 +1,12 @@
+---
+mount_probe_script_name: "mount_probe"
+mount_probe_service_name: "mount-probe"
+mount_probe_path: "/mnt/storage/smb"
+mount_probe_check_timeout_seconds: 10
+mount_probe_capture_timeout_seconds: 10
+mount_probe_timer_on_boot_sec: "1min"
+mount_probe_timer_on_unit_active_sec: "1min"
+mount_probe_timer_accuracy_sec: "1s"
+mount_probe_skip_recheck_after_failure_on_same_boot: true
+mount_probe_state_file: "/var/lib/mount_probe/state"
+mount_probe_dump_dir: "/var/log/mount_probe"

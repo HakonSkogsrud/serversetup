@@ -1,0 +1,181 @@
+#!/bin/bash
+#
+# Probes mount responsiveness and captures a diagnostic snapshot on failure.
+# Logs state transitions to systemd journal for Grafana/Loki.
+# This script is managed by Ansible.
+
+set -u
+
+SCRIPT_NAME="{{ mount_probe_script_name }}"
+PROBE_PATH="{{ mount_probe_path }}"
+CHECK_TIMEOUT="{{ mount_probe_check_timeout_seconds }}"
+CATEGORY_TIMEOUT="{{ mount_probe_capture_timeout_seconds }}"
+SKIP_RECHECK_AFTER_FAILURE_ON_SAME_BOOT="{{ mount_probe_skip_recheck_after_failure_on_same_boot | ternary('true', 'false') }}"
+STATE_FILE="{{ mount_probe_state_file }}"
+DUMP_DIR="{{ mount_probe_dump_dir }}"
+CURRENT_BOOT_ID=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo "unknown")
+LAST_PROBE_RESULT="unknown"
+LAST_PROBE_UNIT="none"
+
+mkdir -p "$(dirname "$STATE_FILE")" "$DUMP_DIR"
+
+if [ -f "$STATE_FILE" ]; then
+    read -r PREVIOUS_STATE PREVIOUS_BOOT_ID PREVIOUS_TIMESTAMP < "$STATE_FILE" || true
+fi
+PREVIOUS_STATE=${PREVIOUS_STATE:-UNKNOWN}
+PREVIOUS_BOOT_ID=${PREVIOUS_BOOT_ID:-unknown}
+PREVIOUS_TIMESTAMP=${PREVIOUS_TIMESTAMP:-unknown}
+
+log_info() {
+    logger -t "$SCRIPT_NAME" -p user.info "$1"
+}
+
+log_warn() {
+    logger -t "$SCRIPT_NAME" -p user.warning "$1"
+}
+
+log_err() {
+    logger -t "$SCRIPT_NAME" -p user.err "$1"
+}
+
+write_state() {
+    printf '%s %s %s\n' "$1" "$CURRENT_BOOT_ID" "$(date --iso-8601=seconds)" > "$STATE_FILE"
+}
+
+probe_path() {
+    local probe_unit="${SCRIPT_NAME}-check-$(date +%s)-$$"
+    local deadline=$((SECONDS + CHECK_TIMEOUT))
+    local active_state
+    local exec_status
+
+    LAST_PROBE_UNIT="$probe_unit.service"
+
+    if ! systemd-run \
+        --quiet \
+        --unit "$probe_unit" \
+        --collect \
+        --property=Type=exec \
+        --property=StandardOutput=null \
+        --property=StandardError=null \
+        /usr/bin/stat "$PROBE_PATH" >/dev/null 2>&1; then
+        LAST_PROBE_RESULT="launch_failed"
+        return 125
+    fi
+
+    while [ "$SECONDS" -lt "$deadline" ]; do
+        active_state=$(systemctl show "$probe_unit.service" --property=ActiveState --value 2>/dev/null || true)
+
+        case "$active_state" in
+            inactive|failed)
+                exec_status=$(systemctl show "$probe_unit.service" --property=ExecMainStatus --value 2>/dev/null || echo 1)
+                systemctl reset-failed "$probe_unit.service" >/dev/null 2>&1 || true
+
+                if [ "$exec_status" = "0" ]; then
+                    LAST_PROBE_RESULT="ok"
+                    return 0
+                fi
+
+                LAST_PROBE_RESULT="exec_failed"
+                return 1
+                ;;
+        esac
+
+        sleep 1
+    done
+
+    systemctl kill --signal=KILL "$probe_unit.service" >/dev/null 2>&1 || true
+    systemctl stop --no-block "$probe_unit.service" >/dev/null 2>&1 || true
+    LAST_PROBE_RESULT="timeout"
+    return 124
+}
+
+run_capture() {
+    local title="$1"
+    shift
+
+    echo
+    echo "### $title"
+    echo
+
+    if timeout "$CATEGORY_TIMEOUT" "$@" 2>&1; then
+        return 0
+    fi
+
+    local exit_code=$?
+    echo "command_exit=$exit_code"
+    return 0
+}
+
+capture_blocked_processes() {
+    local pid
+    local had_blocked=0
+
+    echo
+    echo "### blocked_processes"
+    echo
+    timeout "$CATEGORY_TIMEOUT" ps -eo pid,ppid,stat,wchan:32,comm,args | awk '$3 ~ /D/' 2>&1 || true
+
+    while read -r pid; do
+        [ -n "$pid" ] || continue
+        had_blocked=1
+        echo
+        echo "===== PID $pid stack ====="
+        timeout "$CATEGORY_TIMEOUT" cat "/proc/$pid/stack" 2>&1 || true
+    done < <(timeout "$CATEGORY_TIMEOUT" ps -eo pid=,stat= | awk '$2 ~ /D/ {print $1}' 2>/dev/null)
+
+    if [ "$had_blocked" -eq 0 ]; then
+        echo "No D-state processes found"
+    fi
+}
+
+capture_diagnostics() {
+    local dump_file="$1"
+
+    {
+        echo "timestamp=$(date --iso-8601=seconds)"
+        echo "probe_path=$PROBE_PATH"
+        echo "hostname=$(hostname)"
+        echo "previous_state=$PREVIOUS_STATE"
+        echo "previous_boot_id=$PREVIOUS_BOOT_ID"
+        echo "previous_timestamp=$PREVIOUS_TIMESTAMP"
+        echo "current_boot_id=$CURRENT_BOOT_ID"
+        echo "last_probe_result=$LAST_PROBE_RESULT"
+        echo "last_probe_unit=$LAST_PROBE_UNIT"
+
+        run_capture "findmnt_virtiofs" findmnt --types virtiofs --output TARGET,SOURCE,FSTYPE,OPTIONS
+        run_capture "mount_virtiofs" bash -lc "mount | grep virtiofs"
+        run_capture "uptime" uptime
+        run_capture "memory" free -h
+        run_capture "docker_ps" docker ps --format 'table {{"{{"}}.Names{{"}}"}}\t{{"{{"}}.Status{{"}}"}}'
+        capture_blocked_processes
+        run_capture "kernel_journal" journalctl -k -n 200 --no-pager
+        run_capture "probe_journal" journalctl -t "$SCRIPT_NAME" -n 50 --no-pager
+    } > "$dump_file"
+}
+
+if [ "$PREVIOUS_STATE" = "FAIL" ] \
+    && [ "$SKIP_RECHECK_AFTER_FAILURE_ON_SAME_BOOT" = "true" ] \
+    && [ "$PREVIOUS_BOOT_ID" = "$CURRENT_BOOT_ID" ]; then
+    exit 0
+fi
+
+if probe_path; then
+    write_state "OK"
+
+    if [ "$PREVIOUS_STATE" = "FAIL" ]; then
+        log_info "MOUNT_PROBE_RECOVERY - Mount responded again: $PROBE_PATH"
+    fi
+
+    exit 0
+fi
+
+write_state "FAIL"
+
+if [ "$PREVIOUS_STATE" = "FAIL" ]; then
+    exit 0
+fi
+
+DUMP_FILE="$DUMP_DIR/$(date +%Y%m%d_%H%M%S)-$(basename "$PROBE_PATH").log"
+log_err "MOUNT_PROBE_TIMEOUT - probe_result=$LAST_PROBE_RESULT probe_unit=$LAST_PROBE_UNIT path=$PROBE_PATH"
+capture_diagnostics "$DUMP_FILE"
+log_err "MOUNT_PROBE_DUMP - Diagnostic snapshot written to $DUMP_FILE"

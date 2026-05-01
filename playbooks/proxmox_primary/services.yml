@@ -85,6 +85,8 @@
     - scheduled_update
     - scheduled_reboot
     - firewall
+    - role: mount_probe
+      tags: mount_probe
     - pihole_health
     - pihole_docker
     - syncthing

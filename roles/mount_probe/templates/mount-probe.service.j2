@@ -1,0 +1,13 @@
+[Unit]
+Description=Probe mount responsiveness and capture diagnostics on timeout
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ mount_probe_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ mount_probe_script_name }}
+
+[Install]
+WantedBy=multi-user.target

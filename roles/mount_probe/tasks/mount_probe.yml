@@ -1,0 +1,49 @@
+---
+- name: Ensure mount probe state directory exists
+  ansible.builtin.file:
+    path: "{{ mount_probe_state_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure mount probe dump directory exists
+  ansible.builtin.file:
+    path: "{{ mount_probe_dump_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Deploy mount probe script
+  ansible.builtin.template:
+    src: mount_probe.sh.j2
+    dest: "/usr/local/bin/{{ mount_probe_script_name }}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy mount probe service unit
+  ansible.builtin.template:
+    src: mount-probe.service.j2
+    dest: "/etc/systemd/system/{{ mount_probe_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy mount probe timer unit
+  ansible.builtin.template:
+    src: mount-probe.timer.j2
+    dest: "/etc/systemd/system/{{ mount_probe_service_name }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start mount probe timer
+  ansible.builtin.systemd:
+    name: "{{ mount_probe_service_name }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true

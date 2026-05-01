@@ -1,0 +1,3 @@
+---
+- name: Probe mount responsiveness
+  ansible.builtin.import_tasks: mount_probe.yml

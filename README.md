@@ -108,6 +108,7 @@ Stateful services (CouchDB, Vaultwarden, UptimeKuma, Syncthing, etc.) follow a c
 | [internet_monitor](roles/internet_monitor/) | | systemd | Monitors internet connectivity and pushes heartbeats to UptimeKuma |
 | [loki](roles/loki/) | <img src="https://img.shields.io/badge/Loki-F46800?style=flat&logo=grafana&logoColor=white" alt="Loki" height="20"/> | Docker | Centralized log aggregation for all VMs |
 | [mount_virtiofs](roles/mount_virtiofs/) | <img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="20"/> | virtiofs | Mounts a virtiofs shared filesystem from the Proxmox host into a VM |
+| [mount_probe](roles/mount_probe/) | | systemd | Probes mount responsiveness and captures diagnostics when access starts timing out |
 | [nebula_sync](roles/nebula_sync/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | Docker | Syncs Pi-hole gravity and DNS config across multiple instances |
 | [pihole_docker](roles/pihole_docker/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | Docker | DNS ad blocker and network-wide content filter |
 | [pihole_health](roles/pihole_health/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | systemd | Monitors Pi-hole health via DNS queries and pushes to UptimeKuma |
