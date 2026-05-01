@@ -1,0 +1,215 @@
+---
+# Verification playbook: checks that all expected systemd services and timers
+# managed by this repo are enabled and in the correct active state.
+#
+# Usage:
+#   ansible-playbook playbooks/verify_services.yml --vault-password-file=<vault-file>
+#
+# This playbook makes NO changes to any host — it only reads state and asserts.
+
+- name: Verify systemd units on proxmox
+  hosts: proxmox
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+    expected_enabled_services:
+      - zfs-load-key.service
+    expected_timers:
+      - create-template-vm.timer
+      - sanoid.timer
+      - syncoid.timer
+      - scheduled-update.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on proxmox2
+  hosts: proxmox2
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+    expected_enabled_services: []
+    expected_timers:
+      - create-template-vm.timer
+      - scheduled-update.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on services
+  hosts: services
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - docker.service
+      - firewalld.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+      - docker-auto-update.timer
+      - couchdb-backup.timer
+      - pihole-health.timer
+      - mount-probe.timer
+      - uptimekuma_backup.timer
+      - vaultwarden_backup.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on immich
+  hosts: immich
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - docker.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+      - immich-backup.timer
+      - docker-auto-update.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on samba
+  hosts: samba
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - smb.service
+      - nmb.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on github-runner
+  hosts: github-runner
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - github-runner.service
+      - firewalld.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on subnet-router
+  hosts: subnet-router
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - tailscaled.service
+      - firewalld.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on subnet-router-secondary
+  hosts: subnet-router-secondary
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - tailscaled.service
+      - firewalld.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on pihole-secondary
+  hosts: pihole-secondary
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - docker.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+      - internet-monitor.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on backupserver
+  hosts: backupserver
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - tailscaled.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
+- name: Verify systemd units on fedora
+  hosts: fedora
+  become: true
+  gather_facts: false
+  vars:
+    expected_running_services: []
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"

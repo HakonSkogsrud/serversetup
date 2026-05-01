@@ -1,0 +1,83 @@
+---
+# Shared verification tasks — included by verify_services.yml
+# Expects these variables to be set:
+#   expected_running_services: list of services that should be enabled + running
+#   expected_enabled_services: list of services that should be enabled (but not necessarily running, e.g. oneshot)
+#   expected_timers: list of timers that should be enabled + active
+
+- name: "Check running services are active and enabled"
+  when: expected_running_services | default([]) | length > 0
+  block:
+    - name: "Get status of running services"
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+      register: running_service_status
+      loop: "{{ expected_running_services }}"
+
+    - name: "Assert running services are enabled"
+      ansible.builtin.assert:
+        that:
+          - item.status.UnitFileState == "enabled"
+        fail_msg: "{{ item.item }} is not enabled (state: {{ item.status.UnitFileState | default('unknown') }}) on {{ inventory_hostname }}"
+        success_msg: "{{ item.item }} is enabled on {{ inventory_hostname }}"
+      loop: "{{ running_service_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: "Assert running services are active"
+      ansible.builtin.assert:
+        that:
+          - item.status.ActiveState == "active"
+        fail_msg: "{{ item.item }} is not running (state: {{ item.status.ActiveState | default('unknown') }}) on {{ inventory_hostname }}"
+        success_msg: "{{ item.item }} is running on {{ inventory_hostname }}"
+      loop: "{{ running_service_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+- name: "Check enabled-only services"
+  when: expected_enabled_services | default([]) | length > 0
+  block:
+    - name: "Get status of enabled-only services"
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+      register: enabled_service_status
+      loop: "{{ expected_enabled_services }}"
+
+    - name: "Assert services are enabled"
+      ansible.builtin.assert:
+        that:
+          - item.status.UnitFileState == "enabled"
+        fail_msg: "{{ item.item }} is not enabled (state: {{ item.status.UnitFileState | default('unknown') }}) on {{ inventory_hostname }}"
+        success_msg: "{{ item.item }} is enabled on {{ inventory_hostname }}"
+      loop: "{{ enabled_service_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+- name: "Check timers are active and enabled"
+  when: expected_timers | default([]) | length > 0
+  block:
+    - name: "Get status of timers"
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+      register: timer_status
+      loop: "{{ expected_timers }}"
+
+    - name: "Assert timers are enabled"
+      ansible.builtin.assert:
+        that:
+          - item.status.UnitFileState == "enabled"
+        fail_msg: "{{ item.item }} is not enabled (state: {{ item.status.UnitFileState | default('unknown') }}) on {{ inventory_hostname }}"
+        success_msg: "{{ item.item }} is enabled on {{ inventory_hostname }}"
+      loop: "{{ timer_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: "Assert timers are active"
+      ansible.builtin.assert:
+        that:
+          - item.status.ActiveState == "active"
+        fail_msg: "{{ item.item }} is not active (state: {{ item.status.ActiveState | default('unknown') }}) on {{ inventory_hostname }}"
+        success_msg: "{{ item.item }} is active on {{ inventory_hostname }}"
+      loop: "{{ timer_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
