@@ -17,7 +17,7 @@ My homelab uses a strict GitOps principle where a single GitHub repository is th
 - **"Nuke and Pave" Pipeline:** A **`github-runner` VM** executes the CI/CD pipeline. To prevent drift, major updates involve destroying the old instance and reprovisioning a new one from the Golden Image.
 - **Weekly Maintenance:** Ansible configures local **cron jobs** on VMs to handle OS updates, service restarts, and updates for Pi-hole and Docker Compose apps.
 - **Monitoring:** **UptimeKuma** tracks service uptime with push/ping/HTTP checks across the infrastructure.
-- **Observability:** **Loki** centralizes log aggregation from all VMs (via **Promtail**), while **Grafana** provides dashboards for error logs, internet uptime checks, and other metrics.
+- **Observability:** **Loki** centralizes log aggregation from all VMs (via **Grafana Alloy**), while **Grafana** provides dashboards for error logs, internet uptime checks, and other metrics.
 
 ### Core Infrastructure & Security
 
@@ -112,7 +112,7 @@ Stateful services (CouchDB, Vaultwarden, UptimeKuma, Syncthing, etc.) follow a c
 | [nebula_sync](roles/nebula_sync/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | Docker | Syncs Pi-hole gravity and DNS config across multiple instances |
 | [pihole_docker](roles/pihole_docker/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | Docker | DNS ad blocker and network-wide content filter |
 | [pihole_health](roles/pihole_health/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | systemd | Monitors Pi-hole health via DNS queries and pushes to UptimeKuma |
-| [promtail](roles/promtail/) | <img src="https://img.shields.io/badge/Loki-F46800?style=flat&logo=grafana&logoColor=white" alt="Loki" height="20"/> | Binary | Ships VM logs to Loki for centralized log aggregation |
+| [alloy](roles/alloy/) | <img src="https://img.shields.io/badge/Alloy-F46800?style=flat&logo=grafana&logoColor=white" alt="Alloy" height="20"/> | Package | Collects journal and Docker logs, ships to Loki |
 | [proxmox_config](roles/proxmox_config/) | <img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="20"/> | systemd | Configures ZFS encrypted dataset auto-mount service on Proxmox hosts |
 | [samba](roles/samba/) | <img src="https://img.shields.io/badge/Samba-B10000?style=flat&logo=samba&logoColor=white" alt="Samba" height="20"/> | Samba | File sharing server with macOS Time Machine compatibility |
 | [sanoid](roles/sanoid/) | <img src="https://img.shields.io/badge/ZFS-0052CC?style=flat&logo=openzfs&logoColor=white" alt="ZFS" height="20"/> | ZFS | Automated ZFS snapshot creation and retention management |
