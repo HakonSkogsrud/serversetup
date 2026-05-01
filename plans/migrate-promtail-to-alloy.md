@@ -250,6 +250,36 @@ journalctl -u alloy -n 50 --no-pager | grep -i error
 # Query: {host="<hostname>"} in Loki/Grafana and confirm recent entries
 ```
 
+## Post-deploy verification (all hosts)
+
+After running `deploy-to-homelab`, verify the full fleet in one pass:
+
+```bash
+# 1. Check alloy is active on all hosts
+ansible all -b -m command -a "systemctl is-active alloy"
+
+# 2. Check for errors in alloy logs (last 20 lines)
+ansible all -b -m shell -a "journalctl -u alloy -n 20 --no-pager | grep -i error || echo OK"
+
+# 3. Confirm every host is delivering logs to Loki (query from services VM)
+for host in services immich samba subnet-router subnet-router-secondary pihole-secondary github-runner proxmox proxmox2; do
+  echo -n "$host: "
+  ansible services -b -m shell -a "curl -sG 'http://localhost:3100/loki/api/v1/query_range' \
+    --data-urlencode 'query={host=\"$host\"}' \
+    --data-urlencode 'limit=1' \
+    --data-urlencode 'since=5m'" 2>/dev/null | grep -q '"result":\[{' && echo "OK" || echo "NO LOGS"
+done
+
+# 4. Verify Docker hosts have container logs
+ansible services -b -m shell -a "curl -sG 'http://localhost:3100/loki/api/v1/query_range' \
+  --data-urlencode 'query={host=\"services\", source=\"docker\"}' \
+  --data-urlencode 'limit=1' --data-urlencode 'since=10m'"
+
+# 5. Open Grafana and confirm dashboards still work (label compat)
+#    - Explore → Loki → {job="systemd-journal"} should show all hosts
+#    - Any alerts/dashboards filtering on unit, syslog_identifier, comm should still resolve
+```
+
 ## Label compatibility
 
 The current Promtail config attaches these labels: `job`, `host`, `unit`, `syslog_identifier`, `comm`, `container_name`. Any Grafana dashboards or alert rules that filter on these labels must continue to work.
