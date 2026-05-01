@@ -43,10 +43,10 @@
   vars:
     docker_auto_update_compose_paths:
       - "/home/{{ template.user }}/immich-app/docker-compose.yml"
-    promtail_docker_installed: true
+    alloy_docker_installed: true
   roles:
     - scheduled_reboot
     - scheduled_update
     - immich
     - docker_auto_update
-    - promtail
+    - alloy

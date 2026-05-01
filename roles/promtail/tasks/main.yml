@@ -1,3 +1,0 @@
----
-- name: Install promtail
-  ansible.builtin.import_tasks: promtail.yml

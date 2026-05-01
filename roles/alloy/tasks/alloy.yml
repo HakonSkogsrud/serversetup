@@ -1,0 +1,106 @@
+---
+- name: Gather OS facts
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - os_family
+
+- name: Import Grafana GPG key (RPM)
+  ansible.builtin.rpm_key:
+    key: https://rpm.grafana.com/gpg.key
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Add Grafana RPM repository
+  ansible.builtin.yum_repository:
+    name: grafana
+    description: Grafana OSS
+    baseurl: https://rpm.grafana.com
+    gpgcheck: true
+    gpgkey: https://rpm.grafana.com/gpg.key
+    enabled: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install alloy (RPM)
+  ansible.builtin.dnf:
+    name: alloy
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install prerequisites for apt repo (Debian)
+  ansible.builtin.apt:
+    name:
+      - gpg
+      - apt-transport-https
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Download Grafana GPG key (Debian)
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /tmp/grafana-gpg.key
+    mode: "0644"
+  when: ansible_os_family == "Debian"
+
+- name: Dearmor and install Grafana GPG key (Debian)
+  ansible.builtin.shell:
+    cmd: gpg --dearmor < /tmp/grafana-gpg.key > /usr/share/keyrings/grafana.gpg
+    creates: /usr/share/keyrings/grafana.gpg
+  when: ansible_os_family == "Debian"
+
+- name: Add Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+    state: present
+    filename: grafana
+  when: ansible_os_family == "Debian"
+
+- name: Install alloy (Debian)
+  ansible.builtin.apt:
+    name: alloy
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Add alloy user to systemd-journal group
+  ansible.builtin.user:
+    name: alloy
+    groups: systemd-journal
+    append: true
+
+- name: Add alloy user to docker group
+  ansible.builtin.user:
+    name: alloy
+    groups: docker
+    append: true
+  when: alloy_docker_installed | bool
+
+- name: Remove root override if present
+  ansible.builtin.file:
+    path: /etc/systemd/system/alloy.service.d
+    state: absent
+  notify: Restart alloy
+
+- name: Ensure alloy data directory ownership
+  ansible.builtin.file:
+    path: /var/lib/alloy
+    state: directory
+    owner: alloy
+    group: alloy
+    recurse: true
+
+- name: Deploy alloy config
+  ansible.builtin.template:
+    src: config.alloy.j2
+    dest: /etc/alloy/config.alloy
+    owner: root
+    group: alloy
+    mode: "0640"
+  notify: Restart alloy
+
+- name: Enable and start alloy
+  ansible.builtin.systemd:
+    name: alloy
+    enabled: true
+    state: started
+    daemon_reload: true

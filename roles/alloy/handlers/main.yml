@@ -1,7 +1,7 @@
 ---
-- name: Restart promtail
+- name: Restart alloy
   ansible.builtin.systemd:
-    name: promtail
+    name: alloy
     state: restarted
     daemon_reload: true
   become: true

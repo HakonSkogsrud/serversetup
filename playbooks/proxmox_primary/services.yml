@@ -79,7 +79,7 @@
       - "/home/{{ template.user }}/loki/docker-compose.yml"
       - "/home/{{ template.user }}/grafana/docker-compose.yml"
       - "/home/{{ template.user }}/syncthing/docker-compose.yml"
-    promtail_docker_installed: true
+    alloy_docker_installed: true
     scheduled_reboot_timer_calendar: "*-*-* 01:00:00"
   roles:
     - scheduled_update
@@ -92,7 +92,7 @@
     - syncthing
     - couchdb
     - docker_auto_update
-    - promtail
+    - alloy
     - echovault
     - caddy
     - vaultwarden

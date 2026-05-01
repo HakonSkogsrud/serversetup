@@ -1,0 +1,79 @@
+// Grafana Alloy configuration - managed by Ansible
+
+// ─── Loki endpoint ───────────────────────────────────────────────────────────
+
+loki.write "default" {
+  endpoint {
+    url = "{{ alloy_loki_url }}/loki/api/v1/push"
+  }
+}
+
+// ─── Journal relabel rules ───────────────────────────────────────────────────
+
+loki.relabel "journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+  rule {
+    source_labels = ["__journal_syslog_identifier"]
+    target_label  = "syslog_identifier"
+  }
+  rule {
+    source_labels = ["__journal__comm"]
+    target_label  = "comm"
+  }
+}
+
+// ─── systemd journal ─────────────────────────────────────────────────────────
+
+loki.source.journal "default" {
+  forward_to    = [loki.write.default.receiver]
+  relabel_rules = loki.relabel.journal.rules
+  max_age       = "{{ alloy_journal_max_age }}"
+  labels        = {
+    job  = "systemd-journal",
+    host = "{{ inventory_hostname }}",
+  }
+}
+{% if alloy_docker_installed | bool %}
+
+// ─── Docker container logs ───────────────────────────────────────────────────
+
+discovery.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "30s"
+}
+
+discovery.relabel "docker" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container_name"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "container_id"
+  }
+  rule {
+    replacement  = "{{ inventory_hostname }}"
+    target_label = "host"
+  }
+  rule {
+    replacement  = "docker"
+    target_label = "job"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker.output
+  forward_to = [loki.write.default.receiver]
+
+  relabel_rules = discovery.relabel.docker.rules
+}
+{% endif %}

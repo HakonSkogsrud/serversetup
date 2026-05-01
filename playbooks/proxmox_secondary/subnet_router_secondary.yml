@@ -42,4 +42,4 @@
     - tailscale_serve
     - scheduled_reboot
     - scheduled_update
-    - promtail
+    - alloy

@@ -26,4 +26,4 @@
     - samba
     - scheduled_reboot
     - scheduled_update
-    - promtail
+    - alloy

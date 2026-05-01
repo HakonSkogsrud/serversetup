@@ -1,8 +1,0 @@
----
-promtail_loki_url: "http://{{ vms.services.ip }}:3100/loki/api/v1/push"
-promtail_port: 9080
-promtail_install_dir: "/usr/local/bin"
-promtail_config_dir: "/etc/promtail"
-promtail_positions_file: "/var/lib/promtail/positions.yaml"
-promtail_docker_installed: false
-promtail_version: "v3.6.2"  # Pin - v3.7+ removed promtail from Loki releases

@@ -1,0 +1,4 @@
+---
+alloy_loki_url: "http://{{ vms.services.ip }}:3100"
+alloy_docker_installed: false
+alloy_journal_max_age: "12h"

@@ -29,4 +29,4 @@
     - scheduled_reboot
     - pihole_docker
     - internet_monitor
-    - promtail
+    - alloy
