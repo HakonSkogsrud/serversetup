@@ -88,5 +88,18 @@ else
 fi
 
 logger -t "$SCRIPT_NAME" -p user.info "Script finished"
+{% if docker_auto_update_uptimekuma_push_url %}
+
+if [ "$FAILURE_COUNT" -eq 0 ]; then
+    HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ docker_auto_update_uptimekuma_push_url }}") || true
+    CURL_EXIT_CODE=$?
+
+    if [ $CURL_EXIT_CODE -eq 0 ] && [ "$HTTP_STATUS" = "200" ]; then
+        logger -t "$SCRIPT_NAME" -p user.info "Uptime Kuma push completed with HTTP status $HTTP_STATUS"
+    else
+        logger -t "$SCRIPT_NAME" -p user.warning "Uptime Kuma push failed with curl exit code $CURL_EXIT_CODE and HTTP status $HTTP_STATUS"
+    fi
+fi
+{% endif %}
 
 exit "$FAILURE_COUNT"

@@ -3,3 +3,4 @@
 docker_auto_update_compose_paths: []
 
 docker_auto_update_script_name: "docker_auto_update"
+docker_auto_update_uptimekuma_push_url: ""

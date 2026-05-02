@@ -23,7 +23,6 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
-
     - name: Take backup of vaultwarden database
       ansible.builtin.include_role:
         name: vaultwarden
@@ -79,14 +78,14 @@
       - "/home/{{ template.user }}/loki/docker-compose.yml"
       - "/home/{{ template.user }}/grafana/docker-compose.yml"
       - "/home/{{ template.user }}/syncthing/docker-compose.yml"
+    docker_auto_update_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/9ZVVWCZP0NfHGzCdtzlzdoxYuB2nOFC2?status=up&msg=OK&ping="
     alloy_docker_installed: true
-    scheduled_reboot_timer_calendar: "*-*-* 01:00:00"
+    scheduled_reboot_timer_calendar: "Sun *-*-* 01:00:00"
   roles:
     - scheduled_update
     - scheduled_reboot
     - firewall
-    - role: mount_probe
-      tags: mount_probe
+    - mount_probe
     - pihole_health
     - pihole_docker
     - syncthing
@@ -96,7 +95,8 @@
     - echovault
     - caddy
     - vaultwarden
-    - uptimekuma
+    - role: uptimekuma
+      tags: uptimekuma
     - loki
     - grafana
     - nebula_sync
