@@ -26,3 +26,14 @@ cd "$BACKUP_ROOT"
 ls -1dt vw_*/ | tail -n +$((KEEP_COUNT + 1)) | xargs rm -rf 2>/dev/null || true
 
 logger -t "$SCRIPT_NAME" "Backup completed. Kept last $KEEP_COUNT backups."
+{% if vaultwarden_backup_uptimekuma_push_url %}
+
+HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ vaultwarden_backup_uptimekuma_push_url }}")
+CURL_EXIT_CODE=$?
+
+if [ $CURL_EXIT_CODE -eq 0 ]; then
+    logger -t "$SCRIPT_NAME" -p user.info "Uptime Kuma push completed with HTTP status $HTTP_STATUS"
+else
+    logger -t "$SCRIPT_NAME" -p user.warning "Uptime Kuma push failed with curl exit code $CURL_EXIT_CODE and HTTP status $HTTP_STATUS"
+fi
+{% endif %}
