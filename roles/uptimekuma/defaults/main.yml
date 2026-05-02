@@ -2,3 +2,4 @@
 uptimekuma_data_dir: /home/haaksk/uptimekuma/data
 uptimekuma_backup_dir: /mnt/storage/smb/uptimekuma
 uptimekuma_script_name: uptimekuma_backup
+uptimekuma_backup_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/enyb8cOUS2LCatt0Exb4aiXGfdjsmaFF?status=up&msg=OK&ping="

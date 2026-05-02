@@ -26,3 +26,17 @@ cd "$BACKUP_ROOT"
 ls -1dt uptimekuma_*.tar.gz | tail -n +$((KEEP_COUNT + 1)) | xargs rm -f 2>/dev/null || true
 
 logger -t "$SCRIPT_NAME" "Backup completed: $BACKUP_PATH"
+{% if uptimekuma_backup_uptimekuma_push_url %}
+
+# Wait for Uptime Kuma to be ready after restart
+sleep 10
+
+HTTP_STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "{{ uptimekuma_backup_uptimekuma_push_url }}") || true
+CURL_EXIT_CODE=$?
+
+if [ $CURL_EXIT_CODE -eq 0 ] && [ "$HTTP_STATUS" = "200" ]; then
+    logger -t "$SCRIPT_NAME" -p user.info "Uptime Kuma push completed with HTTP status $HTTP_STATUS"
+else
+    logger -t "$SCRIPT_NAME" -p user.warning "Uptime Kuma push failed with curl exit code $CURL_EXIT_CODE and HTTP status $HTTP_STATUS"
+fi
+{% endif %}
