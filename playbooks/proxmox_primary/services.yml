@@ -84,6 +84,8 @@
   roles:
     - scheduled_update
     - scheduled_reboot
+    - role: tailscale_static_route
+      tags: tailscale_static_route
     - firewall
     - mount_probe
     - pihole_health

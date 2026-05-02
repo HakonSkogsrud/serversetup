@@ -10,3 +10,4 @@ mount_probe_timer_accuracy_sec: "1s"
 mount_probe_skip_recheck_after_failure_on_same_boot: true
 mount_probe_state_file: "/var/lib/mount_probe/state"
 mount_probe_dump_dir: "/var/log/mount_probe"
+mount_probe_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/7FsqIfzPUs286rnJ6nPVWf4Jv22OsXxK?status=up&msg=OK&ping="

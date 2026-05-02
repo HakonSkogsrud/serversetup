@@ -166,6 +166,10 @@ if probe_path; then
         log_info "MOUNT_PROBE_RECOVERY - Mount responded again: $PROBE_PATH"
     fi
 
+{% if mount_probe_uptimekuma_push_url %}
+    curl -s -m 10 -o /dev/null "{{ mount_probe_uptimekuma_push_url }}" || true
+{% endif %}
+
     exit 0
 fi
 
