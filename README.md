@@ -128,6 +128,42 @@ Stateful services (CouchDB, Vaultwarden, UptimeKuma, Syncthing, etc.) follow a c
 | [uptimekuma](roles/uptimekuma/) | <img src="https://img.shields.io/badge/UptimeKuma-5CDD8B?style=flat&logo=uptimekuma&logoColor=white" alt="UptimeKuma" height="20"/> | Docker | Service uptime monitoring with push, ping, and HTTP checks |
 | [vaultwarden](roles/vaultwarden/) | <img src="https://img.shields.io/badge/Vaultwarden-175DDC?style=flat&logo=bitwarden&logoColor=white" alt="Vaultwarden" height="20"/> | Docker | Self-hosted Bitwarden-compatible password manager |
 
+## Systemd Services & Timers
+
+### Services Per Host
+
+| Host | Services (enabled + running) |
+|------|------------------------------|
+| proxmox | `alloy.service`, `zfs-load-key.service` (enabled only) |
+| proxmox2 | `alloy.service` |
+| services | `alloy.service`, `docker.service`, `firewalld.service` |
+| immich | `alloy.service`, `docker.service` |
+| samba | `alloy.service`, `smb.service`, `nmb.service` |
+| github-runner | `alloy.service`, `github-runner.service`, `firewalld.service` |
+| subnet-router | `alloy.service`, `tailscaled.service`, `firewalld.service` |
+| subnet-router-secondary | `alloy.service`, `tailscaled.service`, `firewalld.service` |
+| pihole-secondary | `alloy.service`, `docker.service` |
+| backupserver | `tailscaled.service` |
+
+### Timer Schedules
+
+| Timer | Schedule | Host(s) |
+|-------|----------|---------|
+| `scheduled-update.timer` | Daily | All hosts |
+| `scheduled-reboot.timer` | Sun 01:00 | services |
+| `scheduled-reboot.timer` | Thu 00:00 | immich, samba, github-runner, subnet-router, subnet-router-secondary, pihole-secondary, backupserver |
+| `create-template-vm.timer` | Sun 03:00 | proxmox, proxmox2 |
+| `sanoid.timer` | Every 15 min | proxmox |
+| `syncoid.timer` | Mon 03:00 | proxmox |
+| `docker-auto-update.timer` | Wed 03:00 | services, immich |
+| `uptimekuma_backup.timer` | Daily 01:00 | services |
+| `couchdb-backup.timer` | Daily 02:00 | services |
+| `vaultwarden_backup.timer` | Daily 02:15 | services |
+| `immich-backup.timer` | Daily 01:00 | immich |
+| `pihole-health.timer` | Every 30 min | services |
+| `mount-probe.timer` | Every 1 min | services |
+| `internet-monitor.timer` | Every 1 min | pihole-secondary |
+
 ## Secrets
 
 `secrets.yml` is encrypted with Ansible Vault and contains database passwords, API keys, and notification tokens. The vault password is stored in `.vault_pass` (gitignored).
