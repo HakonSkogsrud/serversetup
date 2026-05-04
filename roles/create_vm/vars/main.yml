@@ -22,3 +22,4 @@ create_vm_target_node: "{{ create_vm_node | default(proxmox.node) }}"
 
 # Optional virtiofs configuration
 create_vm_virtiofs_tag: ""
+create_vm_virtiofs1_tag: ""

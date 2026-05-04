@@ -11,7 +11,7 @@ services:
       - "21027:21027/udp"
     volumes:
       - ./config:/var/syncthing/config
-      - /mnt/storage/smb/Sync:/mnt/storage/smb/Sync
+      - /mnt/storage/syncthing:/mnt/storage/syncthing
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8384/rest/noauth/health"]
       interval: 30s

@@ -1,3 +1,6 @@
 dependencies:
-  - { role: mount_virtiofs }
+  - role: mount_virtiofs
+    vars:
+      mount_virtiofs_tag: "{{ virtiofs_tags.syncthing }}"
+      mount_virtiofs_path: "/mnt/storage/syncthing"
   - { role: docker }

@@ -11,7 +11,7 @@ REMOTE_HOST="{{ vms.backupserver.ip }}"
 POSSIBLE_POOLS=("wdred" "sgblack")
 PROXMOX_DATASET="storage"
 BACKUP_DATASET="backup"
-DATASETS_TO_BACKUP=("smb")
+DATASETS_TO_BACKUP=("smb" "syncthing")
 
 ZFS="/usr/sbin/zfs"
 ZPOOL="/usr/sbin/zpool"

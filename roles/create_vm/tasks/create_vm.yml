@@ -132,6 +132,18 @@
   notify: "reboot vm"
   changed_when: true # Modifies VM configuration, always makes changes
 
+- name: Set virtiofs1 configuration
+  ansible.builtin.command:
+    cmd: "qm set '{{ create_vm_newid }}' --virtiofs1 '{{ create_vm_virtiofs1_tag }},expose-xattr=1'"
+  vars:
+    current_virtiofs: "{{ (create_vm_config_json.stdout | from_json).virtiofs1 | default('') }}"
+  when:
+    - create_vm_virtiofs1_tag is defined
+    - create_vm_virtiofs1_tag | length > 0
+    - create_vm_virtiofs1_tag not in current_virtiofs
+  notify: "reboot vm"
+  changed_when: true
+
 # --- STEP 4: Final Checks ---
 
 - name: Check VM status before starting

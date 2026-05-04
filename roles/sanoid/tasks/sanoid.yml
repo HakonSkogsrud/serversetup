@@ -34,6 +34,10 @@
           use_template = production
           recursive = yes
 
+      [storage/syncthing]
+          use_template = production
+          recursive = yes
+
       [template_production]
           frequently = 0
           hourly = 0

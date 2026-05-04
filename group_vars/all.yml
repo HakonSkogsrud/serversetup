@@ -40,3 +40,4 @@ proxmox2:
 
 virtiofs_tags:
   smb: smb
+  syncthing: syncthing

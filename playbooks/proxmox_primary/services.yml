@@ -61,6 +61,7 @@
         create_vm_sockets: 1
         create_vm_disk_size: 100G
         create_vm_virtiofs_tag: "{{ virtiofs_tags.smb }}"
+        create_vm_virtiofs1_tag: "{{ virtiofs_tags.syncthing }}"
 
 - name: Configure services
   hosts: services
@@ -84,9 +85,9 @@
   roles:
     - scheduled_update
     - scheduled_reboot
-    - role: tailscale_static_route
-      tags: tailscale_static_route
+    - tailscale_static_route
     - firewall
+    - mount_virtiofs
     - mount_probe
     - pihole_health
     - pihole_docker
@@ -97,8 +98,7 @@
     - echovault
     - caddy
     - vaultwarden
-    - role: uptimekuma
-      tags: uptimekuma
+    - uptimekuma
     - loki
     - grafana
     - nebula_sync
