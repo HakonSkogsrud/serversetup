@@ -90,6 +90,15 @@ Stateful services (CouchDB, Vaultwarden, UptimeKuma, Syncthing, etc.) follow a c
 - **Backup:** When `force_recreate=true`, a pre-play runs before any VM changes and copies critical data to `/mnt/storage/smb/<service>/` on the Samba share.
 - **Restore:** `main.yml` checks whether the service's data directory exists on the newly provisioned VM. If missing, it restores from the Samba share before starting the service — making full VM rebuilds non-destructive.
 
+## Manual Maintenance Reminders
+
+- Refresh the offline backup drive periodically, then disconnect it and store it offline again.
+- Open Uptime Kuma and look for failed or missing heartbeats, especially backup, disk health, mount probe, Pi-hole health, and internet monitoring checks.
+- Review disk health alerts for `proxmox`, `proxmox2`, and `backupserver`; when a host stops reporting cleanly, inspect the journal or Grafana/Loki logs before it turns into a real failure.
+- After major deploys, host rebuilds, or role changes, run `ansible-playbook playbooks/verify_services.yml` to confirm expected services and timers are enabled and active.
+- Review Grafana/Loki for scheduled update failures or hosts that have stopped logging successful updates.
+- Treat virtiofs or mount-probe incidents as manual investigation and recovery work; the monitoring should tell me something is wrong, but it will not heal the problem for me.
+
 ## Roles
 
 | Role | | Technology | Description |
