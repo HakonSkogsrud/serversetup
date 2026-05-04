@@ -3,6 +3,12 @@
   hosts: proxmox
   vars_files:
     - ../../secrets.yml
+  vars:
+    disk_health_drives:
+      - /dev/disk/by-id/nvme-WD_Blue_SN5000_1TB_24262A804614
+      - /dev/disk/by-id/nvme-WD_Blue_SN5000_4TB_24460V807373
+      - /dev/disk/by-id/ata-CT4000BX500SSD1_2518E9BB75D7
+    disk_health_push_url: "http://10.0.0.44:3001/api/push/fsHAYxJMTezNZJ9shAUyuiOgGHPXjp7u?status=up&msg=OK&ping="
   roles:
     - create_template_vm
     - sanoid
@@ -10,4 +16,5 @@
     - scheduled_update
     - proxmox_config
     - tailscale_static_route
+    - disk_health
     - alloy

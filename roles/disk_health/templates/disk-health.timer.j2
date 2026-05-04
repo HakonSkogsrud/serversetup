@@ -1,0 +1,11 @@
+[Unit]
+Description=Run disk SMART health check on a fixed interval
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnBootSec={{ disk_health_timer_on_boot_sec }}
+OnUnitActiveSec={{ disk_health_timer_on_unit_active_sec }}
+AccuracySec={{ disk_health_timer_accuracy_sec }}
+
+[Install]
+WantedBy=timers.target

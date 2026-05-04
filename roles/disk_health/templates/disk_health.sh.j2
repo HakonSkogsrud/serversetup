@@ -1,0 +1,234 @@
+#!/bin/bash
+#
+# Checks SMART health of configured drives and pushes to Uptime Kuma on success.
+# Logs failures to systemd journal (picked up by Alloy -> Loki -> Grafana).
+# This script is managed by Ansible.
+
+set -u
+
+SCRIPT_NAME="{{ disk_health_script_name }}"
+PUSH_URL="{{ disk_health_push_url }}"
+
+# Thresholds
+TEMP_MAX={{ disk_health_temp_max }}
+NVME_PCT_USED_MAX={{ disk_health_nvme_pct_used_max }}
+NVME_SPARE_MIN={{ disk_health_nvme_spare_min }}
+REALLOCATED_MAX={{ disk_health_reallocated_max }}
+PENDING_MAX={{ disk_health_pending_max }}
+
+# Drives to check
+DRIVES=(
+{% for drive in disk_health_drives %}
+    "{{ drive }}"
+{% endfor %}
+)
+DRIVE_COUNT={{ disk_health_drives | length }}
+
+FAILED=0
+FAIL_MESSAGES=""
+
+log_info() {
+    logger -t "$SCRIPT_NAME" -p user.info "$1"
+}
+
+log_err() {
+    logger -t "$SCRIPT_NAME" -p user.err "$1"
+}
+
+log_debug() {
+    logger -t "$SCRIPT_NAME" -p user.info "$1"
+}
+
+push_uptimekuma() {
+    local http_status
+    local curl_exit_code
+
+    http_status=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$PUSH_URL")
+    curl_exit_code=$?
+
+    if [ "$curl_exit_code" -eq 0 ]; then
+        log_info "DISK_HEALTH_PUSH_OK - HTTP status $http_status"
+    else
+        log_err "DISK_HEALTH_PUSH_FAILED - curl exit code $curl_exit_code HTTP status $http_status"
+    fi
+}
+
+record_failure() {
+    local drive="$1"
+    local reason="$2"
+    FAILED=1
+    FAIL_MESSAGES+="$drive: $reason; "
+    log_err "DISK_HEALTH_FAIL - drive=$drive reason=$reason"
+}
+
+check_drive() {
+    local drive="$1"
+    local drive_type
+
+    # Check if drive exists
+    if [ ! -b "$drive" ]; then
+        record_failure "$drive" "block device not found"
+        return
+    fi
+
+    # Get SMART overall health
+    local health_output
+    local health_line
+    health_output=$(smartctl -H "$drive" 2>&1)
+    health_line=$(echo "$health_output" | grep -Ei "SMART overall-health|SMART Health Status|PASSED|OK" | head -1)
+    log_debug "DISK_HEALTH_RAW - drive=$drive health_line=${health_line:-unavailable}"
+
+    if ! echo "$health_output" | grep -qi "PASSED\|OK"; then
+        record_failure "$drive" "SMART overall health check failed"
+        return
+    fi
+
+    # Detect drive type
+    local info_output
+    info_output=$(smartctl -i "$drive" 2>&1)
+
+    if echo "$drive" | grep -q "nvme"; then
+        drive_type="nvme"
+        log_debug "DISK_HEALTH_TYPE - drive=$drive type=$drive_type"
+        check_nvme "$drive"
+    elif echo "$info_output" | grep -qi "Rotation Rate.*Solid State\|SSD"; then
+        drive_type="sata_ssd"
+        log_debug "DISK_HEALTH_TYPE - drive=$drive type=$drive_type"
+        check_sata_ssd "$drive"
+    else
+        drive_type="sata_hdd"
+        log_debug "DISK_HEALTH_TYPE - drive=$drive type=$drive_type"
+        check_sata_hdd "$drive"
+    fi
+}
+
+check_nvme() {
+    local drive="$1"
+    local smart_output
+    local pct_line
+    local spare_line
+    local temp_line
+    smart_output=$(smartctl -A "$drive" 2>&1)
+
+    # Percentage Used
+    local pct_used
+    pct_line=$(echo "$smart_output" | grep -i "Percentage Used" | head -1)
+    pct_used=$(echo "$pct_line" | awk '{print $NF}' | tr -d '%')
+
+    # Available Spare
+    local spare
+    spare_line=$(echo "$smart_output" | grep -i "Available Spare:" | grep -v "Threshold" | head -1)
+    spare=$(echo "$spare_line" | awk '{print $NF}' | tr -d '%')
+
+    # Temperature
+    local temp
+    temp_line=$(echo "$smart_output" | grep -i "^Temperature:" | head -1)
+    temp=$(echo "$temp_line" | awk '{print $2}')
+
+    log_debug "DISK_HEALTH_RAW - drive=$drive pct_line=${pct_line:-unavailable} parsed_pct_used=${pct_used:-unavailable}"
+    log_debug "DISK_HEALTH_RAW - drive=$drive spare_line=${spare_line:-unavailable} parsed_spare=${spare:-unavailable}"
+    log_debug "DISK_HEALTH_RAW - drive=$drive temp_line=${temp_line:-unavailable} parsed_temp=${temp:-unavailable}"
+
+    if [ -n "$pct_used" ] && [ "$pct_used" -gt "$NVME_PCT_USED_MAX" ]; then
+        record_failure "$drive" "NVMe percentage used ${pct_used}% exceeds threshold ${NVME_PCT_USED_MAX}%"
+    fi
+
+    if [ -n "$spare" ] && [ "$spare" -lt "$NVME_SPARE_MIN" ]; then
+        record_failure "$drive" "NVMe available spare ${spare}% below threshold ${NVME_SPARE_MIN}%"
+    fi
+
+    if [ -n "$temp" ] && [ "$temp" -gt "$TEMP_MAX" ]; then
+        record_failure "$drive" "temperature ${temp}°C exceeds threshold ${TEMP_MAX}°C"
+    fi
+}
+
+check_sata_ssd() {
+    local drive="$1"
+    local smart_output
+    local reallocated_line
+    local temp_line
+    smart_output=$(smartctl -A "$drive" 2>&1)
+
+    # Reallocated Sector Count
+    local reallocated
+    reallocated_line=$(echo "$smart_output" | grep -i "Reallocated_Sector_Ct\|Reallocated_Event_Count" | head -1)
+    reallocated=$(echo "$reallocated_line" | awk '{print $NF}')
+
+    # Temperature
+    local temp
+    temp_line=$(echo "$smart_output" | grep -i "Temperature_Celsius\|Airflow_Temperature" | head -1)
+    temp=$(echo "$temp_line" | awk '{print $10}')
+
+    log_debug "DISK_HEALTH_RAW - drive=$drive reallocated_line=${reallocated_line:-unavailable} parsed_reallocated=${reallocated:-unavailable}"
+    log_debug "DISK_HEALTH_RAW - drive=$drive temp_line=${temp_line:-unavailable} parsed_temp=${temp:-unavailable}"
+
+    if [ -n "$reallocated" ] && [ "$reallocated" -gt "$REALLOCATED_MAX" ]; then
+        record_failure "$drive" "reallocated sectors ${reallocated} exceeds threshold ${REALLOCATED_MAX}"
+    fi
+
+    if [ -n "$temp" ] && [ "$temp" -gt "$TEMP_MAX" ]; then
+        record_failure "$drive" "temperature ${temp}°C exceeds threshold ${TEMP_MAX}°C"
+    fi
+}
+
+check_sata_hdd() {
+    local drive="$1"
+    local smart_output
+    local reallocated_line
+    local pending_line
+    local temp_line
+    smart_output=$(smartctl -A "$drive" 2>&1)
+
+    # Reallocated Sector Count
+    local reallocated
+    reallocated_line=$(echo "$smart_output" | grep -i "Reallocated_Sector_Ct" | head -1)
+    reallocated=$(echo "$reallocated_line" | awk '{print $NF}')
+
+    # Current Pending Sector
+    local pending
+    pending_line=$(echo "$smart_output" | grep -i "Current_Pending_Sector" | head -1)
+    pending=$(echo "$pending_line" | awk '{print $NF}')
+
+    # Temperature
+    local temp
+    temp_line=$(echo "$smart_output" | grep -i "Temperature_Celsius\|Airflow_Temperature" | head -1)
+    temp=$(echo "$temp_line" | awk '{print $10}')
+
+    log_debug "DISK_HEALTH_RAW - drive=$drive reallocated_line=${reallocated_line:-unavailable} parsed_reallocated=${reallocated:-unavailable}"
+    log_debug "DISK_HEALTH_RAW - drive=$drive pending_line=${pending_line:-unavailable} parsed_pending=${pending:-unavailable}"
+    log_debug "DISK_HEALTH_RAW - drive=$drive temp_line=${temp_line:-unavailable} parsed_temp=${temp:-unavailable}"
+
+    if [ -n "$reallocated" ] && [ "$reallocated" -gt "$REALLOCATED_MAX" ]; then
+        record_failure "$drive" "reallocated sectors ${reallocated} exceeds threshold ${REALLOCATED_MAX}"
+    fi
+
+    if [ -n "$pending" ] && [ "$pending" -gt "$PENDING_MAX" ]; then
+        record_failure "$drive" "pending sectors ${pending} exceeds threshold ${PENDING_MAX}"
+    fi
+
+    if [ -n "$temp" ] && [ "$temp" -gt "$TEMP_MAX" ]; then
+        record_failure "$drive" "temperature ${temp}°C exceeds threshold ${TEMP_MAX}°C"
+    fi
+}
+
+# Main
+log_info "Starting disk health check for ${DRIVE_COUNT} drive(s)"
+
+if [ "$DRIVE_COUNT" -eq 0 ]; then
+    log_err "DISK_HEALTH_CONFIG_ERROR - no drives configured"
+    exit 1
+fi
+
+for drive in "${DRIVES[@]}"; do
+    check_drive "$drive"
+done
+
+if [ "$FAILED" -eq 0 ]; then
+    log_info "DISK_HEALTH_OK - all ${DRIVE_COUNT} drive(s) healthy"
+
+    if [ -n "$PUSH_URL" ]; then
+        push_uptimekuma
+    fi
+else
+    log_err "DISK_HEALTH_DEGRADED - failures: ${FAIL_MESSAGES}"
+fi

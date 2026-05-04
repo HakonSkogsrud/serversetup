@@ -3,7 +3,14 @@
   hosts: proxmox2
   vars_files:
     - ../../secrets.yml
+  vars:
+    disk_health_drives:
+      - /dev/disk/by-id/nvme-SK_hynix_BC711_HFM256GD3JX013N_CYA5N047812705G3Y
+    disk_health_push_url: "http://10.0.0.44:3001/api/push/O6SrgG7iLoNi3JeNoWIbp8XDVHR9g6jY?status=up&msg=OK&ping="
   roles:
     - create_template_vm
     - scheduled_update
+    - role: disk_health
+      tags:
+        - disk_health
     - alloy

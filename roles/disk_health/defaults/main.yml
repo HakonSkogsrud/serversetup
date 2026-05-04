@@ -1,0 +1,15 @@
+---
+disk_health_script_name: "disk_health"
+disk_health_service_name: "disk-health"
+disk_health_drives: []
+disk_health_push_url: ""
+disk_health_timer_on_boot_sec: "5min"
+disk_health_timer_on_unit_active_sec: "6h"
+disk_health_timer_accuracy_sec: "5min"
+
+# Thresholds (fail if exceeded/below)
+disk_health_temp_max: 55
+disk_health_nvme_pct_used_max: 90
+disk_health_nvme_spare_min: 10
+disk_health_reallocated_max: 5
+disk_health_pending_max: 0

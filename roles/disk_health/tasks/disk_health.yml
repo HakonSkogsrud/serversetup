@@ -1,0 +1,41 @@
+---
+- name: Install disk health dependencies
+  ansible.builtin.package:
+    name:
+      - curl
+      - smartmontools
+    state: present
+  become: true
+
+- name: Deploy disk health check script
+  ansible.builtin.template:
+    src: disk_health.sh.j2
+    dest: "/usr/local/bin/{{ disk_health_script_name }}.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy disk health service unit
+  ansible.builtin.template:
+    src: disk-health.service.j2
+    dest: "/etc/systemd/system/{{ disk_health_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy disk health timer unit
+  ansible.builtin.template:
+    src: disk-health.timer.j2
+    dest: "/etc/systemd/system/{{ disk_health_service_name }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start disk health timer
+  ansible.builtin.systemd:
+    name: "{{ disk_health_service_name }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true

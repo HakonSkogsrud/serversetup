@@ -1,0 +1,13 @@
+[Unit]
+Description=Check SMART health of configured drives
+Documentation=man:systemd.service(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ disk_health_script_name }}.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ disk_health_script_name }}
+
+[Install]
+WantedBy=multi-user.target
