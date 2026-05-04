@@ -4,5 +4,8 @@
     tailscale up
     --authkey={{ tailscale_auth_key }}
     --hostname={{ tailscale_node_hostname }}
+    {% if tailscale_node_accept_routes | bool %}
+    --accept-routes
+    {% endif %}
     --reset
   changed_when: true

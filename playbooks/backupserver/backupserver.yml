@@ -6,7 +6,13 @@
     - ../../secrets.yml
   vars:
     tailscale_node_hostname: backupserver
+    tailscale_node_accept_routes: true
+    disk_health_drives:
+      - /dev/disk/by-id/nvme-KXG50ZNV256G_TOSHIBA_59DA173XK5WS
+      - /dev/disk/by-id/ata-WDC_WD40NDZW-11BCVS0_WD-WX82D848U0ZH
+    disk_health_push_url: "http://10.0.0.44:3001/api/push/Guj82a4yCrWmetTDbtGNMX8vOIsqXjMs?status=up&msg=OK&ping="
   roles:
     - scheduled_update
     - scheduled_reboot
     - tailscale_node
+    - disk_health
