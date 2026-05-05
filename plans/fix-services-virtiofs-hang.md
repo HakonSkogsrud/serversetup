@@ -19,12 +19,13 @@ The services VM's virtiofs mount at `/mnt/storage/smb` periodically becomes comp
 |---|---|---|---|---|---|---|
 | 1 | 2026-05-01 17:44 | ~39 min | unhealthy | Up 39 min (healthy) | `request_wait_answer → fuse_simple_request` | low |
 | 2 | 2026-05-02 19:16 | ~18 h | unhealthy | Up 18 h (healthy) | `request_wait_answer → fuse_simple_request → fuse_do_getattr → vfs_statx` | 0.01 |
+| 3 | 2026-05-05 03:22:38 Europe/Oslo | after Syncthing split-mount deploy | unhealthy | Moved to `/mnt/storage/syncthing` | `request_wait_answer → fuse_simple_request → fuse_do_getattr → vfs_statx` | low |
 
-**Pattern:** Both incidents show the identical FUSE deadlock — `request_wait_answer` with no response from `virtiofsd`. System is idle (low load, plenty of RAM). Syncthing was running and healthy in both cases. Hang time after boot varies widely (39 min vs 18 hours), ruling out a simple startup race.
+**Pattern:** All captured incidents show the same FUSE deadlock — `request_wait_answer` with no response from `virtiofsd`. System is idle (low load, plenty of RAM). Hang time after boot varies widely, ruling out a simple startup race.
 
-## Hypothesis: Syncthing saturates virtiofsd
+## Historical hypothesis: Syncthing saturates virtiofsd
 
-Working hypothesis, **strengthened by data**. Syncthing bind-mounts `/mnt/storage/smb/Sync` into its Docker container and does continuous inotify + file I/O through the single `virtiofsd` process backing the VM's virtiofs share. This may saturate the FUSE request queue and block all other mount access.
+Original working hypothesis. Syncthing bind-mounted `/mnt/storage/smb/Sync` into its Docker container and did continuous inotify + file I/O through the single `virtiofsd` process backing the VM's virtiofs share. This was the best explanation for the first two incidents.
 
 Evidence for:
 - Syncthing is the only service with continuous I/O on virtiofs
@@ -37,6 +38,31 @@ Evidence against:
 - Hang does not start immediately after Syncthing starts (39 min in one case, 18 h in another)
 - Stopping Syncthing after the hang begins does not clear the stuck mount
 
+## Current hypothesis: another smb-backed container is the remaining live trigger
+
+The Syncthing-specific hypothesis is now materially weaker. The split-mount fix was implemented and the live Syncthing config was verified to use `/mnt/storage/syncthing/Sync`, but `/mnt/storage/smb` still hung afterward.
+
+Current leading candidates are the remaining containers that still bind directly into `/mnt/storage/smb`:
+- Loki: `/mnt/storage/smb/loki/data`
+- CouchDB: `/mnt/storage/smb/couchdb/data`
+- Echovault: `/mnt/storage/smb/echovault-data`
+
+Current ranking:
+- Loki is now the strongest application-level suspect because it receives continuous log writes and keeps hot state on `/mnt/storage/smb/loki/data`
+- CouchDB is a secondary suspect because Obsidian LiveSync can generate bursts of small document writes, but it is more user-driven than constant
+- Echovault is currently the weakest suspect because it is barely used in practice
+
+Evidence for:
+- The post-fix incident still affected only `/mnt/storage/smb`, not `/mnt/storage/syncthing`
+- Live Syncthing config no longer referenced `/mnt/storage/smb/Sync`
+- Current container inspection shows Loki, CouchDB, and Echovault still mounted on smb-backed paths
+- Host-side Proxmox checks still show no obvious `virtiofsd` or ZFS failure in the correlated journal window
+
+Evidence against / still unknown:
+- No single service has yet been isolated by A/B testing
+- Guest-side dumps so far only captured the probe's own stuck `stat`, not another blocked worker process
+- Proxmox logs remain quiet, so this could still be a guest/kernel-side virtiofs issue rather than one specific application
+
 ## Monitoring (done)
 
 - **Uptime Kuma push monitor** added to `mount_probe` — pushes on each successful probe (every 60s). When the mount hangs, pushes stop and Uptime Kuma alerts after 120s heartbeat timeout.
@@ -47,6 +73,24 @@ Evidence against:
 The A/B test suggested in the original plan is impractical — the hang is intermittent (39 min to 18 h) and the only recovery is a reboot. Two captured incidents with identical signatures plus the Syncthing correlation are sufficient to act.
 
 If the hang still occurs after isolating Syncthing to its own virtiofsd, the hypothesis is disproven and we look at other causes (kernel FUSE bug, virtiofsd memory leak, etc.).
+
+## Status update: what has been done
+
+Completed:
+- Added `mount_probe` monitoring and guest-side dump capture for `/mnt/storage/smb`
+- Added dedicated `virtiofs1` / `syncthing` share for the services VM
+- Moved the Syncthing container bind mount to `/mnt/storage/syncthing`
+- Updated the repo so Syncthing config path migration is automated during deploy
+- Verified the live Syncthing `config.xml` no longer points at `/mnt/storage/smb/Sync`
+- Added a cross-host forensic collector playbook at `playbooks/local/collect_virtiofs_failure.yml`
+- Captured correlated guest/host artifacts under `artifacts/virtiofs-failure/`
+
+What the new evidence says:
+- The split-mount implementation worked, but it did **not** stop the smb hang
+- `/mnt/storage/smb` is still the mount that wedges
+- Proxmox host checks around the failure timestamp still show healthy ZFS and no obvious `virtiofsd` error
+- The remaining active smb consumers are Loki, CouchDB, and Echovault
+- Based on observed usage, Loki should be isolated or tested before CouchDB, and CouchDB before Echovault
 
 ---
 
@@ -143,6 +187,22 @@ zpool iostat -v 1 5
 ```
 
 Compare the `virtiofsd` process backing the services VM with those of other VMs. If the services VM's `virtiofsd` is stuck while the pool is otherwise healthy, that supports the virtiofs contention theory.
+
+#### From the repo (preferred now)
+
+Use the collector playbook to capture both sides into local artifacts:
+
+```bash
+ansible-playbook playbooks/local/collect_virtiofs_failure.yml
+```
+
+If the services VM is already unreachable but you know the alert time, pass it explicitly:
+
+```bash
+ansible-playbook playbooks/local/collect_virtiofs_failure.yml -e 'virtiofs_failure_timestamp_hint=2026-05-05T03:22:38+02:00'
+```
+
+Artifacts are written under `artifacts/virtiofs-failure/<timestamp>/`.
 
 #### Recovery
 
@@ -360,6 +420,20 @@ ansible proxmox -b -m shell -a "sanoid --configcheck"
 ansible proxmox -b -m shell -a "systemctl start syncoid.service"
 ```
 
+Status: completed. The split mount exists on the services VM and live Syncthing config now points to `/mnt/storage/syncthing/Sync`.
+
 ## Step 4: Post-deploy — update Syncthing folder paths
 
 In Syncthing web UI (`http://10.0.0.44:8384`), edit each synced folder and update the path from `/mnt/storage/smb/Sync/<folder>` to `/mnt/storage/syncthing/<folder>`.
+
+Status: no longer a manual-only step. The repo now automates migration of existing Syncthing folder paths during deploy, though the live system was also manually verified.
+
+## Next steps
+
+1. Keep the collector playbook as the standard incident procedure and run it immediately after each alert, with a timestamp hint if needed.
+2. Prioritize Loki as the next suspect, then CouchDB, then Echovault.
+3. Do a controlled isolation test: stop Loki after reboot, wait for the next incident window, and compare whether `/mnt/storage/smb` still hangs.
+4. If the hang still occurs with Loki stopped, repeat the same test with CouchDB stopped.
+5. Only test Echovault if Loki and CouchDB are ruled out, since Echovault is barely used.
+6. If one service correlates strongly, split that service onto its own virtiofs share or move its hot data off the shared smb mount.
+7. If hangs continue after isolating all active smb-backed containers, escalate the investigation toward a guest/kernel/virtiofs bug rather than an application-specific workload issue.
