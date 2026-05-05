@@ -1,0 +1,265 @@
+timestamp=2026-05-05T01:21:48+00:00
+probe_path=/mnt/storage/smb
+hostname=services.local
+previous_state=OK
+previous_boot_id=f216dfe4-b8d1-4ca7-a0d6-58806ab27ed7
+previous_timestamp=2026-05-05T01:20:37+00:00
+current_boot_id=f216dfe4-b8d1-4ca7-a0d6-58806ab27ed7
+last_probe_result=timeout
+last_probe_unit=mount_probe-check-1777944098-183323.service
+
+### findmnt_virtiofs
+
+TARGET                 SOURCE    FSTYPE   OPTIONS
+/mnt/storage/smb       smb       virtiofs rw,relatime,seclabel
+/mnt/storage/syncthing syncthing virtiofs rw,relatime,seclabel
+
+### mount_virtiofs
+
+smb on /mnt/storage/smb type virtiofs (rw,relatime,seclabel)
+syncthing on /mnt/storage/syncthing type virtiofs (rw,relatime,seclabel)
+
+### uptime
+
+ 01:21:48 up  8:22,  0 users,  load average: 0.01, 0.01, 0.00
+
+### memory
+
+               total        used        free      shared  buff/cache   available
+Mem:            11Gi       2.3Gi       1.3Gi        37Mi       8.1Gi       9.0Gi
+Swap:             0B          0B          0B
+
+### docker_ps
+
+NAMES           STATUS
+uptime-kuma     Up 21 minutes (healthy)
+grafana         Up 8 hours
+loki            Up 8 hours
+couchdb         Up 8 hours
+syncthing       Up 8 hours (healthy)
+nebula-sync     Up 8 hours (healthy)
+vaultwarden     Up 8 hours (healthy)
+caddy-caddy-1   Up 8 hours
+echovault       Up 8 hours
+pihole          Up 8 hours (healthy)
+
+### blocked_processes
+
+ 183330       1 Ds   request_wait_answer              stat            /usr/bin/stat /mnt/storage/smb
+
+===== PID 183330 stack =====
+[<0>] request_wait_answer+0x12d/0x210 [fuse]
+[<0>] fuse_simple_request+0x1b8/0x330 [fuse]
+[<0>] fuse_do_getattr+0xe1/0x320 [fuse]
+[<0>] vfs_statx+0xae/0x160
+[<0>] do_statx+0x46/0x90
+[<0>] __x64_sys_statx+0x64/0x80
+[<0>] do_syscall_64+0x5c/0xe0
+[<0>] entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+### kernel_journal
+
+May 04 17:00:33 services.local kernel: SELinux:  policy capability network_peer_controls=1
+May 04 17:00:33 services.local kernel: SELinux:  policy capability open_perms=1
+May 04 17:00:33 services.local kernel: SELinux:  policy capability extended_socket_class=1
+May 04 17:00:33 services.local kernel: SELinux:  policy capability always_check_network=0
+May 04 17:00:33 services.local kernel: SELinux:  policy capability cgroup_seclabel=1
+May 04 17:00:33 services.local kernel: SELinux:  policy capability nnp_nosuid_transition=1
+May 04 17:00:33 services.local kernel: SELinux:  policy capability genfs_seclabel_symlinks=1
+May 04 17:00:38 services.local kernel: SELinux:  Converting 386 SID table entries...
+May 04 17:00:38 services.local kernel: SELinux:  policy capability network_peer_controls=1
+May 04 17:00:38 services.local kernel: SELinux:  policy capability open_perms=1
+May 04 17:00:38 services.local kernel: SELinux:  policy capability extended_socket_class=1
+May 04 17:00:38 services.local kernel: SELinux:  policy capability always_check_network=0
+May 04 17:00:38 services.local kernel: SELinux:  policy capability cgroup_seclabel=1
+May 04 17:00:38 services.local kernel: SELinux:  policy capability nnp_nosuid_transition=1
+May 04 17:00:38 services.local kernel: SELinux:  policy capability genfs_seclabel_symlinks=1
+May 04 17:00:44 services.local kernel: SELinux:  Converting 389 SID table entries...
+May 04 17:00:44 services.local kernel: SELinux:  policy capability network_peer_controls=1
+May 04 17:00:44 services.local kernel: SELinux:  policy capability open_perms=1
+May 04 17:00:44 services.local kernel: SELinux:  policy capability extended_socket_class=1
+May 04 17:00:44 services.local kernel: SELinux:  policy capability always_check_network=0
+May 04 17:00:44 services.local kernel: SELinux:  policy capability cgroup_seclabel=1
+May 04 17:00:44 services.local kernel: SELinux:  policy capability nnp_nosuid_transition=1
+May 04 17:00:44 services.local kernel: SELinux:  policy capability genfs_seclabel_symlinks=1
+May 04 17:00:50 services.local systemd-rc-local-generator[9404]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:00:51 services.local systemd-rc-local-generator[10478]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:00:51 services.local kernel: Warning: Deprecated Driver is detected: nft_compat will not be maintained in a future major release and may be disabled
+May 04 17:00:51 services.local kernel: Warning: Deprecated Driver is detected: nft_compat_module_init will not be maintained in a future major release and may be disabled
+May 04 17:00:51 services.local kernel: Warning: Deprecated Driver is detected: ip_set will not be maintained in a future major release and may be disabled
+May 04 17:00:51 services.local kernel: Warning: Deprecated Driver is detected: ip_set_init will not be maintained in a future major release and may be disabled
+May 04 17:00:51 services.local kernel: bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+May 04 17:00:59 services.local kernel: evm: overlay not supported
+May 04 17:01:07 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered blocking state
+May 04 17:01:07 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered disabled state
+May 04 17:01:07 services.local kernel: veth4f40597: entered allmulticast mode
+May 04 17:01:07 services.local kernel: veth4f40597: entered promiscuous mode
+May 04 17:01:07 services.local kernel: eth0: renamed from vethdd9e638
+May 04 17:01:07 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered blocking state
+May 04 17:01:07 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered forwarding state
+May 04 17:01:21 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered blocking state
+May 04 17:01:21 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered disabled state
+May 04 17:01:21 services.local kernel: veth17a67c1: entered allmulticast mode
+May 04 17:01:21 services.local kernel: veth17a67c1: entered promiscuous mode
+May 04 17:01:21 services.local kernel: eth0: renamed from veth091a0a3
+May 04 17:01:21 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered blocking state
+May 04 17:01:21 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered forwarding state
+May 04 17:01:23 services.local systemd-rc-local-generator[20241]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:23 services.local systemd-rc-local-generator[20273]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:25 services.local systemd-rc-local-generator[21274]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:26 services.local systemd-rc-local-generator[21305]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:44 services.local systemd-rc-local-generator[22049]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:47 services.local systemd-rc-local-generator[23121]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:47 services.local systemd-rc-local-generator[23152]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:01:57 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered blocking state
+May 04 17:01:57 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered disabled state
+May 04 17:01:57 services.local kernel: vethbdde74c: entered allmulticast mode
+May 04 17:01:57 services.local kernel: vethbdde74c: entered promiscuous mode
+May 04 17:01:57 services.local kernel: eth0: renamed from veth13c8635
+May 04 17:01:57 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered blocking state
+May 04 17:01:57 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered forwarding state
+May 04 17:02:03 services.local kernel: br-73aa52679840: port 1(veth555e89b) entered blocking state
+May 04 17:02:03 services.local kernel: br-73aa52679840: port 1(veth555e89b) entered disabled state
+May 04 17:02:03 services.local kernel: veth555e89b: entered allmulticast mode
+May 04 17:02:03 services.local kernel: veth555e89b: entered promiscuous mode
+May 04 17:02:03 services.local kernel: eth0: renamed from veth6d4ebb3
+May 04 17:02:03 services.local kernel: br-73aa52679840: port 1(veth555e89b) entered blocking state
+May 04 17:02:03 services.local kernel: br-73aa52679840: port 1(veth555e89b) entered forwarding state
+May 04 17:02:12 services.local kernel: br-3bce974de0f7: port 1(vethe94384f) entered blocking state
+May 04 17:02:12 services.local kernel: br-3bce974de0f7: port 1(vethe94384f) entered disabled state
+May 04 17:02:12 services.local kernel: vethe94384f: entered allmulticast mode
+May 04 17:02:12 services.local kernel: vethe94384f: entered promiscuous mode
+May 04 17:02:12 services.local kernel: eth0: renamed from vetha572c1c
+May 04 17:02:12 services.local kernel: br-3bce974de0f7: port 1(vethe94384f) entered blocking state
+May 04 17:02:12 services.local kernel: br-3bce974de0f7: port 1(vethe94384f) entered forwarding state
+May 04 17:02:15 services.local systemd-rc-local-generator[28520]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:02:15 services.local systemd-rc-local-generator[28552]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:02:40 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered blocking state
+May 04 17:02:40 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered disabled state
+May 04 17:02:40 services.local kernel: vethde2831e: entered allmulticast mode
+May 04 17:02:40 services.local kernel: vethde2831e: entered promiscuous mode
+May 04 17:02:40 services.local kernel: eth0: renamed from veth8e034a1
+May 04 17:02:40 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered blocking state
+May 04 17:02:40 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered forwarding state
+May 04 17:02:43 services.local systemd-rc-local-generator[31686]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:02:43 services.local systemd-rc-local-generator[31717]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:02:49 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered blocking state
+May 04 17:02:49 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered disabled state
+May 04 17:02:49 services.local kernel: vethc7bdb1c: entered allmulticast mode
+May 04 17:02:49 services.local kernel: vethc7bdb1c: entered promiscuous mode
+May 04 17:02:49 services.local kernel: eth0: renamed from veth813a1cd
+May 04 17:02:49 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered blocking state
+May 04 17:02:49 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered forwarding state
+May 04 17:03:09 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered blocking state
+May 04 17:03:09 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered disabled state
+May 04 17:03:09 services.local kernel: veth77f818d: entered allmulticast mode
+May 04 17:03:09 services.local kernel: veth77f818d: entered promiscuous mode
+May 04 17:03:09 services.local kernel: eth0: renamed from veth6553907
+May 04 17:03:09 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered blocking state
+May 04 17:03:09 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered forwarding state
+May 04 17:03:12 services.local kernel: br-dfbaf2596078: port 2(veth9262385) entered blocking state
+May 04 17:03:12 services.local kernel: br-dfbaf2596078: port 2(veth9262385) entered disabled state
+May 04 17:03:12 services.local kernel: veth9262385: entered allmulticast mode
+May 04 17:03:12 services.local kernel: veth9262385: entered promiscuous mode
+May 04 17:03:12 services.local kernel: eth0: renamed from veth6dbf9d9
+May 04 17:03:12 services.local kernel: br-dfbaf2596078: port 2(veth9262385) entered blocking state
+May 04 17:03:12 services.local kernel: br-dfbaf2596078: port 2(veth9262385) entered forwarding state
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered disabled state
+May 04 17:03:14 services.local kernel: vethdd9e638: renamed from eth0
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered disabled state
+May 04 17:03:14 services.local kernel: veth4f40597 (unregistering): left allmulticast mode
+May 04 17:03:14 services.local kernel: veth4f40597 (unregistering): left promiscuous mode
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(veth4f40597) entered disabled state
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(vethbe0aba9) entered blocking state
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(vethbe0aba9) entered disabled state
+May 04 17:03:14 services.local kernel: vethbe0aba9: entered allmulticast mode
+May 04 17:03:14 services.local kernel: vethbe0aba9: entered promiscuous mode
+May 04 17:03:14 services.local kernel: eth0: renamed from vethcdcbe73
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(vethbe0aba9) entered blocking state
+May 04 17:03:14 services.local kernel: br-f34deeb5e6eb: port 1(vethbe0aba9) entered forwarding state
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered disabled state
+May 04 17:03:16 services.local kernel: veth091a0a3: renamed from eth0
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered disabled state
+May 04 17:03:16 services.local kernel: veth17a67c1 (unregistering): left allmulticast mode
+May 04 17:03:16 services.local kernel: veth17a67c1 (unregistering): left promiscuous mode
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(veth17a67c1) entered disabled state
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(vethb30780c) entered blocking state
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(vethb30780c) entered disabled state
+May 04 17:03:16 services.local kernel: vethb30780c: entered allmulticast mode
+May 04 17:03:16 services.local kernel: vethb30780c: entered promiscuous mode
+May 04 17:03:16 services.local kernel: eth0: renamed from vethe132e46
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(vethb30780c) entered blocking state
+May 04 17:03:16 services.local kernel: br-c771f3c8a3a1: port 1(vethb30780c) entered forwarding state
+May 04 17:03:17 services.local systemd-rc-local-generator[38720]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered disabled state
+May 04 17:03:29 services.local kernel: veth13c8635: renamed from eth0
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered disabled state
+May 04 17:03:29 services.local kernel: vethbdde74c (unregistering): left allmulticast mode
+May 04 17:03:29 services.local kernel: vethbdde74c (unregistering): left promiscuous mode
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethbdde74c) entered disabled state
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethee6009c) entered blocking state
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethee6009c) entered disabled state
+May 04 17:03:29 services.local kernel: vethee6009c: entered allmulticast mode
+May 04 17:03:29 services.local kernel: vethee6009c: entered promiscuous mode
+May 04 17:03:29 services.local kernel: eth0: renamed from vethdb67358
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethee6009c) entered blocking state
+May 04 17:03:29 services.local kernel: br-7069edf7ffb0: port 1(vethee6009c) entered forwarding state
+May 04 17:03:29 services.local systemd-rc-local-generator[39388]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered disabled state
+May 04 17:03:31 services.local kernel: veth813a1cd: renamed from eth0
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered disabled state
+May 04 17:03:31 services.local kernel: vethc7bdb1c (unregistering): left allmulticast mode
+May 04 17:03:31 services.local kernel: vethc7bdb1c (unregistering): left promiscuous mode
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethc7bdb1c) entered disabled state
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethb138b40) entered blocking state
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethb138b40) entered disabled state
+May 04 17:03:31 services.local kernel: vethb138b40: entered allmulticast mode
+May 04 17:03:31 services.local kernel: vethb138b40: entered promiscuous mode
+May 04 17:03:31 services.local kernel: eth0: renamed from vethc060abc
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethb138b40) entered blocking state
+May 04 17:03:31 services.local kernel: br-f7d90fb0b46d: port 1(vethb138b40) entered forwarding state
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered disabled state
+May 04 17:03:32 services.local kernel: veth6553907: renamed from eth0
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered disabled state
+May 04 17:03:32 services.local kernel: veth77f818d (unregistering): left allmulticast mode
+May 04 17:03:32 services.local kernel: veth77f818d (unregistering): left promiscuous mode
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth77f818d) entered disabled state
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth0c3015a) entered blocking state
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth0c3015a) entered disabled state
+May 04 17:03:32 services.local kernel: veth0c3015a: entered allmulticast mode
+May 04 17:03:32 services.local kernel: veth0c3015a: entered promiscuous mode
+May 04 17:03:32 services.local kernel: eth0: renamed from veth740953b
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth0c3015a) entered blocking state
+May 04 17:03:32 services.local kernel: br-e6b5c1695cd1: port 1(veth0c3015a) entered forwarding state
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered disabled state
+May 04 20:21:55 services.local kernel: veth8e034a1: renamed from eth0
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered disabled state
+May 04 20:21:55 services.local kernel: vethde2831e (unregistering): left allmulticast mode
+May 04 20:21:55 services.local kernel: vethde2831e (unregistering): left promiscuous mode
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(vethde2831e) entered disabled state
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered blocking state
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered disabled state
+May 04 20:21:55 services.local kernel: veth0bf3b24: entered allmulticast mode
+May 04 20:21:55 services.local kernel: veth0bf3b24: entered promiscuous mode
+May 04 20:21:55 services.local kernel: eth0: renamed from veth0e9b9bc
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered blocking state
+May 04 20:21:55 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered forwarding state
+May 04 20:21:59 services.local systemd-rc-local-generator[87394]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 05 00:01:34 services.local systemd-rc-local-generator[166253]: /etc/rc.d/rc.local is not marked executable, skipping.
+May 05 01:00:04 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered disabled state
+May 05 01:00:04 services.local kernel: veth0e9b9bc: renamed from eth0
+May 05 01:00:04 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered disabled state
+May 05 01:00:04 services.local kernel: veth0bf3b24 (unregistering): left allmulticast mode
+May 05 01:00:04 services.local kernel: veth0bf3b24 (unregistering): left promiscuous mode
+May 05 01:00:04 services.local kernel: br-dfbaf2596078: port 1(veth0bf3b24) entered disabled state
+May 05 01:00:08 services.local kernel: br-dfbaf2596078: port 1(veth81efed1) entered blocking state
+May 05 01:00:08 services.local kernel: br-dfbaf2596078: port 1(veth81efed1) entered disabled state
+May 05 01:00:08 services.local kernel: veth81efed1: entered allmulticast mode
+May 05 01:00:08 services.local kernel: veth81efed1: entered promiscuous mode
+May 05 01:00:08 services.local kernel: eth0: renamed from veth1e762ee
+May 05 01:00:08 services.local kernel: br-dfbaf2596078: port 1(veth81efed1) entered blocking state
+May 05 01:00:08 services.local kernel: br-dfbaf2596078: port 1(veth81efed1) entered forwarding state
+
+### probe_journal
+
+May 05 01:21:48 services.local mount_probe[183372]: MOUNT_PROBE_TIMEOUT - probe_result=timeout probe_unit=mount_probe-check-1777944098-183323.service path=/mnt/storage/smb

@@ -1,0 +1,4 @@
+collected_at=2026-05-05T10:14:58+02:00
+host=services
+ansible_host=10.0.0.44
+reason=Timeout when waiting for 10.0.0.44:22

@@ -1,0 +1,116 @@
+collected_at=2026-05-05T08:16:49+00:00
+host=services.local
+
+### mount_probe_state
+FAIL f216dfe4-b8d1-4ca7-a0d6-58806ab27ed7 2026-05-05T01:21:48+00:00
+
+### latest_mount_probe_dump
+/var/log/mount_probe/20260505_012148-smb.log
+
+### mount_probe_journal
+-- No entries --
+
+### virtiofs_mounts
+TARGET                 SOURCE    FSTYPE   OPTIONS
+/mnt/storage/smb       smb       virtiofs rw,relatime,seclabel
+/mnt/storage/syncthing syncthing virtiofs rw,relatime,seclabel
+
+### blocked_processes
+
+### processes_referencing_storage_paths
+
+### running_units
+  UNIT                       LOAD   ACTIVE SUB     DESCRIPTION
+  alloy.service              loaded active running Vendor-agnostic OpenTelemetry Collector distribution with programmable pipelines
+  auditd.service             loaded active running Security Auditing Service
+  chronyd.service            loaded active running NTP client/server
+  containerd.service         loaded active running containerd container runtime
+  crond.service              loaded active running Command Scheduler
+  dbus-broker.service        loaded active running D-Bus System Message Bus
+  docker.service             loaded active running Docker Application Container Engine
+  firewalld.service          loaded active running firewalld - dynamic firewall daemon
+  getty@tty1.service         loaded active running Getty on tty1
+  gssproxy.service           loaded active running GSSAPI Proxy Daemon
+  irqbalance.service         loaded active running irqbalance daemon
+  NetworkManager.service     loaded active running Network Manager
+  polkit.service             loaded active running Authorization Manager
+  qemu-guest-agent.service   loaded active running QEMU Guest Agent
+  rpcbind.service            loaded active running RPC Bind
+  rsyslog.service            loaded active running System Logging Service
+  serial-getty@ttyS0.service loaded active running Serial Getty on ttyS0
+  sshd.service               loaded active running OpenSSH server daemon
+  systemd-journald.service   loaded active running Journal Service
+  systemd-logind.service     loaded active running User Login Management
+  systemd-udevd.service      loaded active running Rule-based Manager for Device Events and Files
+  tuned.service              loaded active running Dynamic System Tuning Daemon
+  user@1000.service          loaded active running User Manager for UID 1000
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+23 loaded units listed.
+
+### all_timers
+NEXT                        LEFT          LAST                        PASSED  UNIT                         ACTIVATES
+Tue 2026-05-05 08:17:00 UTC 11s left      -                           -       mount-probe.timer            mount-probe.service
+Tue 2026-05-05 08:21:00 UTC 4min 11s left -                           -       pihole-health.timer          pihole-health.service
+Tue 2026-05-05 08:28:43 UTC 11min left    -                           -       dnf-makecache.timer          dnf-makecache.service
+Tue 2026-05-05 08:31:00 UTC 14min left    -                           -       systemd-tmpfiles-clean.timer systemd-tmpfiles-clean.service
+Wed 2026-05-06 00:00:00 UTC 15h left      Tue 2026-05-05 00:00:04 UTC 8h ago  logrotate.timer              logrotate.service
+Wed 2026-05-06 00:00:00 UTC 15h left      Tue 2026-05-05 00:00:04 UTC 8h ago  scheduled-update.timer       scheduled-update.service
+Wed 2026-05-06 01:00:00 UTC 16h left      Tue 2026-05-05 01:00:04 UTC 7h ago  uptimekuma_backup.timer      uptimekuma_backup.service
+Wed 2026-05-06 02:00:00 UTC 17h left      Tue 2026-05-05 02:00:11 UTC 6h ago  couchdb-backup.timer         couchdb-backup.service
+Wed 2026-05-06 02:15:00 UTC 17h left      Tue 2026-05-05 02:15:00 UTC 6h ago  vaultwarden_backup.timer     vaultwarden_backup.service
+Wed 2026-05-06 03:00:00 UTC 18h left      Mon 2026-05-04 17:01:26 UTC 15h ago docker-auto-update.timer     docker-auto-update.service
+Sun 2026-05-10 01:00:00 UTC 4 days left   Mon 2026-05-04 16:59:58 UTC 15h ago scheduled-reboot.timer       scheduled-reboot.service
+
+11 timers listed.
+
+### compose_references_to_storage_paths
+/home/haaksk/couchdb/docker-compose.yml:9:      - /mnt/storage/smb/couchdb/data:/opt/couchdb/data:Z
+/home/haaksk/echovault/docker-compose.yml:12:      - /mnt/storage/smb/echovault-data:/data:Z
+/home/haaksk/loki/docker-compose.yml:11:      - /mnt/storage/smb/loki/data:/loki:Z
+/home/haaksk/syncthing/docker-compose.yml:14:      - /mnt/storage/syncthing:/mnt/storage/syncthing
+
+### docker_container_mount_refs
+
+## uptime-kuma (9866111e2c7f)
+
+## grafana (3766355f9686)
+
+## loki (832136b5d786)
+160-            {
+161-                "Type": "bind",
+162:                "Source": "/mnt/storage/smb/loki/data",
+163-                "Destination": "/loki",
+164-                "Mode": "rw,Z",
+
+## couchdb (9cceb935d654)
+148-            {
+149-                "Type": "bind",
+150:                "Source": "/mnt/storage/smb/couchdb/data",
+151-                "Destination": "/opt/couchdb/data",
+152-                "Mode": "rw,Z",
+
+## syncthing (ceff758c20e3)
+207-            {
+208-                "Type": "bind",
+209:                "Source": "/mnt/storage/syncthing",
+210:                "Destination": "/mnt/storage/syncthing",
+211-                "Mode": "rw",
+212-                "RW": true,
+
+## nebula-sync (824cc02a2141)
+
+## vaultwarden (76e12be81e71)
+
+## caddy-caddy-1 (cc033b5ae7d5)
+
+## echovault (1b1479a904f1)
+152-            {
+153-                "Type": "bind",
+154:                "Source": "/mnt/storage/smb/echovault-data",
+155-                "Destination": "/data",
+156-                "Mode": "rw,Z",
+
+## pihole (4b5337cc152e)
