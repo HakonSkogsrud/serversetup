@@ -41,6 +41,16 @@
     mode: "0644"
   notify: Restart syncthing
 
+- name: Migrate Syncthing folder paths to dedicated virtiofs mount
+  become: true
+  ansible.builtin.replace:
+    path: "{{ syncthing_config_dir }}/config.xml"
+    regexp: '{{ syncthing_old_data_path | regex_escape }}'
+    replace: "{{ syncthing_data_path }}"
+  notify: Restart syncthing
+  when:
+    - syncthing_config_exists.stat.exists or (syncthing_config_backup.stat.exists | default(false))
+
 - name: Start syncthing container
   become: true
   community.docker.docker_compose_v2:

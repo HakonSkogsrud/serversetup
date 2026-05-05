@@ -1,3 +1,5 @@
 ---
 syncthing_config_dir: "/home/{{ template.user }}/syncthing/config"
-syncthing_backup_dir: /mnt/storage/smb/syncthing
+syncthing_old_data_path: "/mnt/storage/smb/Sync"
+syncthing_data_path: "/mnt/storage/syncthing"
+syncthing_backup_dir: "{{ syncthing_data_path }}/.syncthing-config-backup"
