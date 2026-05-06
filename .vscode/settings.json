@@ -20,6 +20,7 @@
         "git fetch": true,
         "awk": true,
         "ansible": true,
-        "git checkout": true
+        "git checkout": true,
+        "git -C /home/haaksk/Workspace/serversetup": true
     },
 }
