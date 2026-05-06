@@ -4,9 +4,25 @@
     path: "{{ loki_live_data_path }}"
   register: loki_backup_data_exists
 
+- name: Check if Loki compose file exists
+  ansible.builtin.stat:
+    path: "{{ loki_data_dir }}/docker-compose.yml"
+  register: loki_backup_compose_file
+
 - name: Backup Loki data
   when: loki_backup_data_exists.stat.exists
   block:
+    - name: Stop Loki container before backup
+      ansible.builtin.shell:
+        cmd: docker compose stop loki
+        chdir: "{{ loki_data_dir }}"
+      become: true
+      become_user: "{{ template.user }}"
+      changed_when: true
+      when: loki_backup_compose_file.stat.exists
+      args:
+        executable: /bin/bash
+
     - name: Create backup archive of Loki data
       community.general.archive:
         path: "{{ loki_live_data_path }}"
@@ -25,3 +41,14 @@
       ansible.builtin.file:
         path: "/tmp/loki-backup.tar.gz"
         state: absent
+
+    - name: Start Loki container after backup
+      ansible.builtin.shell:
+        cmd: docker compose start loki
+        chdir: "{{ loki_data_dir }}"
+      become: true
+      become_user: "{{ template.user }}"
+      changed_when: true
+      when: loki_backup_compose_file.stat.exists
+      args:
+        executable: /bin/bash

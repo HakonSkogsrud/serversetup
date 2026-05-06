@@ -71,6 +71,15 @@
         group: "{{ template.user }}"
       become: true
 
+    - name: Remove restored Loki WAL directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ loki_live_data_path }}/wal"
+        - "{{ loki_live_data_path }}/tsdb-shipper-active/wal"
+      become: true
+
     - name: Fix ownership of restored Loki data
       ansible.builtin.file:
         path: "{{ loki_live_data_path }}"
