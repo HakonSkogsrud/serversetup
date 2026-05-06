@@ -1,6 +1,21 @@
 ---
-- name: Restore couchdb backup if available
+- name: Check if CouchDB live data directory exists
+  ansible.builtin.stat:
+    path: "{{ couchdb_storage_path }}/data"
+  register: couchdb_live_data_exists
+
+- name: Check if CouchDB live data directory is empty
+  ansible.builtin.find:
+    paths: "{{ couchdb_storage_path }}/data"
+    recurse: false
+    hidden: true
+  register: couchdb_live_data_contents
+  when: couchdb_live_data_exists.stat.exists
+
+- name: Restore couchdb backup if local data is missing or empty
   ansible.builtin.import_tasks: restore.yml
+  when:
+    - not couchdb_live_data_exists.stat.exists or couchdb_live_data_contents.matched == 0
 
 - name: Install couchdb
   ansible.builtin.import_tasks: couchdb.yml

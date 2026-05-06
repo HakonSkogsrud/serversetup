@@ -8,7 +8,7 @@ SCRIPT_NAME="{{ couchdb_backup_script_name }}"
 BACKUP_DEST_DIR="{{ couchdb_backup_path }}"
 PROJECT_DIR="{{ couchdb_data_dir }}"
 COUCHDB_CONTAINER="couchdb"
-STORAGE_PATH="/mnt/storage/smb/couchdb/data"
+STORAGE_PATH="{{ couchdb_storage_path }}/data"
 
 logger -t "$SCRIPT_NAME" -p user.info "Starting CouchDB backup"
 

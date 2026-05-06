@@ -8,7 +8,7 @@
     group: "{{ template.user }}"
   become: true
 
-- name: Create CouchDB storage data directory
+- name: Create CouchDB live data directory
   ansible.builtin.file:
     path: "{{ couchdb_storage_path }}/data"
     state: directory
