@@ -35,6 +35,12 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
+    - name: Take backup of loki
+      ansible.builtin.include_role:
+        name: loki
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
     - name: Take backup of pihole
       ansible.builtin.include_role:
         name: pihole_docker

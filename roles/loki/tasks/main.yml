@@ -1,3 +1,21 @@
 ---
+- name: Check if Loki live data directory exists
+  ansible.builtin.stat:
+    path: "{{ loki_live_data_path }}"
+  register: loki_live_data_exists
+
+- name: Check if Loki live data directory is empty
+  ansible.builtin.find:
+    paths: "{{ loki_live_data_path }}"
+    recurse: false
+    hidden: true
+  register: loki_live_data_contents
+  when: loki_live_data_exists.stat.exists
+
+- name: Restore Loki backup if local data is missing or empty
+  ansible.builtin.import_tasks: restore.yml
+  when:
+    - not loki_live_data_exists.stat.exists or loki_live_data_contents.matched == 0
+
 - name: Install loki
   ansible.builtin.import_tasks: loki.yml

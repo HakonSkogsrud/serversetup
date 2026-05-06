@@ -1,0 +1,105 @@
+---
+- name: Check if backup file exists on controller
+  ansible.builtin.stat:
+    path: "/tmp/loki-backup.tar.gz"
+  delegate_to: localhost
+  become: false
+  register: loki_controller_backup
+
+- name: Check if backup file exists on storage
+  ansible.builtin.stat:
+    path: "{{ loki_backup_path }}/loki-backup.tar.gz"
+  register: loki_storage_backup
+
+- name: Check if Loki compose file exists
+  ansible.builtin.stat:
+    path: "{{ loki_data_dir }}/docker-compose.yml"
+  register: loki_compose_file
+
+- name: Set backup source fact
+  ansible.builtin.set_fact:
+    loki_backup_source: >-
+      {{ '/tmp/loki-backup.tar.gz' if loki_controller_backup.stat.exists
+         else (loki_backup_path ~ '/loki-backup.tar.gz') if loki_storage_backup.stat.exists
+         else '' }}
+    loki_backup_is_remote: "{{ loki_storage_backup.stat.exists and not loki_controller_backup.stat.exists }}"
+
+- name: Restore Loki data
+  when: loki_backup_source != ''
+  block:
+    - name: Stop Loki container before restore
+      ansible.builtin.shell:
+        cmd: docker compose stop loki
+        chdir: "{{ loki_data_dir }}"
+      become: true
+      become_user: "{{ template.user }}"
+      changed_when: true
+      when: loki_compose_file.stat.exists
+      args:
+        executable: /bin/bash
+
+    - name: Copy backup from controller to remote
+      ansible.builtin.copy:
+        src: "{{ loki_backup_source }}"
+        dest: "/tmp/loki-backup.tar.gz"
+        mode: "0644"
+      when: not loki_backup_is_remote | bool
+
+    - name: Copy backup from storage to temp (remote_src)
+      ansible.builtin.copy:
+        src: "{{ loki_backup_source }}"
+        dest: "/tmp/loki-backup.tar.gz"
+        mode: "0644"
+        remote_src: true
+      when: loki_backup_is_remote | bool
+
+    - name: Ensure Loki base directory exists
+      ansible.builtin.file:
+        path: "{{ loki_data_dir }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
+    - name: Extract backup to Loki data directory
+      ansible.builtin.unarchive:
+        src: "/tmp/loki-backup.tar.gz"
+        dest: "{{ loki_data_dir }}"
+        remote_src: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
+    - name: Fix ownership of restored Loki data
+      ansible.builtin.file:
+        path: "{{ loki_live_data_path }}"
+        state: directory
+        recurse: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
+    - name: Ensure Loki backup directory exists
+      ansible.builtin.file:
+        path: "{{ loki_backup_path }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+      become: true
+
+    - name: Copy backup to persistent storage
+      ansible.builtin.copy:
+        src: "/tmp/loki-backup.tar.gz"
+        dest: "{{ loki_backup_path }}/loki-backup.tar.gz"
+        mode: "0644"
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        remote_src: true
+      when: not loki_backup_is_remote | bool
+
+    - name: Clean up temp restore file
+      ansible.builtin.file:
+        path: "/tmp/loki-backup.tar.gz"
+        state: absent
