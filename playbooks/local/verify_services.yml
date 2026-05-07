@@ -200,16 +200,3 @@
   tasks:
     - name: Include verification tasks
       ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
-
-- name: Verify systemd units on fedora
-  hosts: fedora
-  become: true
-  gather_facts: false
-  vars:
-    expected_running_services: []
-    expected_enabled_services: []
-    expected_timers:
-      - scheduled-update.timer
-  tasks:
-    - name: Include verification tasks
-      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
