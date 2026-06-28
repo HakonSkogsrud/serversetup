@@ -4,6 +4,8 @@
 # Logs to systemd journal for Grafana/Loki.
 # This script is managed by Ansible.
 
+set -o pipefail
+
 SCRIPT_NAME="{{ immich_backup_script_name }}"
 BACKUP_DEST_DIR="/mnt/storage/smb/immich_backup"
 POSTGRES_CONTAINER="immich_postgres"
