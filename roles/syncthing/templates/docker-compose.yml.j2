@@ -12,6 +12,7 @@ services:
     volumes:
       - ./config:/var/syncthing/config
       - {{ syncthing_data_path }}:{{ syncthing_data_path }}
+      - {{ syncthing_data_path_smb }}:{{ syncthing_data_path_smb }}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8384/rest/noauth/health"]
       interval: 30s
