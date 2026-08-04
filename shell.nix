@@ -5,7 +5,9 @@ pkgs.mkShell {
     ansible
     ansible-lint
     ansible-language-server
+    basedpyright
     pre-commit
+    ruff
     yamllint
     python3Packages.passlib
   ];
