@@ -23,6 +23,8 @@ services:
   app: &nextcloud_app
     image: nextcloud:{{ nextcloud_version }}
     restart: unless-stopped
+    extra_hosts:
+      - "{{ nextcloud_external_hostname }}:127.0.0.1"
     ports:
       - "{{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}:80"
     environment: &nextcloud_environment
