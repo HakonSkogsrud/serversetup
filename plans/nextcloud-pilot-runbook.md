@@ -1,6 +1,8 @@
 # Nextcloud personal pilot runbook
 
-This pilot deploys Nextcloud Files, Calendar, Contacts, Notes, and Text on a dedicated VM. Access is
+This pilot deploys Nextcloud Files, Calendar, Contacts, Notes, Text, and Nextcloud Office on a
+dedicated VM. Office uses the built-in Collabora CODE server for the pilot, avoiding a separate
+office container and proxy endpoint. Access is
 private through the existing subnet-router, Tailscale Serve, and Caddy. The Nextcloud VM does not
 join the tailnet. PostgreSQL and Redis are disposable VM state; user data,
 configuration, custom applications, themes, and logical database dumps live on

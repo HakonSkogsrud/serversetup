@@ -17,6 +17,10 @@ nextcloud_admin_user: nextcloud-admin
 nextcloud_db_name: nextcloud
 nextcloud_db_user: nextcloud
 nextcloud_external_path: /nextcloud
+nextcloud_office_internal_url: "http://127.0.0.1/custom_apps/richdocumentscode/proxy.php?req="
+nextcloud_office_callback_url: "http://127.0.0.1"
+nextcloud_office_public_url: >-
+  https://{{ nextcloud_external_hostname }}{{ nextcloud_external_path }}/custom_apps/richdocumentscode/proxy.php?req=
 nextcloud_backup_script_name: nextcloud-backup
 nextcloud_backup_timer_calendar: "*-*-* 02:30:00"
 nextcloud_backup_retention_days: 14
@@ -24,3 +28,5 @@ nextcloud_apps:
   - calendar
   - contacts
   - notes
+  - richdocuments
+  - richdocumentscode
