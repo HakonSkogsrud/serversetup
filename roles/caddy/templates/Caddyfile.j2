@@ -23,7 +23,7 @@
 	}
 
 	handle_path /nextcloud/* {
-		reverse_proxy {{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}
+		reverse_proxy {{ vms.nextcloud.ip }}:{{ vms.nextcloud.port }}
 	}
 
 	handle {

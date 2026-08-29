@@ -11,7 +11,7 @@ nextcloud_custom_apps_path: "{{ nextcloud_storage_path }}/custom_apps"
 nextcloud_themes_path: "{{ nextcloud_storage_path }}/themes"
 nextcloud_backup_path: "{{ nextcloud_storage_path }}/backups"
 nextcloud_postgres_path: "{{ nextcloud_project_dir }}/postgres"
-nextcloud_http_port: 8080
+nextcloud_http_port: "{{ vms.nextcloud.port }}"
 
 nextcloud_admin_user: nextcloud-admin
 nextcloud_db_name: nextcloud
