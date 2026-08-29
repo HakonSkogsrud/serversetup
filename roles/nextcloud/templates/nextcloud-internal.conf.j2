@@ -11,4 +11,14 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto http;
     }
+
+    # EuroOffice uses this internal address for callbacks and downloads. Its
+    # connector can emit either the public webroot-prefixed form above or an
+    # app-root path such as /apps/eurooffice/track.
+    location / {
+        proxy_pass http://app;
+        proxy_set_header Host nextcloud;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto http;
+    }
 }
