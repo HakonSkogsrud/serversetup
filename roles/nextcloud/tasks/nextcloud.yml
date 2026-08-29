@@ -53,7 +53,7 @@
     owner: "{{ template.user }}"
     group: "{{ template.user }}"
     mode: "0644"
-  notify: Reload internal Nextcloud proxy
+  notify: Recreate internal Nextcloud proxy
 
 - name: Pull pinned Nextcloud images
   community.docker.docker_compose_v2_pull:
