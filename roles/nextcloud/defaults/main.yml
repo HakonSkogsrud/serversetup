@@ -14,7 +14,7 @@ nextcloud_postgres_path: "{{ nextcloud_project_dir }}/postgres"
 nextcloud_http_port: "{{ vms.nextcloud.port }}"
 nextcloud_eurooffice_data_path: "{{ nextcloud_storage_path }}/eurooffice-data"
 nextcloud_eurooffice_log_path: "{{ nextcloud_storage_path }}/eurooffice-logs"
-nextcloud_eurooffice_version: "9.3.1"
+nextcloud_eurooffice_version: "v9.3.2"
 nextcloud_eurooffice_http_port: "{{ vms.nextcloud.eurooffice_port }}"
 
 nextcloud_admin_user: nextcloud-admin
