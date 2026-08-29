@@ -1,0 +1,69 @@
+---
+- name: Find Nextcloud database backups
+  ansible.builtin.find:
+    paths: "{{ nextcloud_backup_path }}"
+    patterns: "nextcloud-*.dump"
+    file_type: file
+    age: 1s
+  register: nextcloud_database_backups
+
+- name: Select newest Nextcloud database backup
+  ansible.builtin.set_fact:
+    nextcloud_restore_dump: >-
+      {{ (nextcloud_database_backups.files | sort(attribute='mtime') | last).path }}
+  when:
+    - nextcloud_database_backups.matched | int > 0
+
+- name: Refuse to initialize an old Nextcloud config without a database backup
+  ansible.builtin.assert:
+    that: nextcloud_database_backups.matched | int > 0
+    fail_msg: >-
+      Persistent config.php exists but no database dump was found in
+      {{ nextcloud_backup_path }}. Refusing to initialize an empty database.
+
+- name: Restore newest Nextcloud database backup
+  when: nextcloud_restore_dump is defined
+  block:
+    - name: Wait for PostgreSQL before restore
+      ansible.builtin.command:
+        cmd: docker compose exec --no-TTY db pg_isready -U {{ nextcloud_db_user }} -d {{ nextcloud_db_name }}
+        chdir: "{{ nextcloud_project_dir }}"
+      register: nextcloud_postgres_ready
+      changed_when: false
+      retries: 30
+      delay: 2
+      until: nextcloud_postgres_ready.rc == 0
+
+    - name: Recreate empty Nextcloud database
+      ansible.builtin.shell: |
+        set -o pipefail
+        docker compose stop app cron
+        docker compose exec --no-TTY db dropdb --if-exists --force -U {{ nextcloud_db_user }} {{ nextcloud_db_name }}
+        docker compose exec --no-TTY db createdb -U {{ nextcloud_db_user }} -O {{ nextcloud_db_user }} {{ nextcloud_db_name }}
+      args:
+        chdir: "{{ nextcloud_project_dir }}"
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Import Nextcloud database dump
+      ansible.builtin.shell: >-
+        docker compose exec --no-TTY db pg_restore
+        --exit-on-error --clean --if-exists
+        --username={{ nextcloud_db_user }} --dbname={{ nextcloud_db_name }}
+        < {{ nextcloud_restore_dump }}
+      args:
+        chdir: "{{ nextcloud_project_dir }}"
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Start Nextcloud after database restore
+      ansible.builtin.command:
+        cmd: docker compose up -d app cron
+        chdir: "{{ nextcloud_project_dir }}"
+      changed_when: true
+
+    - name: Run Nextcloud database repair after restore
+      ansible.builtin.command:
+        cmd: docker compose exec --user www-data --no-TTY app php occ maintenance:repair
+        chdir: "{{ nextcloud_project_dir }}"
+      changed_when: true

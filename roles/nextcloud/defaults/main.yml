@@ -1,0 +1,26 @@
+---
+nextcloud_version: "33.0.8-apache"
+nextcloud_postgres_version: "17.6-alpine"
+nextcloud_redis_version: "8.2.1-alpine"
+
+nextcloud_project_dir: "/home/{{ template.user }}/nextcloud"
+nextcloud_storage_path: /mnt/storage/nextcloud
+nextcloud_data_path: "{{ nextcloud_storage_path }}/data"
+nextcloud_config_path: "{{ nextcloud_storage_path }}/config"
+nextcloud_custom_apps_path: "{{ nextcloud_storage_path }}/custom_apps"
+nextcloud_themes_path: "{{ nextcloud_storage_path }}/themes"
+nextcloud_backup_path: "{{ nextcloud_storage_path }}/backups"
+nextcloud_postgres_path: "{{ nextcloud_project_dir }}/postgres"
+nextcloud_http_port: 8080
+
+nextcloud_admin_user: nextcloud-admin
+nextcloud_db_name: nextcloud
+nextcloud_db_user: nextcloud
+nextcloud_tailscale_hostname: nextcloud
+nextcloud_backup_script_name: nextcloud-backup
+nextcloud_backup_timer_calendar: "*-*-* 02:30:00"
+nextcloud_backup_retention_days: 14
+nextcloud_apps:
+  - calendar
+  - contacts
+  - notes

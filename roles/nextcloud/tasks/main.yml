@@ -1,0 +1,41 @@
+---
+- name: Validate required Nextcloud secrets
+  ansible.builtin.assert:
+    that:
+      - nextcloud_admin_password is defined
+      - nextcloud_admin_password | length >= 16
+      - nextcloud_db_password is defined
+      - nextcloud_db_password | length >= 16
+    fail_msg: >-
+      Define nextcloud_admin_password and nextcloud_db_password (at least 16 characters)
+      in secrets.yml before deploying Nextcloud.
+  no_log: true
+
+- name: Check whether PostgreSQL existed before deployment
+  ansible.builtin.stat:
+    path: "{{ nextcloud_postgres_path }}/PG_VERSION"
+  register: nextcloud_postgres_preexisting
+
+- name: Check whether persistent Nextcloud configuration exists
+  ansible.builtin.stat:
+    path: "{{ nextcloud_config_path }}/config.php"
+  register: nextcloud_config_preexisting
+
+- name: Decide whether this VM needs a database restore
+  ansible.builtin.set_fact:
+    nextcloud_restore_required: >-
+      {{ (not nextcloud_postgres_preexisting.stat.exists)
+         and nextcloud_config_preexisting.stat.exists }}
+
+- name: Install Nextcloud
+  ansible.builtin.import_tasks: nextcloud.yml
+
+- name: Restore Nextcloud database when required
+  ansible.builtin.import_tasks: restore.yml
+  when: nextcloud_restore_required | bool
+
+- name: Configure the running Nextcloud pilot
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Configure Nextcloud backup timer
+  ansible.builtin.import_tasks: backup_timer.yml

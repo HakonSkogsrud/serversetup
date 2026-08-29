@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PROJECT_DIR="{{ nextcloud_project_dir }}"
+BACKUP_DIR="{{ nextcloud_backup_path }}"
+STAMP="$(date --utc +%Y%m%dT%H%M%SZ)"
+FINAL_DUMP="${BACKUP_DIR}/nextcloud-${STAMP}.dump"
+TEMP_DUMP="${FINAL_DUMP}.tmp"
+MAINTENANCE_ENABLED=0
+CRON_STOPPED=0
+
+cleanup() {
+  rm -f "${TEMP_DUMP}"
+  if [[ "${CRON_STOPPED}" -eq 1 ]]; then
+    docker compose --project-directory "${PROJECT_DIR}" start cron || true
+  fi
+  if [[ "${MAINTENANCE_ENABLED}" -eq 1 ]]; then
+    docker compose --project-directory "${PROJECT_DIR}" exec --user www-data --no-TTY app \
+      php occ maintenance:mode --off || true
+  fi
+}
+trap cleanup EXIT
+
+findmnt --noheadings --target "{{ nextcloud_storage_path }}" --types virtiofs >/dev/null
+docker compose --project-directory "${PROJECT_DIR}" exec --no-TTY db \
+  pg_isready -U "{{ nextcloud_db_user }}" -d "{{ nextcloud_db_name }}" >/dev/null
+
+docker compose --project-directory "${PROJECT_DIR}" exec --user www-data --no-TTY app \
+  php occ maintenance:mode --on
+MAINTENANCE_ENABLED=1
+docker compose --project-directory "${PROJECT_DIR}" stop cron
+CRON_STOPPED=1
+
+docker compose --project-directory "${PROJECT_DIR}" exec --no-TTY db \
+  pg_dump --format=custom --username="{{ nextcloud_db_user }}" "{{ nextcloud_db_name }}" > "${TEMP_DUMP}"
+test -s "${TEMP_DUMP}"
+docker compose --project-directory "${PROJECT_DIR}" exec -T db \
+  pg_restore --list < "${TEMP_DUMP}" >/dev/null
+mv "${TEMP_DUMP}" "${FINAL_DUMP}"
+
+cat > "${FINAL_DUMP}.metadata" <<EOF
+created_at=${STAMP}
+nextcloud_image=nextcloud:{{ nextcloud_version }}
+postgres_image=postgres:{{ nextcloud_postgres_version }}
+redis_image=redis:{{ nextcloud_redis_version }}
+EOF
+
+find "${BACKUP_DIR}" -type f \( -name 'nextcloud-*.dump' -o -name 'nextcloud-*.dump.metadata' \) \
+  -mtime +{{ nextcloud_backup_retention_days }} -delete
+
+if [[ "${NEXTCLOUD_LEAVE_STOPPED:-0}" == "1" ]]; then
+  CRON_STOPPED=0
+  MAINTENANCE_ENABLED=0
+  docker compose --project-directory "${PROJECT_DIR}" down
+  exit 0
+fi
+
+docker compose --project-directory "${PROJECT_DIR}" start cron
+CRON_STOPPED=0
+docker compose --project-directory "${PROJECT_DIR}" exec --user www-data --no-TTY app \
+  php occ maintenance:mode --off
+MAINTENANCE_ENABLED=0

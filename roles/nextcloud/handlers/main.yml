@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart nextcloud
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ nextcloud_project_dir }}"
+  changed_when: true

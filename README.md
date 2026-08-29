@@ -29,7 +29,7 @@ My homelab uses a strict GitOps principle where a single GitHub repository is th
 
 **Tailscale** provides a secure mesh backbone. Remote HTTPS access flows through **Tailscale Serve** on the subnet-router, which proxies into **Caddy** (running on the services VM) as a reverse proxy, routing requests to the appropriate internal service (CouchDB, Vaultwarden, etc.). Primary and secondary Pi-hole VMs provide content filtering and DNS resolution for the entire network via the gateway.
 
-- **Key VMs:** **`github-runner`** (CI/CD), **`samba`** (File server/backup ingestion), **`immich`** (Photos/Video), **`loki`** (Log aggregation), **`grafana`** (Error logs/Visualization), and **`services`** (Docker host for Syncthing, CouchDB, Vaultwarden, Nebula, UptimeKuma, **Caddy**).
+- **Key VMs:** **`github-runner`** (CI/CD), **`samba`** (File server/backup ingestion), **`immich`** (Photos/Video), **`nextcloud`** (personal files, calendar, contacts, and notes pilot), **`loki`** (Log aggregation), **`grafana`** (Error logs/Visualization), and **`services`** (Docker host for Syncthing, CouchDB, Vaultwarden, Nebula, UptimeKuma, **Caddy**).
 - **`immich`** and **`samba`** are intentionally kept on dedicated VMs. Immich is a large, complex service with its own heavy stack (ML workers, database, Redis); isolating it means photo access is unaffected when the `services` VM is being rebuilt or experimented with. Samba is the ingestion point for photos and files from phones and cameras — it needs to stay available around the clock so no transfers are lost during maintenance.
 - **CouchDB** on the services VM serves as the backend for **Obsidian LiveSync**, synchronizing notes across iPhone, Android, Windows, and Linux devices with HTTPS access via Tailscale.
 - **Vaultwarden** provides a self-hosted Bitwarden-compatible password manager, accessible securely over Tailscale.
@@ -125,6 +125,7 @@ zpool export lacierugged
 | [internet_monitor](roles/internet_monitor/) | | systemd | Monitors internet connectivity and pushes heartbeats to UptimeKuma |
 | [loki](roles/loki/) | <img src="https://img.shields.io/badge/Loki-F46800?style=flat&logo=grafana&logoColor=white" alt="Loki" height="20"/> | Docker | Centralized log aggregation for all VMs |
 | [mount_virtiofs](roles/mount_virtiofs/) | <img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="20"/> | virtiofs | Mounts a virtiofs shared filesystem from the Proxmox host into a VM |
+| [nextcloud](roles/nextcloud/) | | Docker | Personal cloud pilot with PostgreSQL, Redis, cron, Tailscale HTTPS, and fail-closed restore testing |
 | [mount_probe](roles/mount_probe/) | | systemd | Probes mount responsiveness and captures diagnostics when access starts timing out |
 | [nebula_sync](roles/nebula_sync/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | Docker | Syncs Pi-hole gravity and DNS config across multiple instances |
 | [pihole_docker](roles/pihole_docker/) | <img src="https://img.shields.io/badge/Pi--hole-96060C?style=flat&logo=pihole&logoColor=white" alt="Pi-hole" height="20"/> | Docker | DNS ad blocker and network-wide content filter |
@@ -155,6 +156,7 @@ zpool export lacierugged
 | proxmox2 | `alloy.service` |
 | services | `alloy.service`, `docker.service`, `firewalld.service` |
 | immich | `alloy.service`, `docker.service` |
+| nextcloud | `alloy.service`, `docker.service`, `firewalld.service`, `tailscaled.service` |
 | samba | `alloy.service`, `smb.service`, `nmb.service` |
 | github-runner | `alloy.service`, `github-runner.service`, `firewalld.service` |
 | subnet-router | `alloy.service`, `tailscaled.service`, `firewalld.service` |
@@ -177,6 +179,7 @@ zpool export lacierugged
 | `couchdb-backup.timer` | Daily 02:00 | services |
 | `vaultwarden_backup.timer` | Daily 02:15 | services |
 | `immich-backup.timer` | Daily 01:00 | immich |
+| `nextcloud-backup.timer` | Daily 02:30 | nextcloud |
 | `pihole-health.timer` | Every 30 min | services |
 | `mount-probe.timer` | Every 1 min | services |
 | `internet-monitor.timer` | Every 1 min | pihole-secondary |

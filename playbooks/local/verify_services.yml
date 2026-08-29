@@ -89,6 +89,27 @@
     - name: Include verification tasks
       ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
 
+- name: Verify systemd units on nextcloud
+  hosts: nextcloud
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../secrets.yml
+  vars:
+    expected_running_services:
+      - alloy.service
+      - docker.service
+      - firewalld.service
+      - tailscaled.service
+    expected_enabled_services: []
+    expected_timers:
+      - scheduled-update.timer
+      - scheduled-reboot.timer
+      - nextcloud-backup.timer
+  tasks:
+    - name: Include verification tasks
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+
 - name: Verify systemd units on samba
   hosts: samba
   become: true

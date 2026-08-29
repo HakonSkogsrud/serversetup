@@ -1,0 +1,9 @@
+[Unit]
+Description=Create a consistent Nextcloud database backup
+RequiresMountsFor={{ nextcloud_storage_path }}
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/{{ nextcloud_backup_script_name }}
