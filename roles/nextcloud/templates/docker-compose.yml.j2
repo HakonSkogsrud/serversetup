@@ -20,11 +20,24 @@ services:
     restart: unless-stopped
     command: redis-server --save "" --appendonly no
 
+  eurooffice:
+    image: ghcr.io/euro-office/documentserver:{{ nextcloud_eurooffice_version }}
+    restart: unless-stopped
+    ports:
+      - "{{ vms.nextcloud.ip }}:{{ nextcloud_eurooffice_http_port }}:80"
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: {{ eurooffice_jwt_secret | to_json }}
+      # EuroOffice fetches file content and callback URLs directly from the
+      # Nextcloud container on this private Compose network.
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
+    volumes:
+      - {{ nextcloud_eurooffice_data_path }}:/var/lib/euro-office/documentserver:Z
+      - {{ nextcloud_eurooffice_log_path }}:/var/log/euro-office/documentserver:Z
+
   app: &nextcloud_app
     image: nextcloud:{{ nextcloud_version }}
     restart: unless-stopped
-    extra_hosts:
-      - "{{ nextcloud_external_hostname }}:127.0.0.1"
     ports:
       - "{{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}:80"
     environment: &nextcloud_environment

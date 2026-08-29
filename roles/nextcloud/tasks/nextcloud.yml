@@ -28,6 +28,17 @@
     - { path: "{{ nextcloud_custom_apps_path }}", mode: "0750" }
     - { path: "{{ nextcloud_themes_path }}", mode: "0750" }
 
+- name: Create persistent EuroOffice working directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - "{{ nextcloud_eurooffice_data_path }}"
+    - "{{ nextcloud_eurooffice_log_path }}"
+
 - name: Create protected Nextcloud backup directory
   ansible.builtin.file:
     path: "{{ nextcloud_backup_path }}"
