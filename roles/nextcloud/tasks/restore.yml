@@ -110,8 +110,8 @@
       ansible.builtin.shell: |
         set -o pipefail
         docker compose stop app cron
-        docker compose exec --no-TTY db dropdb --if-exists --force -U {{ nextcloud_db_user }} {{ nextcloud_db_name }}
-        docker compose exec --no-TTY db createdb -U {{ nextcloud_db_user }} -O {{ nextcloud_db_user }} {{ nextcloud_db_name }}
+        docker compose exec --no-TTY db dropdb --if-exists --force -U {{ nextcloud_postgres_bootstrap_user }} {{ nextcloud_db_name }}
+        docker compose exec --no-TTY db createdb -U {{ nextcloud_postgres_bootstrap_user }} -O {{ nextcloud_db_user }} {{ nextcloud_db_name }}
       args:
         chdir: "{{ nextcloud_project_dir }}"
         executable: /bin/bash
