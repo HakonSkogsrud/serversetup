@@ -19,6 +19,9 @@ nextcloud_eurooffice_http_port: "{{ vms.nextcloud.eurooffice_port }}"
 nextcloud_admin_user: nextcloud-admin
 nextcloud_db_name: nextcloud
 nextcloud_db_user: nextcloud
+# The PostgreSQL image creates this administrative role on a fresh database
+# volume. Restores may then add the database role recorded in config.php.
+nextcloud_postgres_bootstrap_user: nextcloud
 nextcloud_external_path: /nextcloud
 nextcloud_eurooffice_public_url: "https://{{ nextcloud_external_hostname }}/office/"
 # The two services share the Compose network. These avoid hairpinning through

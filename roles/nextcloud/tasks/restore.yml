@@ -29,18 +29,82 @@
       Persistent config.php exists but no database dump was found in
       {{ nextcloud_backup_path }}. Refusing to initialize an empty database.
 
+- name: Read database credentials from persistent Nextcloud configuration
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - exec
+      - --user
+      - www-data
+      - --no-TTY
+      - app
+      - php
+      - -r
+      - >-
+        require '/var/www/html/config/config.php';
+        echo json_encode([
+          'dbname' => $CONFIG['dbname'],
+          'dbuser' => $CONFIG['dbuser'],
+          'dbpassword' => $CONFIG['dbpassword'],
+        ]);
+  args:
+    chdir: "{{ nextcloud_project_dir }}"
+  register: nextcloud_persistent_db_config_command
+  changed_when: false
+  no_log: true
+
+- name: Use database credentials from persistent Nextcloud configuration
+  ansible.builtin.set_fact:
+    nextcloud_persistent_db_config: "{{ nextcloud_persistent_db_config_command.stdout | from_json }}"
+    nextcloud_db_name: "{{ (nextcloud_persistent_db_config_command.stdout | from_json).dbname }}"
+    nextcloud_db_user: "{{ (nextcloud_persistent_db_config_command.stdout | from_json).dbuser }}"
+    nextcloud_db_password: "{{ (nextcloud_persistent_db_config_command.stdout | from_json).dbpassword }}"
+    nextcloud_restore_db_role_sql: >-
+      DO $$ DECLARE
+        db_user text := '{{ (nextcloud_persistent_db_config_command.stdout | from_json).dbuser | replace("'", "''") }}';
+        db_password text := '{{ (nextcloud_persistent_db_config_command.stdout | from_json).dbpassword | replace("'", "''") }}';
+      BEGIN
+        IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = db_user) THEN
+          EXECUTE format('ALTER ROLE %I LOGIN PASSWORD %L', db_user, db_password);
+        ELSE
+          EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', db_user, db_password);
+        END IF;
+      END $$;
+  no_log: true
+
 - name: Restore newest Nextcloud database backup
   when: nextcloud_restore_dump is defined
   block:
     - name: Wait for PostgreSQL before restore
       ansible.builtin.command:
-        cmd: docker compose exec --no-TTY db pg_isready -U {{ nextcloud_db_user }} -d {{ nextcloud_db_name }}
+        cmd: >-
+          docker compose exec --no-TTY db pg_isready
+          -U {{ nextcloud_postgres_bootstrap_user }} -d postgres
         chdir: "{{ nextcloud_project_dir }}"
       register: nextcloud_postgres_ready
       changed_when: false
       retries: 30
       delay: 2
       until: nextcloud_postgres_ready.rc == 0
+
+    - name: Ensure database role from persistent Nextcloud configuration exists
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - exec
+          - --no-TTY
+          - db
+          - psql
+          - "--username={{ nextcloud_postgres_bootstrap_user }}"
+          - --dbname=postgres
+          - --set=ON_ERROR_STOP=1
+          - "--command={{ nextcloud_restore_db_role_sql }}"
+      args:
+        chdir: "{{ nextcloud_project_dir }}"
+      changed_when: true
+      no_log: true
 
     - name: Recreate empty Nextcloud database
       ansible.builtin.shell: |
