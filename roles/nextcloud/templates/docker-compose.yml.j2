@@ -1,0 +1,62 @@
+---
+services:
+  db:
+    image: postgres:{{ nextcloud_postgres_version }}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: {{ nextcloud_db_name | to_json }}
+      POSTGRES_USER: {{ nextcloud_db_user | to_json }}
+      POSTGRES_PASSWORD: {{ nextcloud_db_password | to_json }}
+    volumes:
+      - {{ nextcloud_postgres_path }}:/var/lib/postgresql/data:Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ nextcloud_db_user }} -d {{ nextcloud_db_name }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:{{ nextcloud_redis_version }}
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+
+  app: &nextcloud_app
+    image: nextcloud:{{ nextcloud_version }}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:{{ nextcloud_http_port }}:80"
+    environment: &nextcloud_environment
+      POSTGRES_HOST: "db"
+      POSTGRES_DB: {{ nextcloud_db_name | to_json }}
+      POSTGRES_USER: {{ nextcloud_db_user | to_json }}
+      POSTGRES_PASSWORD: {{ nextcloud_db_password | to_json }}
+      REDIS_HOST: "redis"
+      NEXTCLOUD_ADMIN_USER: {{ nextcloud_admin_user | to_json }}
+      NEXTCLOUD_ADMIN_PASSWORD: {{ nextcloud_admin_password | to_json }}
+      NEXTCLOUD_DATA_DIR: /var/www/html/data
+      NEXTCLOUD_TRUSTED_DOMAINS: "nextcloud {{ vms.nextcloud.ip }}"
+      TRUSTED_PROXIES: "127.0.0.1"
+      OVERWRITEPROTOCOL: "https"
+      PHP_MEMORY_LIMIT: "512M"
+      PHP_UPLOAD_LIMIT: "10G"
+    volumes: &nextcloud_volumes
+      - {{ nextcloud_data_path }}:/var/www/html/data:Z
+      - {{ nextcloud_config_path }}:/var/www/html/config:Z
+      - {{ nextcloud_custom_apps_path }}:/var/www/html/custom_apps:Z
+      - {{ nextcloud_themes_path }}:/var/www/html/themes:Z
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  cron:
+    <<: *nextcloud_app
+    entrypoint: /cron.sh
+    ports: []
+    environment: *nextcloud_environment
+    volumes: *nextcloud_volumes
+
+networks:
+  default:
+    name: nextcloud

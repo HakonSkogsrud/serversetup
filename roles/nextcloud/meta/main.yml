@@ -1,0 +1,9 @@
+---
+dependencies:
+  - role: docker
+  - role: firewall
+  - role: mount_virtiofs
+    mount_virtiofs_tag: "{{ virtiofs_tags.nextcloud }}"
+    mount_virtiofs_path: "{{ nextcloud_storage_path }}"
+  - role: tailscale_node
+    tailscale_node_hostname: "{{ nextcloud_tailscale_hostname }}"

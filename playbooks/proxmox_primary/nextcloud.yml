@@ -1,0 +1,78 @@
+---
+- name: Back up Nextcloud before VM recreation
+  hosts: nextcloud
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../../secrets.yml
+  tasks:
+    - name: Run and verify fail-closed Nextcloud backup
+      ansible.builtin.include_role:
+        name: nextcloud
+        tasks_from: backup.yml
+      when: force_recreate | default(false) | bool
+
+- name: Create Nextcloud VM
+  hosts: proxmox
+  become: false
+  vars_files:
+    - ../../secrets.yml
+  pre_tasks:
+    - name: Check for dedicated Nextcloud ZFS dataset
+      ansible.builtin.command: zfs list -H -o name storage/nextcloud
+      register: nextcloud_zfs_dataset
+      failed_when: false
+      changed_when: false
+
+    - name: Create dedicated Nextcloud ZFS dataset
+      ansible.builtin.command: zfs create storage/nextcloud
+      when: nextcloud_zfs_dataset.rc != 0
+      changed_when: true
+
+    - name: Check for Proxmox Nextcloud directory mapping
+      ansible.builtin.command: pvesh get /cluster/mapping/dir/nextcloud --output-format json
+      register: nextcloud_directory_mapping
+      failed_when: false
+      changed_when: false
+
+    - name: Create Proxmox Nextcloud directory mapping
+      ansible.builtin.command: >-
+        pvesh create /cluster/mapping/dir
+        --id nextcloud
+        --map node={{ proxmox.node }},path=/storage/nextcloud
+      when: nextcloud_directory_mapping.rc != 0
+      changed_when: true
+
+    - name: Snapshot consistent Nextcloud state before VM recreation
+      ansible.builtin.command: >-
+        zfs snapshot storage/nextcloud@pre-recreate-{{ now(utc=true, fmt='%Y%m%dT%H%M%SZ') }}
+      when:
+        - force_recreate | default(false) | bool
+        - nextcloud_zfs_dataset.rc == 0
+      changed_when: true
+  roles:
+    - role: create_vm
+      vars:
+        create_vm_name: nextcloud
+        create_vm_newid: "{{ vms.nextcloud.vmid }}"
+        create_vm_ipaddr: "{{ vms.nextcloud.ip }}"
+        create_vm_balloon: 4096
+        create_vm_cores: 2
+        create_vm_memory: 8192
+        create_vm_sockets: 1
+        create_vm_disk_size: 50G
+        create_vm_virtiofs_tag: "{{ virtiofs_tags.nextcloud }}"
+
+- name: Configure Nextcloud VM
+  hosts: nextcloud
+  become: true
+  vars_files:
+    - ../../secrets.yml
+  vars:
+    scheduled_reboot_timer_calendar: "Thu *-*-* 00:30:00"
+    alloy_docker_installed: true
+  roles:
+    - scheduled_update
+    - scheduled_reboot
+    - nextcloud
+    - alloy

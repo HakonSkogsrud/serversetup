@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Nextcloud database backup
+
+[Timer]
+OnCalendar={{ nextcloud_backup_timer_calendar }}
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

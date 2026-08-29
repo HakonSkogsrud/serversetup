@@ -1,0 +1,57 @@
+---
+- name: Create Nextcloud project directory
+  ansible.builtin.file:
+    path: "{{ nextcloud_project_dir }}"
+    state: directory
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0750"
+
+- name: Create disposable PostgreSQL directory
+  ansible.builtin.file:
+    path: "{{ nextcloud_postgres_path }}"
+    state: directory
+    owner: "70"
+    group: "70"
+    mode: "0700"
+
+- name: Create persistent Nextcloud directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "33"
+    group: "33"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ nextcloud_data_path }}", mode: "0750" }
+    - { path: "{{ nextcloud_config_path }}", mode: "0750" }
+    - { path: "{{ nextcloud_custom_apps_path }}", mode: "0750" }
+    - { path: "{{ nextcloud_themes_path }}", mode: "0750" }
+
+- name: Create protected Nextcloud backup directory
+  ansible.builtin.file:
+    path: "{{ nextcloud_backup_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Deploy Nextcloud Compose configuration
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ nextcloud_project_dir }}/docker-compose.yml"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0600"
+  no_log: true
+  notify: Restart nextcloud
+
+- name: Pull pinned Nextcloud images
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ nextcloud_project_dir }}"
+
+- name: Start Nextcloud stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ nextcloud_project_dir }}"
+    state: present
+  register: nextcloud_compose

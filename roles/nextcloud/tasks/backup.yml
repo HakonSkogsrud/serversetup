@@ -1,0 +1,33 @@
+---
+- name: Assert Nextcloud persistent storage is mounted
+  ansible.builtin.command: "findmnt --noheadings --target {{ nextcloud_storage_path }} --types virtiofs"
+  changed_when: false
+
+- name: Assert Nextcloud backup script exists
+  ansible.builtin.stat:
+    path: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
+  register: nextcloud_backup_script
+  failed_when: not nextcloud_backup_script.stat.exists
+
+- name: Run fail-closed Nextcloud backup
+  ansible.builtin.command: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
+  environment:
+    NEXTCLOUD_LEAVE_STOPPED: "1"
+  register: nextcloud_backup_run
+  changed_when: true
+
+- name: Verify fresh database dump exists
+  ansible.builtin.find:
+    paths: "{{ nextcloud_backup_path }}"
+    patterns: "nextcloud-*.dump"
+    file_type: file
+    age: "-10m"
+    size: 1
+  register: nextcloud_fresh_backup
+  failed_when: nextcloud_fresh_backup.matched | int == 0
+
+- name: Verify persistent Nextcloud config exists
+  ansible.builtin.stat:
+    path: "{{ nextcloud_config_path }}/config.php"
+  register: nextcloud_config_backup
+  failed_when: not nextcloud_config_backup.stat.exists

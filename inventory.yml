@@ -9,6 +9,9 @@ all:
         immich:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms.immich.ip }}"
+        nextcloud:
+          ansible_user: "{{ template.user }}"
+          ansible_host: "{{ vms.nextcloud.ip }}"
         samba:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms.samba.ip }}"

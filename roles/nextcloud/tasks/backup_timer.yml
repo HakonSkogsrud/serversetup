@@ -1,0 +1,33 @@
+---
+- name: Deploy Nextcloud backup script
+  ansible.builtin.template:
+    src: nextcloud-backup.sh.j2
+    dest: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Deploy Nextcloud backup service
+  ansible.builtin.template:
+    src: nextcloud-backup.service.j2
+    dest: /etc/systemd/system/nextcloud-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy Nextcloud backup timer
+  ansible.builtin.template:
+    src: nextcloud-backup.timer.j2
+    dest: /etc/systemd/system/nextcloud-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable Nextcloud backup timer
+  ansible.builtin.systemd:
+    name: nextcloud-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true
