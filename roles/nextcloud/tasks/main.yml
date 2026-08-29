@@ -24,11 +24,17 @@
     path: "{{ nextcloud_config_path }}/config.php"
   register: nextcloud_config_preexisting
 
+- name: Check whether a previous database restore was interrupted
+  ansible.builtin.stat:
+    path: "{{ nextcloud_restore_marker_path }}"
+  register: nextcloud_restore_marker
+
 - name: Decide whether this VM needs a database restore
   ansible.builtin.set_fact:
     nextcloud_restore_required: >-
       {{ (not nextcloud_postgres_preexisting.stat.exists)
-         and nextcloud_config_preexisting.stat.exists }}
+         and nextcloud_config_preexisting.stat.exists
+         or nextcloud_restore_marker.stat.exists }}
 
 - name: Install Nextcloud
   ansible.builtin.import_tasks: nextcloud.yml

@@ -1,4 +1,12 @@
 ---
+- name: Mark database restore as in progress
+  ansible.builtin.file:
+    path: "{{ nextcloud_restore_marker_path }}"
+    state: touch
+    owner: root
+    group: root
+    mode: "0600"
+
 - name: Find Nextcloud database backups
   ansible.builtin.find:
     paths: "{{ nextcloud_backup_path }}"
@@ -48,7 +56,7 @@
     - name: Import Nextcloud database dump
       ansible.builtin.shell: >-
         docker compose exec --no-TTY db pg_restore
-        --exit-on-error --clean --if-exists
+        --exit-on-error --clean --if-exists --no-owner
         --username={{ nextcloud_db_user }} --dbname={{ nextcloud_db_name }}
         < {{ nextcloud_restore_dump }}
       args:
@@ -62,8 +70,13 @@
         chdir: "{{ nextcloud_project_dir }}"
       changed_when: true
 
-    - name: Run Nextcloud database repair after restore
-      ansible.builtin.command:
-        cmd: docker compose exec --user www-data --no-TTY app php occ maintenance:repair
-        chdir: "{{ nextcloud_project_dir }}"
-      changed_when: true
+- name: Run Nextcloud database repair after restore
+  ansible.builtin.command:
+    cmd: docker compose exec --user www-data --no-TTY app php occ maintenance:repair
+    chdir: "{{ nextcloud_project_dir }}"
+  changed_when: true
+
+- name: Clear completed database restore marker
+  ansible.builtin.file:
+    path: "{{ nextcloud_restore_marker_path }}"
+    state: absent
