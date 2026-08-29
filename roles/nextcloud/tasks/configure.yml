@@ -1,7 +1,7 @@
 ---
 - name: Disable maintenance mode after database restore
   ansible.builtin.command:
-    cmd: timeout 60 docker compose exec --user www-data --no-TTY app php occ maintenance:mode --off
+    cmd: timeout --foreground 60 docker compose exec --user www-data --no-TTY app php occ maintenance:mode --off
     chdir: "{{ nextcloud_project_dir }}"
   register: nextcloud_maintenance_off
   retries: 30
