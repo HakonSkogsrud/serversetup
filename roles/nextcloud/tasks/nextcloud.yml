@@ -46,6 +46,15 @@
   no_log: true
   notify: Restart nextcloud
 
+- name: Deploy internal Nextcloud webroot proxy configuration
+  ansible.builtin.template:
+    src: nextcloud-internal.conf.j2
+    dest: "{{ nextcloud_project_dir }}/nextcloud-internal.conf"
+    owner: "{{ template.user }}"
+    group: "{{ template.user }}"
+    mode: "0644"
+  notify: Restart nextcloud
+
 - name: Pull pinned Nextcloud images
   community.docker.docker_compose_v2_pull:
     project_src: "{{ nextcloud_project_dir }}"

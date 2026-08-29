@@ -23,7 +23,9 @@ nextcloud_eurooffice_public_url: "https://{{ nextcloud_external_hostname }}/offi
 # The two services share the Compose network. These avoid hairpinning through
 # the subnet-router and let a VM rebuild retain the same topology.
 nextcloud_eurooffice_internal_url: "http://eurooffice/"
-nextcloud_eurooffice_storage_url: "http://app/"
+# Nextcloud has the public /nextcloud webroot, while Apache in the app
+# container serves it at /. The internal proxy removes that public prefix.
+nextcloud_eurooffice_storage_url: "http://nextcloud-internal/"
 nextcloud_backup_script_name: nextcloud-backup
 nextcloud_backup_timer_calendar: "*-*-* 02:30:00"
 nextcloud_backup_retention_days: 14
