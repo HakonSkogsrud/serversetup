@@ -24,7 +24,7 @@ services:
     image: nextcloud:{{ nextcloud_version }}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:{{ nextcloud_http_port }}:80"
+      - "{{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}:80"
     environment: &nextcloud_environment
       POSTGRES_HOST: "db"
       POSTGRES_DB: {{ nextcloud_db_name | to_json }}
@@ -34,9 +34,12 @@ services:
       NEXTCLOUD_ADMIN_USER: {{ nextcloud_admin_user | to_json }}
       NEXTCLOUD_ADMIN_PASSWORD: {{ nextcloud_admin_password | to_json }}
       NEXTCLOUD_DATA_DIR: /var/www/html/data
-      NEXTCLOUD_TRUSTED_DOMAINS: "nextcloud {{ vms.nextcloud.ip }}"
-      TRUSTED_PROXIES: "127.0.0.1"
+      NEXTCLOUD_TRUSTED_DOMAINS: "nextcloud {{ vms.nextcloud.ip }} {{ nextcloud_external_hostname }}"
+      TRUSTED_PROXIES: {{ vms.services.ip | to_json }}
       OVERWRITEPROTOCOL: "https"
+      OVERWRITEHOST: {{ nextcloud_external_hostname | to_json }}
+      OVERWRITEWEBROOT: {{ nextcloud_external_path | to_json }}
+      OVERWRITECLIURL: {{ ('https://' ~ nextcloud_external_hostname ~ nextcloud_external_path) | to_json }}
       PHP_MEMORY_LIMIT: "512M"
       PHP_UPLOAD_LIMIT: "10G"
     volumes: &nextcloud_volumes

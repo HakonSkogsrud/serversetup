@@ -15,6 +15,17 @@
 		reverse_proxy 127.0.0.1:3001
 	}
 
+	redir /.well-known/caldav /nextcloud/remote.php/dav/ permanent
+	redir /.well-known/carddav /nextcloud/remote.php/dav/ permanent
+
+	handle /nextcloud {
+		redir /nextcloud/ permanent
+	}
+
+	handle_path /nextcloud/* {
+		reverse_proxy {{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}
+	}
+
 	handle {
 		respond "caddy in running in docker"
 	}

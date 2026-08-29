@@ -68,6 +68,18 @@
   become: true
   vars_files:
     - ../../secrets.yml
+  pre_tasks:
+    - name: Read subnet-router Tailscale identity
+      ansible.builtin.command: tailscale status --json
+      delegate_to: subnet-router
+      register: nextcloud_subnet_router_status
+      changed_when: false
+
+    - name: Derive external Nextcloud hostname
+      ansible.builtin.set_fact:
+        nextcloud_external_hostname: >-
+          {{ ((nextcloud_subnet_router_status.stdout | from_json).Self.DNSName)
+             | regex_replace('\.$', '') }}
   vars:
     scheduled_reboot_timer_calendar: "Thu *-*-* 00:30:00"
     alloy_docker_installed: true
@@ -76,3 +88,11 @@
     - scheduled_reboot
     - nextcloud
     - alloy
+
+- name: Add Nextcloud route to the existing Caddy proxy
+  hosts: services
+  become: true
+  vars_files:
+    - ../../secrets.yml
+  roles:
+    - caddy
