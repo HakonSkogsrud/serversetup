@@ -100,7 +100,6 @@
       - alloy.service
       - docker.service
       - firewalld.service
-      - tailscaled.service
     expected_enabled_services: []
     expected_timers:
       - scheduled-update.timer

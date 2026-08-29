@@ -1,7 +1,8 @@
 # Nextcloud personal pilot runbook
 
 This pilot deploys Nextcloud Files, Calendar, Contacts, Notes, and Text on a dedicated VM. Access is
-private through Tailscale Serve. PostgreSQL and Redis are disposable VM state; user data,
+private through the existing subnet-router, Tailscale Serve, and Caddy. The Nextcloud VM does not
+join the tailnet. PostgreSQL and Redis are disposable VM state; user data,
 configuration, custom applications, themes, and logical database dumps live on
 `storage/nextcloud`.
 
@@ -23,14 +24,14 @@ do not exist. Confirm that VMID `4010` and address `10.0.0.83` are free before t
 ansible-playbook playbooks/proxmox_primary/nextcloud.yml
 ```
 
-At the end of the play, obtain the HTTPS URL with:
+At the end of the play, obtain the subnet-router HTTPS hostname with:
 
 ```bash
-ssh nextcloud tailscale serve status
+ssh subnet-router tailscale serve status
 ```
 
-Log in as `nextcloud-admin`, create a separate non-admin personal account, and use that account for
-all testing.
+Open `https://<subnet-router-hostname>/nextcloud/`. Log in as `nextcloud-admin`, create a separate
+non-admin personal account, and use that account for all testing.
 
 ## Pilot acceptance data
 

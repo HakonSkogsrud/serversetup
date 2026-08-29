@@ -1,11 +1,11 @@
 ---
-- name: read couchdb vars to get port
+- name: Read CouchDB vars to get port
   ansible.builtin.include_vars:
-      file: "../../couchdb/defaults/main.yml"
+    file: "../../couchdb/defaults/main.yml"
 
-- name: read vaultwarden vars to get port
+- name: Read Vaultwarden vars to get port
   ansible.builtin.include_vars:
     file: "../../vaultwarden/defaults/main.yml"
 
-- name: setup caddy
+- name: Set up Caddy
   ansible.builtin.include_tasks: caddy.yml

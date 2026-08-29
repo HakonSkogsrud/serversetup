@@ -16,7 +16,7 @@ nextcloud_http_port: 8080
 nextcloud_admin_user: nextcloud-admin
 nextcloud_db_name: nextcloud
 nextcloud_db_user: nextcloud
-nextcloud_tailscale_hostname: nextcloud
+nextcloud_external_path: /nextcloud
 nextcloud_backup_script_name: nextcloud-backup
 nextcloud_backup_timer_calendar: "*-*-* 02:30:00"
 nextcloud_backup_retention_days: 14
