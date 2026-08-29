@@ -18,7 +18,10 @@ nextcloud_db_name: nextcloud
 nextcloud_db_user: nextcloud
 nextcloud_external_path: /nextcloud
 nextcloud_office_internal_url: "http://127.0.0.1/custom_apps/richdocumentscode/proxy.php?req="
-nextcloud_office_callback_url: "http://127.0.0.1"
+# CODE reaches this URL from inside the Nextcloud app container. The Compose
+# host mapping resolves it to localhost, while retaining the public hostname
+# that CODE permits in its WOPI allow-list.
+nextcloud_office_callback_url: "http://{{ nextcloud_external_hostname }}"
 nextcloud_office_public_url: >-
   https://{{ nextcloud_external_hostname }}{{ nextcloud_external_path }}/custom_apps/richdocumentscode/proxy.php?req=
 nextcloud_backup_script_name: nextcloud-backup

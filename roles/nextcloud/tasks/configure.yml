@@ -72,9 +72,8 @@
       http://{{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}/custom_apps/richdocumentscode/proxy.php?req=/hosting/discovery
     headers:
       # This first request starts CODE. Its allowed WOPI host must match the
-      # localhost callback configured below; public browser URLs are handled
-      # separately by Caddy.
-      Host: "127.0.0.1"
+      # hostname in the container-local callback configured below.
+      Host: "{{ nextcloud_external_hostname }}"
     return_content: true
     status_code: 200
   register: nextcloud_office_discovery
