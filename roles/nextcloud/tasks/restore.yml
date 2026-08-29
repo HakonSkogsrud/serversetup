@@ -56,7 +56,7 @@
     - name: Import Nextcloud database dump
       ansible.builtin.shell: >-
         docker compose exec --no-TTY db pg_restore
-        --exit-on-error --clean --if-exists --no-owner
+        --exit-on-error --clean --if-exists --no-owner --no-acl
         --username={{ nextcloud_db_user }} --dbname={{ nextcloud_db_name }}
         < {{ nextcloud_restore_dump }}
       args:
