@@ -1,7 +1,7 @@
 ---
 - name: Disable maintenance mode after install or restore
   ansible.builtin.command:
-    cmd: docker compose exec --user www-data --no-TTY app php occ maintenance:mode --off
+    cmd: timeout 60 docker compose exec --user www-data --no-TTY app php occ maintenance:mode --off
     chdir: "{{ nextcloud_project_dir }}"
   register: nextcloud_maintenance_off
   retries: 30
@@ -36,7 +36,9 @@
     chdir: "{{ nextcloud_project_dir }}"
   loop: "{{ nextcloud_apps }}"
   register: nextcloud_app_install
-  changed_when: "'installed' in nextcloud_app_install.stdout"
+  changed_when: >-
+    'installed' in nextcloud_app_install.stdout and
+    'already installed' not in nextcloud_app_install.stdout
   failed_when:
     - nextcloud_app_install.rc != 0
     - "'already installed' not in nextcloud_app_install.stdout"

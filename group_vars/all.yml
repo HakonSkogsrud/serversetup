@@ -16,6 +16,7 @@ vms:
   nextcloud:
     ip: 10.0.0.83
     vmid: 4010
+    port: 8080
   github_runner:
     ip: 10.0.0.81
   pihole-secondary:
