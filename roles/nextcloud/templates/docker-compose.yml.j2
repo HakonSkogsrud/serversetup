@@ -31,9 +31,9 @@ services:
       # EuroOffice fetches file content and callback URLs directly from the
       # Nextcloud container on this private Compose network.
       ALLOW_PRIVATE_IP_ADDRESS: "true"
-    volumes:
-      - {{ nextcloud_eurooffice_data_path }}:/var/lib/euro-office/documentserver:Z
-      - {{ nextcloud_eurooffice_log_path }}:/var/log/euro-office/documentserver:Z
+    # This image cannot initialise with empty host-mounted config or log
+    # directories. Its collaboration working state is disposable; Nextcloud's
+    # persistent data and database remain the authoritative document store.
 
   app: &nextcloud_app
     image: nextcloud:{{ nextcloud_version }}
