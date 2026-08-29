@@ -18,12 +18,18 @@
 	redir /.well-known/caldav /nextcloud/remote.php/dav/ permanent
 	redir /.well-known/carddav /nextcloud/remote.php/dav/ permanent
 
-	# Built-in Nextcloud Office may emit CODE asset URLs without the webroot
-	# prefix. Keep those narrowly scoped paths reachable through the same app.
-	handle /custom_apps/richdocumentscode/* {
-		reverse_proxy {{ vms.nextcloud.ip }}:{{ vms.nextcloud.port }} {
+	# Serve the document editor through the existing hostname so the browser and
+	# Nextcloud stay same-origin. The upstream uses X-Forwarded-Prefix when
+	# generating its asset and WebSocket URLs.
+	handle /office {
+		redir /office/ permanent
+	}
+
+	handle_path /office/* {
+		reverse_proxy {{ vms.nextcloud.ip }}:{{ vms.nextcloud.eurooffice_port }} {
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-Prefix /office
 		}
 	}
 

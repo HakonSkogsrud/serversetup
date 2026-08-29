@@ -44,7 +44,7 @@
     - nextcloud_app_install.rc != 0
     - "'already installed' not in nextcloud_app_install.stdout"
 
-- name: Configure built-in Nextcloud Office endpoint
+- name: Disable replaced built-in Nextcloud Office apps
   ansible.builtin.command:
     argv:
       - docker
@@ -56,31 +56,18 @@
       - app
       - php
       - occ
-      - config:app:set
-      - richdocuments
-      - wopi_url
-      - "--value={{ nextcloud_office_internal_url }}"
+      - app:disable
+      - "{{ item }}"
   args:
     chdir: "{{ nextcloud_project_dir }}"
-  register: nextcloud_office_internal_config
-  changed_when: "'updated' in nextcloud_office_internal_config.stdout"
-  when: "'richdocumentscode' in nextcloud_apps"
+  loop: "{{ nextcloud_legacy_office_apps }}"
+  register: nextcloud_legacy_office_disable
+  changed_when: "'disabled' in nextcloud_legacy_office_disable.stdout"
+  failed_when:
+    - nextcloud_legacy_office_disable.rc != 0
+    - "'not installed' not in nextcloud_legacy_office_disable.stdout"
 
-- name: Validate built-in Nextcloud Office discovery endpoint
-  ansible.builtin.uri:
-    url: >-
-      http://{{ vms.nextcloud.ip }}:{{ nextcloud_http_port }}/custom_apps/richdocumentscode/proxy.php?req=/hosting/discovery
-    headers:
-      # This first request starts CODE. Its allowed WOPI host must match the
-      # hostname in the container-local callback configured below.
-      Host: "{{ nextcloud_external_hostname }}"
-    return_content: true
-    status_code: 200
-  register: nextcloud_office_discovery
-  failed_when: "'<wopi-discovery>' not in nextcloud_office_discovery.content"
-  when: "'richdocumentscode' in nextcloud_apps"
-
-- name: Configure public and callback Nextcloud Office URLs
+- name: Configure EuroOffice connector
   ansible.builtin.command:
     argv:
       - docker
@@ -93,23 +80,44 @@
       - php
       - occ
       - config:app:set
-      - richdocuments
+      - eurooffice
       - "{{ item.key }}"
       - "--value={{ item.value }}"
   args:
     chdir: "{{ nextcloud_project_dir }}"
   loop:
-    - { key: public_wopi_url, value: "{{ nextcloud_office_public_url }}" }
-    - { key: wopi_callback_url, value: "{{ nextcloud_office_callback_url }}" }
-  register: nextcloud_office_url_config
-  changed_when: "'updated' in nextcloud_office_url_config.stdout"
-  when: "'richdocumentscode' in nextcloud_apps"
+    - { key: DocumentServerUrl, value: "{{ nextcloud_eurooffice_public_url }}" }
+    - { key: DocumentServerInternalUrl, value: "{{ nextcloud_eurooffice_internal_url }}" }
+    - { key: StorageUrl, value: "{{ nextcloud_eurooffice_storage_url }}" }
+    - { key: jwt_secret, value: "{{ eurooffice_jwt_secret }}" }
+  register: nextcloud_eurooffice_config
+  changed_when: "'updated' in nextcloud_eurooffice_config.stdout"
+  no_log: true
 
-- name: Permit only the Caddy VM to reach Nextcloud
+- name: Wait for EuroOffice health check
+  ansible.builtin.uri:
+    url: "http://{{ vms.nextcloud.ip }}:{{ nextcloud_eurooffice_http_port }}/healthcheck"
+    return_content: true
+    status_code: 200
+  register: nextcloud_eurooffice_health
+  retries: 30
+  delay: 5
+  until: nextcloud_eurooffice_health.content | trim == 'true'
+
+- name: Verify the EuroOffice connector
+  ansible.builtin.command:
+    cmd: docker compose exec --user www-data --no-TTY app php occ eurooffice:documentserver --check
+    chdir: "{{ nextcloud_project_dir }}"
+  changed_when: false
+
+- name: Permit only the Caddy VM to reach Nextcloud and EuroOffice
   ansible.posix.firewalld:
     rich_rule: >-
       rule family="ipv4" source address="{{ vms.services.ip }}/32"
-      port port="{{ nextcloud_http_port }}" protocol="tcp" accept
+      port port="{{ item }}" protocol="tcp" accept
     permanent: true
     state: enabled
     immediate: true
+  loop:
+    - "{{ nextcloud_http_port }}"
+    - "{{ nextcloud_eurooffice_http_port }}"

@@ -17,6 +17,7 @@ vms:
     ip: 10.0.0.83
     vmid: 4010
     port: 8080
+    eurooffice_port: 8081
   github_runner:
     ip: 10.0.0.81
   pihole-secondary:

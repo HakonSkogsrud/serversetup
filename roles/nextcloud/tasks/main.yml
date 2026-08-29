@@ -6,9 +6,12 @@
       - nextcloud_admin_password | length >= 16
       - nextcloud_db_password is defined
       - nextcloud_db_password | length >= 16
+      - eurooffice_jwt_secret is defined
+      - eurooffice_jwt_secret | length >= 32
     fail_msg: >-
-      Define nextcloud_admin_password and nextcloud_db_password (at least 16 characters)
-      in secrets.yml before deploying Nextcloud.
+      Define nextcloud_admin_password, nextcloud_db_password (at least 16 characters),
+      and eurooffice_jwt_secret (at least 32 characters) in secrets.yml before deploying
+      Nextcloud.
   no_log: true
 
 - name: Check whether PostgreSQL existed before deployment
