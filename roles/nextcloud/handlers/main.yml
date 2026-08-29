@@ -8,3 +8,9 @@
     cmd: docker compose up -d
     chdir: "{{ nextcloud_project_dir }}"
   changed_when: true
+
+- name: Reload internal Nextcloud proxy
+  ansible.builtin.command:
+    cmd: docker compose exec --no-TTY nextcloud-internal nginx -s reload
+    chdir: "{{ nextcloud_project_dir }}"
+  changed_when: true
