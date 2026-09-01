@@ -33,6 +33,10 @@ nextcloud_eurooffice_storage_url: "http://nextcloud-internal/"
 nextcloud_backup_script_name: nextcloud-backup
 nextcloud_backup_timer_calendar: "*-*-* 02:30:00"
 nextcloud_backup_retention_days: 14
+nextcloud_backup_on_deploy: true
+# Set this to the URL of a Uptime Kuma push monitor. A successful backup
+# pushes only after Nextcloud has returned to its intended running state.
+nextcloud_backup_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/o7cftEioKypKQ0h0nejjAbvqnAvS0mEs?status=up&msg=OK&ping="
 nextcloud_apps:
   - calendar
   - contacts

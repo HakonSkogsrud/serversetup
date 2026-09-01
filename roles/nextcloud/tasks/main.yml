@@ -48,3 +48,7 @@
 
 - name: Configure Nextcloud backup timer
   ansible.builtin.import_tasks: backup_timer.yml
+
+- name: Create and verify a Nextcloud backup after deployment
+  ansible.builtin.import_tasks: backup.yml
+  when: nextcloud_backup_on_deploy | bool

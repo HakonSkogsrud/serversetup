@@ -10,6 +10,8 @@
       ansible.builtin.include_role:
         name: nextcloud
         tasks_from: backup.yml
+      vars:
+        nextcloud_backup_leave_stopped: true
       when: force_recreate | default(false) | bool
 
 - name: Create Nextcloud VM

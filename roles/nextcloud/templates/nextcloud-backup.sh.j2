@@ -3,11 +3,31 @@ set -Eeuo pipefail
 
 PROJECT_DIR="{{ nextcloud_project_dir }}"
 BACKUP_DIR="{{ nextcloud_backup_path }}"
+SCRIPT_NAME="{{ nextcloud_backup_script_name }}"
+LOCK_FILE="/run/lock/${SCRIPT_NAME}.lock"
 STAMP="$(date --utc +%Y%m%dT%H%M%SZ)"
 FINAL_DUMP="${BACKUP_DIR}/nextcloud-${STAMP}.dump"
 TEMP_DUMP="${FINAL_DUMP}.tmp"
 MAINTENANCE_ENABLED=0
 CRON_STOPPED=0
+
+{% if nextcloud_backup_uptimekuma_push_url %}
+push_uptimekuma() {
+  local http_status
+  local curl_exit_code
+
+  if http_status="$(curl --fail --silent --show-error --max-time 10 \
+    --output /dev/null --write-out "%{http_code}" \
+    "{{ nextcloud_backup_uptimekuma_push_url }}")"; then
+    logger -t "${SCRIPT_NAME}" -p user.info \
+      "Uptime Kuma push completed with HTTP status ${http_status}"
+  else
+    curl_exit_code=$?
+    logger -t "${SCRIPT_NAME}" -p user.warning \
+      "Uptime Kuma push failed with curl exit code ${curl_exit_code} and HTTP status ${http_status:-unknown}"
+  fi
+}
+{% endif %}
 
 cleanup() {
   rm -f "${TEMP_DUMP}"
@@ -21,7 +41,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
+exec 9>"${LOCK_FILE}"
+if ! flock --nonblock 9; then
+  logger -t "${SCRIPT_NAME}" -p user.err "Another Nextcloud backup is already running"
+  exit 1
+fi
+
 findmnt --noheadings --target "{{ nextcloud_storage_path }}" --types virtiofs >/dev/null
+test -s "{{ nextcloud_config_path }}/config.php"
 docker compose --project-directory "${PROJECT_DIR}" exec --no-TTY db \
   pg_isready -U "{{ nextcloud_db_user }}" -d "{{ nextcloud_db_name }}" >/dev/null
 
@@ -52,11 +79,14 @@ if [[ "${NEXTCLOUD_LEAVE_STOPPED:-0}" == "1" ]]; then
   CRON_STOPPED=0
   MAINTENANCE_ENABLED=0
   docker compose --project-directory "${PROJECT_DIR}" down
-  exit 0
+else
+  docker compose --project-directory "${PROJECT_DIR}" start cron
+  CRON_STOPPED=0
+  docker compose --project-directory "${PROJECT_DIR}" exec --user www-data --no-TTY app \
+    php occ maintenance:mode --off
+  MAINTENANCE_ENABLED=0
 fi
 
-docker compose --project-directory "${PROJECT_DIR}" start cron
-CRON_STOPPED=0
-docker compose --project-directory "${PROJECT_DIR}" exec --user www-data --no-TTY app \
-  php occ maintenance:mode --off
-MAINTENANCE_ENABLED=0
+{% if nextcloud_backup_uptimekuma_push_url %}
+push_uptimekuma
+{% endif %}

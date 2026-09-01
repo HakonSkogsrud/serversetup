@@ -9,10 +9,11 @@
   register: nextcloud_backup_script
   failed_when: not nextcloud_backup_script.stat.exists
 
-- name: Run fail-closed Nextcloud backup
+- name: Run Nextcloud backup
   ansible.builtin.command: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
   environment:
-    NEXTCLOUD_LEAVE_STOPPED: "1"
+    NEXTCLOUD_LEAVE_STOPPED: >-
+      {{ '1' if nextcloud_backup_leave_stopped | default(false) | bool else '0' }}
   register: nextcloud_backup_run
   changed_when: true
 
