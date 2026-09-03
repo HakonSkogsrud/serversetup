@@ -3,11 +3,13 @@
   ansible.builtin.command: "findmnt --noheadings --target {{ nextcloud_storage_path }} --types virtiofs"
   changed_when: false
 
-- name: Assert Nextcloud backup script exists
-  ansible.builtin.stat:
-    path: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
-  register: nextcloud_backup_script
-  failed_when: not nextcloud_backup_script.stat.exists
+- name: Deploy current Nextcloud backup script
+  ansible.builtin.template:
+    src: nextcloud-backup.sh.j2
+    dest: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
+    owner: root
+    group: root
+    mode: "0750"
 
 - name: Run Nextcloud backup
   ansible.builtin.command: "/usr/local/bin/{{ nextcloud_backup_script_name }}"
