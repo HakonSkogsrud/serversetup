@@ -52,6 +52,9 @@ jobs:
       - name: "[Proxmox Primary] Subnet Router"
         run: ansible-playbook playbooks/proxmox_primary/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
+      - name: "[Proxmox Primary] Nextcloud"
+        run: ansible-playbook playbooks/proxmox_primary/nextcloud.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+
       - name: "[Proxmox Secondary] Proxmox2"
         run: ansible-playbook playbooks/proxmox_secondary/proxmox2.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
