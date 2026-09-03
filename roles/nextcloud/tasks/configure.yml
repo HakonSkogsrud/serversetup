@@ -104,6 +104,27 @@
   delay: 5
   until: nextcloud_eurooffice_health.content | trim == 'true'
 
+- name: Wait for Nextcloud through the internal EuroOffice proxy
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - exec
+      - --no-TTY
+      - eurooffice
+      - curl
+      - --fail
+      - --silent
+      - --show-error
+      - http://nextcloud-internal/status.php
+  args:
+    chdir: "{{ nextcloud_project_dir }}"
+  register: nextcloud_internal_proxy_status
+  retries: 30
+  delay: 5
+  until: nextcloud_internal_proxy_status.rc == 0
+  changed_when: false
+
 - name: Verify the EuroOffice connector
   ansible.builtin.command:
     cmd: docker compose exec --user www-data --no-TTY app php occ eurooffice:documentserver --check
