@@ -38,10 +38,10 @@ proxmox:
   node: proxmox
 
 proxmox2:
-  ip: 10.0.0.33
+  ip: 10.0.0.87
   api_user: root@pam
   user: root
-  node: proxmox2
+  node: proxmox-backup
 
 virtiofs_tags:
   smb: smb
