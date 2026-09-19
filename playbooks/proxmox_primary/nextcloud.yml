@@ -87,6 +87,7 @@
     scheduled_reboot_timer_calendar: "Thu *-*-* 00:30:00"
     alloy_docker_installed: true
   roles:
+    - almalinux_vm_bootstrap
     - scheduled_update
     - scheduled_reboot
     - nextcloud

@@ -1,0 +1,68 @@
+---
+- name: Check whether initial AlmaLinux bootstrap is complete
+  ansible.builtin.stat:
+    path: "{{ almalinux_vm_bootstrap_marker }}"
+  register: almalinux_vm_bootstrap_marker_state
+  when: ansible_facts.get('distribution', '') == 'AlmaLinux'
+
+- name: Update and reboot a fresh AlmaLinux VM
+  when:
+    - ansible_facts.get('distribution', '') == 'AlmaLinux'
+    - not almalinux_vm_bootstrap_marker_state.stat.exists
+  block:
+    - name: Fully update AlmaLinux
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+
+    - name: Install complete AlmaLinux kernel module set
+      ansible.builtin.dnf:
+        name:
+          - kernel
+          - kernel-modules
+          - kernel-modules-extra
+        state: latest
+
+    - name: Reboot after initial AlmaLinux update
+      ansible.builtin.reboot:
+        msg: Rebooting after initial AlmaLinux VM bootstrap
+        reboot_timeout: 600
+
+    - name: Refresh facts after initial AlmaLinux reboot
+      ansible.builtin.setup:
+
+    - name: Find newest installed AlmaLinux kernel
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail &&
+          rpm -q kernel-core --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' |
+          sort -V | tail -n 1
+        executable: /bin/bash
+      register: almalinux_vm_bootstrap_newest_kernel
+      changed_when: false
+
+    - name: Verify AlmaLinux booted the newest installed kernel
+      ansible.builtin.assert:
+        that:
+          - almalinux_vm_bootstrap_newest_kernel.stdout | trim == ansible_facts['kernel']
+        fail_msg: >-
+          Running kernel {{ ansible_facts['kernel'] }} does not match newest installed
+          kernel {{ almalinux_vm_bootstrap_newest_kernel.stdout | trim }}.
+
+    - name: Create serversetup state directory
+      ansible.builtin.file:
+        path: "{{ almalinux_vm_bootstrap_state_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Record completed AlmaLinux bootstrap
+      ansible.builtin.copy:
+        dest: "{{ almalinux_vm_bootstrap_marker }}"
+        content: "{{ ansible_facts['kernel'] }}\n"
+        owner: root
+        group: root
+        mode: "0644"
+

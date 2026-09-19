@@ -37,9 +37,9 @@
   vars_files:
     - ../../secrets.yml
   roles:
+    - almalinux_vm_bootstrap
     - tailscale_subnet_router
     - tailscale_serve
     - scheduled_reboot
     - scheduled_update
     - alloy
-

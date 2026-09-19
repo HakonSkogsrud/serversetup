@@ -1,0 +1,4 @@
+---
+almalinux_vm_bootstrap_state_dir: /var/lib/serversetup
+almalinux_vm_bootstrap_marker: "{{ almalinux_vm_bootstrap_state_dir }}/almalinux-bootstrap-complete"
+

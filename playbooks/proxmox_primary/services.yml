@@ -90,6 +90,7 @@
     alloy_docker_installed: true
     scheduled_reboot_timer_calendar: "Sun *-*-* 01:00:00"
   roles:
+    - almalinux_vm_bootstrap
     - scheduled_update
     - scheduled_reboot
     - tailscale_static_route

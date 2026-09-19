@@ -26,6 +26,7 @@
   vars_files:
     - ../../secrets.yml
   roles:
+    - almalinux_vm_bootstrap
     - scheduled_update
     - scheduled_reboot
     - pihole_podman

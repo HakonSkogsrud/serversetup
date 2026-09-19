@@ -53,6 +53,8 @@
       tags: [always]
 
   roles:
+    - role: almalinux_vm_bootstrap
+      tags: [bootstrap]
     - role: samba
       tags: [samba]
     - role: scheduled_reboot

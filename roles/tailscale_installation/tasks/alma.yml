@@ -29,3 +29,19 @@
     name: tailscaled
     enabled: true
     state: started
+
+- name: Load Tailscale netfilter modules at boot
+  ansible.builtin.template:
+    src: tailscale-netfilter.conf.j2
+    dest: /etc/modules-load.d/tailscale-netfilter.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Load Tailscale netfilter modules now
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - xt_mark
+    - iptable_filter
