@@ -4,6 +4,8 @@
     path: "/tmp/grafana-backup.tar.gz"
   delegate_to: localhost
   become: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
   register: grafana_controller_backup
 
 - name: Check if backup file exists on storage
