@@ -1,9 +1,14 @@
 ---
 - name: Install kernel modules required by Docker networking on RedHat
   ansible.builtin.package:
-    name: "kernel-modules-extra-{{ ansible_facts['kernel'] }}"
+    name: "kernel-modules-extra-{{ ansible_facts.get('kernel', ansible_kernel | default('')) }}"
     state: present
-  when: ansible_facts['os_family'] == 'RedHat'
+  when:
+    - ansible_facts.get('os_family', ansible_os_family | default('')) == 'RedHat'
+    # Backup-only plays intentionally do not gather facts. Their existing
+    # Docker installation is sufficient; the subsequent configuration play
+    # gathers facts and installs the matching kernel module package.
+    - ansible_facts.get('kernel', ansible_kernel | default('')) | length > 0
 
 - name: Load Docker networking kernel modules at boot on RedHat
   ansible.builtin.template:
@@ -12,7 +17,7 @@
     owner: root
     group: root
     mode: "0644"
-  when: ansible_facts['os_family'] == 'RedHat'
+  when: ansible_facts.get('os_family', ansible_os_family | default('')) == 'RedHat'
 
 - name: Ensure prerequisites are installed (yum-utils)
   ansible.builtin.dnf:
