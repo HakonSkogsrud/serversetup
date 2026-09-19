@@ -1,5 +1,5 @@
 ---
-- name: Create samba VM
+- name: Create GitHub runner VM
   hosts: proxmox
   become: false
   vars_files:
@@ -21,13 +21,6 @@
   become: true
   vars_files:
     - ../../secrets.yml
-  vars:
-    gitlab_runner_url: "http://{{ vms.github_runner.ip }}"
-    gitlab_runner_executor: "docker"
-    gitlab_runner_tags:
-      - docker
-      - linux
-      - ansible
   roles:
     - firewall
     - github_runner

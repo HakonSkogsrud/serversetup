@@ -10,7 +10,8 @@
       - /dev/disk/by-id/ata-CT4000BX500SSD1_2518E9BB75D7
     disk_health_push_url: "http://10.0.0.44:3001/api/push/fsHAYxJMTezNZJ9shAUyuiOgGHPXjp7u?status=up&msg=OK&ping="
   roles:
-    - create_template_vm
+    - role: create_template_vm
+      tags: [template]
     - sanoid
     - syncoid
     - scheduled_update

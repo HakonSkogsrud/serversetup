@@ -3,6 +3,7 @@
 create_template_vm_storage: local-lvm
 create_template_vm_template_search_domain: "local"
 create_template_vm_alma10_arch: x86_64
+create_template_vm_alma10_vmid: "9001"
 create_template_vm_alma10_template_name: "alma-10-cloud-template-automated"
 
 create_template_vm_templates:
@@ -15,7 +16,7 @@ create_template_vm_templates:
     # Preserve the existing AlmaLinux 9 cache when upgrading from the single-template setup.
     checksum_cache_file: "{{ create_template_vm_image_download_path }}/.alma_checksum_cache"
   - version: "10"
-    vmid: "9001"
+    vmid: "{{ create_template_vm_alma10_vmid }}"
     name: "{{ create_template_vm_alma10_template_name }}"
     image_url: "https://raw.repo.almalinux.org/almalinux/10/cloud/{{ create_template_vm_alma10_arch }}/images/AlmaLinux-10-GenericCloud-latest.{{ create_template_vm_alma10_arch }}.qcow2"
     image_filename: "AlmaLinux-10-GenericCloud-latest.{{ create_template_vm_alma10_arch }}.qcow2"
@@ -26,5 +27,9 @@ create_template_vm_templates:
 create_template_vm_image_download_path: "/var/lib/vz/template/cache"
 
 create_template_vm_script_name: "create_template_vm"
+
+# Preserve the last working template when a new upstream image appears. Set
+# this explicitly only for a controlled replacement until atomic swaps exist.
+create_template_vm_allow_destructive_replace: false
 
 create_template_vm_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/NXqJQyHSMTHrQKWCxE6297xZIrLNkt5h?status=up&msg=OK&ping="

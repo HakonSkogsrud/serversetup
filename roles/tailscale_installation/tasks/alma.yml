@@ -1,11 +1,19 @@
 ---
+- name: Check whether Tailscale is installed
+  ansible.builtin.command: rpm -q tailscale
+  register: tailscale_installation_package
+  changed_when: false
+  failed_when: false
+
 - name: Download Tailscale install script
   ansible.builtin.get_url:
     url: https://tailscale.com/install.sh
     dest: /tmp/install.sh
     mode: "0755"
+  when: tailscale_installation_package.rc != 0
 
 - name: Run Tailscale install script
+  when: tailscale_installation_package.rc != 0
   block:
     - name: Run Tailscale install script
       ansible.builtin.command: bash -o pipefail /tmp/install.sh

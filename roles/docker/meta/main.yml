@@ -1,0 +1,5 @@
+---
+# Docker detects firewalld at startup and creates its docker zone and
+# forwarding policy. Ensure firewalld is running first on fresh guests.
+dependencies:
+  - role: firewall

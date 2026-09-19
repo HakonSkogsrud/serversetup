@@ -1,0 +1,21 @@
+---
+# AlmaLinux 10's default x86_64 image has the x86-64-v3 baseline. Keep this
+# selection host-specific so the older secondary MacBook can use x86_64_v2.
+create_template_vm_alma10_arch: x86_64
+create_template_vm_alma10_vmid: "9001"
+create_template_vm_alma10_template_name: alma-10-v3-cloud-template-automated
+
+# Manage only the AlmaLinux 10 v3 template on the primary host. The old
+# AlmaLinux 9 template remains untouched during the migration pilot.
+create_template_vm_templates:
+  - version: "10"
+    vmid: "{{ create_template_vm_alma10_vmid }}"
+    name: "{{ create_template_vm_alma10_template_name }}"
+    image_url: "https://raw.repo.almalinux.org/almalinux/10/cloud/{{ create_template_vm_alma10_arch }}/images/AlmaLinux-10-GenericCloud-latest.{{ create_template_vm_alma10_arch }}.qcow2"
+    image_filename: "AlmaLinux-10-GenericCloud-latest.{{ create_template_vm_alma10_arch }}.qcow2"
+    checksum_url: "https://raw.repo.almalinux.org/almalinux/10/cloud/{{ create_template_vm_alma10_arch }}/images/CHECKSUM"
+    # Preserve the cache used when the primary AlmaLinux 10 template was first built.
+    checksum_cache_file: "{{ create_template_vm_image_download_path }}/.alma_10_checksum_cache"
+
+# Primary VM deployments clone the primary AlmaLinux 10 v3 template.
+create_vm_template_vmid: 9001

@@ -14,6 +14,7 @@ VM_PASSWORD="{{ vm_password }}"
 GATEWAY="{{ gateway }}"
 STORAGE="{{ create_template_vm_storage }}"
 SEARCH_DOMAIN="{{ create_template_vm_template_search_domain }}"
+ALLOW_DESTRUCTIVE_REPLACE="{{ create_template_vm_allow_destructive_replace | bool | lower }}"
 
 IMAGE_DOWNLOAD_PATH="{{ create_template_vm_image_download_path }}"
 
@@ -174,9 +175,15 @@ update_template() {
 
     local cached_checksum
     cached_checksum=$(get_cached_checksum)
-    if [[ "$remote_checksum" == "$cached_checksum" ]]; then
+    if [[ "$remote_checksum" == "$cached_checksum" ]] && qm status "$VMID" &>/dev/null; then
         logger -t "$SCRIPT_NAME" -p user.info "AlmaLinux ${version} checksum matches - no update needed"
         return 0
+    fi
+
+    if qm status "$VMID" &>/dev/null && [[ "$ALLOW_DESTRUCTIVE_REPLACE" != "true" ]]; then
+        logger -t "$SCRIPT_NAME" -p user.err \
+            "AlmaLinux ${version} changed, but preserving existing template VM ${VMID}; controlled replacement required"
+        return 1
     fi
 
     logger -t "$SCRIPT_NAME" -p user.info "AlmaLinux ${version} checksum changed - updating template"

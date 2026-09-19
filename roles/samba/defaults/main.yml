@@ -1,0 +1,4 @@
+---
+# Production Samba uses the Proxmox VirtioFS share. Isolated validation VMs
+# may disable it and exercise Samba against an empty local directory.
+samba_mount_virtiofs: true

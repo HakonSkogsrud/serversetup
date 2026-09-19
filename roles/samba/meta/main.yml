@@ -1,3 +1,4 @@
 dependencies:
   - { role: firewall }
-  - { role: mount_virtiofs }
+  - role: mount_virtiofs
+    when: samba_mount_virtiofs | bool
