@@ -1,0 +1,13 @@
+---
+pihole_podman_base_dir: "/home/{{ template.user }}/pihole"
+pihole_podman_compose_file: "{{ pihole_podman_base_dir }}/docker-compose.yml"
+pihole_podman_data_dir: "{{ pihole_podman_base_dir }}/etc-pihole"
+pihole_podman_config_file: "{{ pihole_podman_data_dir }}/pihole.toml"
+pihole_podman_backup_dir: "/mnt/storage/smb/pihole_docker"
+pihole_podman_image: "docker.io/pihole/pihole:2026.04.0"
+pihole_podman_interface: eth0
+pihole_podman_ipv4_address: "{{ ansible_facts[pihole_podman_interface]['ipv4']['address'] }}"
+pihole_podman_timezone: Europe/Oslo
+pihole_podman_upstream_dns_1: 9.9.9.9
+pihole_podman_upstream_dns_2: 149.112.112.112
+pihole_podman_password: "{{ pihole_password }}"

@@ -1,0 +1,41 @@
+---
+- name: Clear an earlier MacBook Pro governor fallback
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+    - "{{ macbook_pro_cpu_governor_fallback_unit }}.timer"
+    - "{{ macbook_pro_cpu_governor_fallback_unit }}.service"
+  failed_when: false
+  changed_when: false
+
+- name: Schedule MacBook Pro powersave fallback
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemd-run
+      - --unit={{ macbook_pro_cpu_governor_fallback_unit }}
+      - --on-active={{ macbook_pro_cpu_governor_fallback_delay }}
+      - --collect
+      - /bin/sh
+      - -c
+      - 'for policy in /sys/devices/system/cpu/cpufreq/policy*; do echo {{ macbook_pro_cpu_governor_idle }} > "$policy/scaling_governor"; done'
+  changed_when: true
+
+- name: Set MacBook Pro to deployment performance mode
+  become: true
+  ansible.builtin.shell: |
+    set -eu
+    found=false
+    for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+      [ -f "$policy/scaling_governor" ] || continue
+      grep -qw {{ macbook_pro_cpu_governor_deployment | quote }} "$policy/scaling_available_governors"
+      echo {{ macbook_pro_cpu_governor_deployment | quote }} > "$policy/scaling_governor"
+      test "$(cat "$policy/scaling_governor")" = {{ macbook_pro_cpu_governor_deployment | quote }}
+      found=true
+    done
+    "$found"
+  args:
+    executable: /bin/sh
+  changed_when: true

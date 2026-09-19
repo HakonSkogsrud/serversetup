@@ -1,0 +1,6 @@
+---
+- name: Restart Pi-hole with Podman
+  ansible.builtin.command: podman-compose -f "{{ pihole_podman_compose_file }}" up -d
+  args:
+    chdir: "{{ pihole_podman_base_dir }}"
+  become: true

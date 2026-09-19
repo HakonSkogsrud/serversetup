@@ -74,7 +74,7 @@
 - name: Clone VM and Apply Network Config (CLI)
   ansible.builtin.shell: |
     # Clone the VM
-    qm clone {{ template.vmid }} {{ create_vm_newid }} --name {{ create_vm_name }} --full 1
+    qm clone {{ create_vm_template_vmid }} {{ create_vm_newid }} --name {{ create_vm_name }} --full 1
 
     # Apply IP config immediately (Fixes the "No route to host" race condition)
     qm set {{ create_vm_newid }} --ipconfig0 "ip={{ create_vm_ipaddr }}/24,gw={{ create_vm_gateway }}"

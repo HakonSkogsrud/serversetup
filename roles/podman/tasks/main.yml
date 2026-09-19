@@ -1,0 +1,16 @@
+---
+- name: Install EPEL release metadata
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
+- name: Install Podman and Compose provider
+  ansible.builtin.dnf:
+    name: "{{ podman_packages }}"
+    state: present
+
+- name: Verify Podman runtime
+  ansible.builtin.command: >-
+    podman info --format '{{ '{{' }}.Host.OCIRuntime.Name{{ '}}' }}'
+  register: podman_runtime
+  changed_when: false

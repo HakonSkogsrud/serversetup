@@ -1,0 +1,17 @@
+services:
+  pihole:
+    image: "{{ pihole_podman_image }}"
+    container_name: pihole
+    network_mode: host
+    environment:
+      TZ: "{{ pihole_podman_timezone }}"
+      FTLCONF_webserver_api_password: "{{ pihole_podman_password }}"
+      FTLCONF_LOCAL_IPV4: "{{ pihole_podman_ipv4_address }}"
+      FTLCONF_dns_upstreams: "{{ pihole_podman_upstream_dns_1 }};{{ pihole_podman_upstream_dns_2 }}"
+      FTLCONF_dns_interface: "{{ pihole_podman_interface }}"
+      FTLCONF_dns_listeningMode: single
+    volumes:
+      - ./etc-pihole:/etc/pihole:Z
+    restart: unless-stopped
+    cap_add:
+      - SYS_NICE

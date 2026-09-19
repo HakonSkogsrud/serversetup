@@ -1,0 +1,5 @@
+---
+# Hosts may override this to select a different source template. The primary
+# keeps the existing AlmaLinux 9 template from group_vars; proxmox2 selects
+# its AlmaLinux 10 x86_64_v2 template in host_vars/proxmox2.yml.
+create_vm_template_vmid: "{{ template.vmid }}"

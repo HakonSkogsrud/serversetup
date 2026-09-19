@@ -1,0 +1,8 @@
+---
+# The secondary MacBook supports the AlmaLinux 10 x86_64_v2 image. The
+# primary Proxmox host keeps the default x86_64/v3 AlmaLinux 10 template.
+create_template_vm_alma10_arch: x86_64_v2
+create_template_vm_alma10_template_name: alma-10-v2-cloud-template-automated
+
+# Secondary VM deployments clone the secondary-only AlmaLinux 10 v2 template.
+create_vm_template_vmid: 9001

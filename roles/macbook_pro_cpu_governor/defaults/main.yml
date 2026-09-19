@@ -1,0 +1,7 @@
+---
+# The secondary Proxmox host is a MacBook Pro. Use full CPU performance only
+# during deployment, then return it to its normal low-power mode.
+macbook_pro_cpu_governor_deployment: performance
+macbook_pro_cpu_governor_idle: powersave
+macbook_pro_cpu_governor_fallback_delay: 45m
+macbook_pro_cpu_governor_fallback_unit: macbook-pro-cpu-governor-restore

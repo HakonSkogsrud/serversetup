@@ -8,9 +8,20 @@
       - /dev/disk/by-id/ata-Samsung_SSD_850_EVO_500GB_S21JNXAG645083Y
     disk_health_push_url: "http://10.0.0.44:3001/api/push/O6SrgG7iLoNi3JeNoWIbp8XDVHR9g6jY?status=up&msg=OK&ping="
   roles:
-    - create_template_vm
+    - role: macbook_pro_cpu_governor
+      tags: [always]
+    - role: create_template_vm
+      tags: [template]
     - scheduled_update
     - role: disk_health
       tags:
         - disk_health
     - alloy
+  post_tasks:
+    - name: Restore MacBook Pro powersave mode
+      ansible.builtin.include_role:
+        name: macbook_pro_cpu_governor
+        tasks_from: restore
+        apply:
+          tags: [always]
+      tags: [always]

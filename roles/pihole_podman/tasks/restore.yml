@@ -1,0 +1,39 @@
+---
+- name: Check if Pi-hole backup directory exists
+  ansible.builtin.stat:
+    path: "{{ pihole_podman_backup_dir }}"
+  register: pihole_podman_backup_dir_exists
+
+- name: Find newest Pi-hole backup
+  ansible.builtin.shell:
+    cmd: "ls -t pihole_*.tar.gz 2>/dev/null | head -1"
+    chdir: "{{ pihole_podman_backup_dir }}"
+  register: pihole_podman_newest_backup
+  failed_when: false
+  when: pihole_podman_backup_dir_exists.stat.exists
+
+- name: Restore Pi-hole data
+  when:
+    - pihole_podman_backup_dir_exists.stat.exists
+    - pihole_podman_newest_backup.stdout | length > 0
+  block:
+    - name: Ensure Pi-hole base directory exists
+      ansible.builtin.file:
+        path: "{{ pihole_podman_base_dir }}"
+        state: directory
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"
+        mode: "0755"
+
+    - name: Remove existing Pi-hole data before restore
+      ansible.builtin.file:
+        path: "{{ pihole_podman_data_dir }}"
+        state: absent
+
+    - name: Extract Pi-hole backup
+      ansible.builtin.unarchive:
+        src: "{{ pihole_podman_backup_dir }}/{{ pihole_podman_newest_backup.stdout }}"
+        dest: "{{ pihole_podman_base_dir }}"
+        remote_src: true
+        owner: "{{ template.user }}"
+        group: "{{ template.user }}"

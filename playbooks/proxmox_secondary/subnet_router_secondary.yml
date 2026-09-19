@@ -5,6 +5,7 @@
   vars_files:
     - ../../secrets.yml
   roles:
+    - macbook_pro_cpu_governor
     - role: create_vm
       vars:
         create_vm_name: subnet-router-secondary
@@ -46,3 +47,12 @@
     - scheduled_reboot
     - scheduled_update
     - alloy
+
+- name: Restore secondary host power-saving mode
+  hosts: proxmox2
+  become: true
+  tasks:
+    - name: Restore secondary host power-saving mode
+      ansible.builtin.include_role:
+        name: macbook_pro_cpu_governor
+        tasks_from: restore

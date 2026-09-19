@@ -68,7 +68,6 @@
   tasks:
     - name: Include verification tasks
       ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
-
 - name: Verify systemd units on immich
   hosts: immich
   become: true
@@ -194,7 +193,7 @@
   vars:
     expected_running_services:
       - alloy.service
-      - docker.service
+      - firewalld.service
     expected_enabled_services: []
     expected_timers:
       - scheduled-update.timer
@@ -203,6 +202,11 @@
   tasks:
     - name: Include verification tasks
       ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"
+    - name: Verify the Podman Pi-hole container is running
+      ansible.builtin.command: podman ps --filter name=pihole --filter status=running --format "{{ '{{' }}.Names{{ '}}' }}"
+      register: pihole_podman_status
+      changed_when: false
+      failed_when: "'pihole' not in pihole_podman_status.stdout_lines"
 
 - name: Verify systemd units on backupserver
   hosts: backupserver
