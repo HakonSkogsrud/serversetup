@@ -44,7 +44,7 @@ jobs:
         run: ansible-playbook playbooks/proxmox_primary/samba.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: "[Proxmox Primary] Subnet Router"
-        run: ansible-playbook playbooks/proxmox_primary/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+        run: ansible-playbook playbooks/proxmox_primary/subnet_router.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: "[Proxmox Primary] Services"
         run: ansible-playbook playbooks/proxmox_primary/services.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
@@ -62,7 +62,7 @@ jobs:
         run: ansible-playbook playbooks/proxmox_secondary/pihole_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
 
       - name: "[Proxmox Secondary] Subnet Router Secondary"
-        run: ansible-playbook playbooks/proxmox_secondary/subnet_router_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") -e "force_recreate=true"
+        run: ansible-playbook playbooks/proxmox_secondary/subnet_router_secondary.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
 
       - name: "[Backupserver] Backupserver"
         run: ansible-playbook playbooks/backupserver/backupserver.yml --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
