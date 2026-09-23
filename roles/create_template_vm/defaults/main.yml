@@ -7,14 +7,6 @@ create_template_vm_alma10_vmid: "9001"
 create_template_vm_alma10_template_name: "alma-10-cloud-template-automated"
 
 create_template_vm_templates:
-  - version: "9"
-    vmid: "{{ template.vmid }}"
-    name: "{{ template.name }}"
-    image_url: "https://raw.repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
-    image_filename: "AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
-    checksum_url: "https://raw.repo.almalinux.org/almalinux/9/cloud/x86_64/images/CHECKSUM"
-    # Preserve the existing AlmaLinux 9 cache when upgrading from the single-template setup.
-    checksum_cache_file: "{{ create_template_vm_image_download_path }}/.alma_checksum_cache"
   - version: "10"
     vmid: "{{ create_template_vm_alma10_vmid }}"
     name: "{{ create_template_vm_alma10_template_name }}"

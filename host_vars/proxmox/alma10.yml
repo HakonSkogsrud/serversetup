@@ -5,8 +5,7 @@ create_template_vm_alma10_arch: x86_64
 create_template_vm_alma10_vmid: "9001"
 create_template_vm_alma10_template_name: alma-10-v3-cloud-template-automated
 
-# Manage only the AlmaLinux 10 v3 template on the primary host. The old
-# AlmaLinux 9 template remains untouched during the migration pilot.
+# Manage the AlmaLinux 10 v3 template on the primary host.
 create_template_vm_templates:
   - version: "10"
     vmid: "{{ create_template_vm_alma10_vmid }}"

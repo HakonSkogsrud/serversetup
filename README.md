@@ -113,7 +113,7 @@ zpool export lacierugged
 |------|---|------------|-------------|
 | [caddy](roles/caddy/) | <img src="https://img.shields.io/badge/Caddy-00ADD8?style=flat&logo=caddy&logoColor=white" alt="Caddy" height="20"/> | Docker | Reverse proxy with TLS termination and Caddyfile-based routing |
 | [couchdb](roles/couchdb/) | <img src="https://img.shields.io/badge/CouchDB-E42528?style=flat&logo=apachecouchdb&logoColor=white" alt="CouchDB" height="20"/> | Docker | NoSQL document database, used as Obsidian LiveSync backend |
-| [create_template_vm](roles/create_template_vm/) | <img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="20"/> | Proxmox API | Creates and updates AlmaLinux 9 and 10 golden image template VMs on Proxmox |
+| [create_template_vm](roles/create_template_vm/) | <img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="20"/> | Proxmox API | Creates and updates AlmaLinux 10 golden image template VMs on Proxmox |
 | [create_vm](roles/create_vm/) | <img src="https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white" alt="Proxmox" height="20"/> | Proxmox API | Clones and provisions VMs from the template with network config |
 | [docker](roles/docker/) | <img src="https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker" height="20"/> | DNF | Installs Docker CE, CLI, containerd, and docker-compose plugin |
 | [docker_auto_update](roles/docker_auto_update/) | <img src="https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker" height="20"/> | Docker + systemd | Weekly systemd timer that pulls and restarts updated Docker images |

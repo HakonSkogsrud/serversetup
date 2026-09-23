@@ -1,5 +1,3 @@
 ---
-# Hosts may override this to select a different source template. The primary
-# keeps the existing AlmaLinux 9 template from group_vars unless a Proxmox
-# host selects its AlmaLinux 10 template in host_vars.
+# Hosts may override this to select an architecture-specific AlmaLinux 10 template.
 create_vm_template_vmid: "{{ template.vmid }}"
