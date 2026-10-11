@@ -13,6 +13,7 @@
     - role: create_template_vm
       tags: [template]
     - scheduled_update
+    - scheduled_reboot
     - role: disk_health
       tags:
         - disk_health

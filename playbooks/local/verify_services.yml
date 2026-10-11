@@ -40,6 +40,7 @@
     expected_timers:
       - create-template-vm.timer
       - scheduled-update.timer
+      - scheduled-reboot.timer
   tasks:
     - name: Include verification tasks
       ansible.builtin.include_tasks: "{{ playbook_dir }}/verify_tasks.yml"

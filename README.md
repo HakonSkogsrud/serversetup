@@ -169,6 +169,7 @@ zpool export lacierugged
 | Timer | Schedule | Host(s) |
 |-------|----------|---------|
 | `scheduled-update.timer` | Daily | All hosts |
+| `scheduled-reboot.timer` | Daily 04:00 (server local time) | proxmox2 |
 | `scheduled-reboot.timer` | Sun 01:00 | services |
 | `scheduled-reboot.timer` | Thu 00:00 | immich, samba, github-runner, subnet-router, subnet-router-secondary, pihole-secondary, backupserver |
 | `create-template-vm.timer` | Sun 03:00 | proxmox, proxmox2 |

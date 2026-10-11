@@ -1,4 +1,7 @@
 ---
+# Reboot nightly at 04:00 in the server's local timezone.
+scheduled_reboot_timer_calendar: "*-*-* 04:00:00"
+
 # The secondary MacBook supports the AlmaLinux 10 x86_64_v2 image. The
 # primary Proxmox host selects the standard x86_64 AlmaLinux 10 template separately.
 create_template_vm_alma10_arch: x86_64_v2
