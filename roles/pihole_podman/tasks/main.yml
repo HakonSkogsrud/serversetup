@@ -54,6 +54,13 @@
   become: true
   changed_when: true
 
+- name: Enable Podman container recovery after reboot
+  ansible.builtin.systemd:
+    name: podman-restart.service
+    enabled: true
+    state: started
+  become: true
+
 - name: Configure firewalld for Pi-hole
   ansible.posix.firewalld:
     port: "{{ item }}"
