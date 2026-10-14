@@ -379,3 +379,17 @@ a monitor delivery failure is warned separately without undoing a published imag
 Ansible apply succeeded (3 changes); private monitor file installed at mode 0600.
 Kuma accepted the initial heartbeat for the completed successful release.
 Nightly user timer enabled; schedule is 03:00 Europe/Oslo with up to 10 minutes jitter.
+
+## Five-build GHCR retention
+
+User requested five retained builds. Cleanup now runs after successful
+publication, keeps five managed versions including stable, and protects custom
+recovery tags/untagged manifests. Sorting uses dated release tags. The existing
+PAT's delete:packages scope was added by the user and verified active remotely.
+Registry cleanup has a five-minute timeout; failure warns without reverting a
+release or suppressing its Kuma heartbeat.
+
+Builder storage audit: 149 GiB filesystem, 53 GiB used, 96 GiB free before cleanup.
+Two local pipeline references are retained; dangling intermediate image pruning
+was added to recovery and successful cleanup. Prototype tags and the root-owned
+LAN registry remain untouched.

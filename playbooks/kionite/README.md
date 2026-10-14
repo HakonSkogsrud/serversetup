@@ -98,3 +98,17 @@ The complete pipeline passed on 2026-10-14. Its basic gate checks boot, DNS,
 KWin/Plasma startup and Klassy/Smooth Swipe files. Build subprocesses use umask
 022 so guest services can traverse image directories; private pipeline state
 and credentials retain restrictive permissions.
+
+## Image retention
+
+GHCR retains five managed published builds, counting the image behind `stable`.
+Older managed versions are deleted after successful publication; custom recovery
+tags and untagged manifests are protected. The publishing PAT requires
+`delete:packages` in addition to its existing publishing permission. The scope
+was verified active on the builder; changing scopes on the existing PAT required
+no new token or Vault update.
+
+The builder keeps two local pipeline image references and prunes untagged
+intermediate layers during recovery and successful cleanup. Test/base disks are
+removed and logs/workspaces expire after 30 days. Legacy tagged prototype images
+and the temporary root-owned LAN registry are preserved.
