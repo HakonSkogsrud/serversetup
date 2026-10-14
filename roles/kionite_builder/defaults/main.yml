@@ -1,0 +1,42 @@
+---
+kionite_builder_user: kionite-build
+kionite_builder_home: /var/lib/kionite-builder
+kionite_builder_source: https://github.com/HakonSkogsrud/kionite.git
+kionite_builder_revision: main
+kionite_builder_subid_start: 2000000
+kionite_builder_subid_count: 65536
+kionite_builder_packages:
+  - podman
+  - skopeo
+  - git
+  - python3
+  - tar
+  - acl
+  - cloud-utils-growpart
+  - bcvk
+  - qemu-kvm
+  - qemu-img
+  - virtiofsd
+  - openssh-clients
+  - fuse-overlayfs
+  - util-linux
+  - binutils
+  - kernel-tools
+  - libvirt-daemon-kvm
+  - libvirt-client
+  - edk2-ovmf
+  - swtpm
+# EPEL 0.10 cannot bootstrap SSH for this Kinoite installer. Pin upstream 0.21.
+kionite_builder_bcvk_artifact: ghcr.io/bootc-dev/bcvk-binary@sha256:ff43faee13fab34f90fd382e1c03a9f040b6ce3a6b373c1733f91b684964e212
+kionite_builder_bcvk_manifest_sha: ff43faee13fab34f90fd382e1c03a9f040b6ce3a6b373c1733f91b684964e212
+kionite_builder_bcvk_layer_sha: f0909af314131b83ef5af86c9979eef16fd57a1bd4509a972331f196fce9cf5a
+kionite_builder_bcvk_version: 'bcvk 0.21.0'
+kionite_builder_ghcr_auth_enabled: false
+kionite_builder_ghcr_username: HakonSkogsrud
+kionite_builder_ghcr_secret_key: atomic-homelab-builder
+kionite_builder_secrets_file: '{{ inventory_dir }}/secrets.yml'
+kionite_builder_registry_repo: ghcr.io/hakonskogsrud/kionite
+kionite_builder_schedule: '*-*-* 03:00:00 Europe/Oslo'
+kionite_builder_timer_enabled: false
+kionite_builder_monitor_enabled: false
+kionite_builder_monitor_secret_key: atomic_homelab_builder_success_push_url

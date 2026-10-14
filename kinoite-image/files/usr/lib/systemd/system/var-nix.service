@@ -1,0 +1,11 @@
+[Unit]
+Description=Create persistent backing directory for the Nix store
+DefaultDependencies=no
+After=systemd-remount-fs.service
+RequiresMountsFor=/var
+Before=nix.mount local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/install -d -m 0755 -o root -g root /var/nix
+RemainAfterExit=yes

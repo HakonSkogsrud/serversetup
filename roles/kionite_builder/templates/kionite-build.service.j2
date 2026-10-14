@@ -1,0 +1,17 @@
+[Unit]
+Description=Build, smoke-test and publish Kionite
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ kionite_builder_home }}/source
+Environment=XDG_RUNTIME_DIR=/run/user/{{ ansible_facts.getent_passwd[kionite_builder_user][1] }}
+Environment=BCVK_BIN=/usr/local/bin/bcvk
+Environment=REGISTRY_REPO={{ kionite_builder_registry_repo }}
+Environment=REGISTRY_AUTH_FILE={{ kionite_builder_home }}/.config/containers/auth.json
+Environment=PUBLISH=1
+EnvironmentFile=-{{ kionite_builder_home }}/.config/kionite-monitor.env
+ExecStart=/usr/bin/bash {{ kionite_builder_home }}/source/scripts/pipeline.sh
+TimeoutStartSec=3h
+TimeoutStopSec=2min
+UMask=0077
+SuccessExitStatus=75

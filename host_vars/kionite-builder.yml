@@ -1,0 +1,5 @@
+---
+kionite_builder_ghcr_auth_enabled: true
+kionite_builder_ghcr_secret_key: atomic-homelab-builder
+kionite_builder_monitor_enabled: true
+kionite_builder_timer_enabled: true

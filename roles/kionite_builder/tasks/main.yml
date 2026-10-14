@@ -1,0 +1,314 @@
+---
+- name: Require AlmaLinux 10 builder
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == 'AlmaLinux'
+      - ansible_facts.distribution_major_version == '10'
+      - ansible_facts.architecture == 'x86_64'
+
+- name: Install EPEL repository
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
+- name: Enable CRB for EPEL dependencies
+  community.general.ini_file:
+    path: /etc/yum.repos.d/almalinux-crb.repo
+    section: crb
+    option: enabled
+    value: '1'
+    mode: '0644'
+
+- name: Install build and virtualization tools
+  ansible.builtin.dnf:
+    name: '{{ kionite_builder_packages }}'
+    state: present
+    update_cache: true
+
+- name: Create versioned bcvk artifact cache
+  ansible.builtin.file:
+    path: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Download pinned upstream bcvk artifact
+  ansible.builtin.command:
+    argv:
+      - skopeo
+      - copy
+      - 'docker://{{ kionite_builder_bcvk_artifact }}'
+      - 'dir:/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}'
+    creates: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}/manifest.json'
+
+- name: Verify cached artifact manifest
+  ansible.builtin.stat:
+    path: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}/manifest.json'
+    checksum_algorithm: sha256
+  register: kionite_builder_bcvk_manifest
+
+- name: Require pinned artifact digest
+  ansible.builtin.assert:
+    that: kionite_builder_bcvk_manifest.stat.checksum == kionite_builder_bcvk_manifest_sha
+
+- name: Extract pinned bcvk binary
+  ansible.builtin.unarchive:
+    src: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}/{{ kionite_builder_bcvk_layer_sha }}'
+    dest: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}'
+    remote_src: true
+    creates: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}/bcvk-x86_64-unknown-linux-gnu'
+
+- name: Install pinned bcvk binary for explicit pipeline use
+  ansible.builtin.copy:
+    src: '/var/cache/kionite-bcvk/{{ kionite_builder_bcvk_manifest_sha }}/bcvk-x86_64-unknown-linux-gnu'
+    dest: /usr/local/bin/bcvk
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Verify pinned bcvk version
+  ansible.builtin.command:
+    argv: [/usr/local/bin/bcvk, --version]
+  register: kionite_builder_bcvk
+  changed_when: false
+  failed_when: kionite_builder_bcvk.stdout | trim != kionite_builder_bcvk_version
+
+- name: Create dedicated build account
+  ansible.builtin.user:
+    name: '{{ kionite_builder_user }}'
+    home: '{{ kionite_builder_home }}'
+    create_home: true
+    shell: /bin/bash
+    groups: kvm
+    append: true
+    password_lock: true
+
+- name: Validate subordinate ID allocation against other accounts
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - -c
+      - |
+        import pathlib, sys
+        user, start, count = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+        for path in ('/etc/subuid', '/etc/subgid'):
+            for line in pathlib.Path(path).read_text().splitlines():
+                name, offset, length = line.split(':')
+                offset, length = int(offset), int(length)
+                if name != user and max(start, offset) < min(start+count, offset+length):
+                    raise SystemExit(f'{path}: proposed range overlaps {name}')
+      - '{{ kionite_builder_user }}'
+      - '{{ kionite_builder_subid_start | string }}'
+      - '{{ kionite_builder_subid_count | string }}'
+  changed_when: false
+
+- name: Allocate subordinate user and group IDs
+  ansible.builtin.lineinfile:
+    path: '{{ item }}'
+    regexp: '^{{ kionite_builder_user }}:'
+    line: '{{ kionite_builder_user }}:{{ kionite_builder_subid_start }}:{{ kionite_builder_subid_count }}'
+  loop:
+    - /etc/subuid
+    - /etc/subgid
+
+- name: Create builder state directories
+  ansible.builtin.file:
+    path: '{{ kionite_builder_home }}/{{ item }}'
+    state: directory
+    owner: '{{ kionite_builder_user }}'
+    group: '{{ kionite_builder_user }}'
+    mode: '0700'
+  loop:
+    - logs
+    - tests
+    - releases
+    - .config/containers
+    - .config/libvirt
+    - .config/systemd/user
+
+- name: Avoid privileged core-limit changes in session QEMU
+  ansible.builtin.copy:
+    dest: '{{ kionite_builder_home }}/.config/libvirt/qemu.conf'
+    content: "# Rootless session daemon inherits a restricted hard core limit.\nmax_core = 0\n"
+    owner: '{{ kionite_builder_user }}'
+    group: '{{ kionite_builder_user }}'
+    mode: '0600'
+
+- name: Inspect lingering configuration
+  ansible.builtin.stat:
+    path: '/var/lib/systemd/linger/{{ kionite_builder_user }}'
+  register: kionite_builder_linger
+
+- name: Enable unattended user services
+  ansible.builtin.command:
+    argv: [loginctl, enable-linger, '{{ kionite_builder_user }}']
+  when: not kionite_builder_linger.stat.exists
+
+- name: Resolve builder account UID
+  ansible.builtin.getent:
+    database: passwd
+    key: '{{ kionite_builder_user }}'
+
+- name: Verify nested KVM availability
+  ansible.builtin.stat:
+    path: /dev/kvm
+  register: kionite_builder_kvm
+
+- name: Require KVM device
+  ansible.builtin.assert:
+    that: kionite_builder_kvm.stat.exists
+    fail_msg: Expose host CPU virtualization and enable nested KVM on Proxmox first.
+
+- name: Checkout image source as build user
+  become: true
+  become_user: '{{ kionite_builder_user }}'
+  ansible.builtin.git:
+    repo: '{{ kionite_builder_source }}'
+    dest: '{{ kionite_builder_home }}/source'
+    version: '{{ kionite_builder_revision }}'
+    update: false
+  environment:
+    HOME: '{{ kionite_builder_home }}'
+    GIT_TERMINAL_PROMPT: '0'
+
+- name: Verify rootless Podman as unattended build user
+  become: true
+  become_user: '{{ kionite_builder_user }}'
+  ansible.builtin.command:
+    argv: [podman, info, --format, json]
+  environment:
+    HOME: '{{ kionite_builder_home }}'
+    XDG_RUNTIME_DIR: '/run/user/{{ ansible_facts.getent_passwd[kionite_builder_user][1] }}'
+  register: kionite_builder_podman
+  changed_when: false
+
+- name: Require rootless execution and overlay storage
+  ansible.builtin.assert:
+    that:
+      - (kionite_builder_podman.stdout | from_json).host.security.rootless
+      - (kionite_builder_podman.stdout | from_json).store.graphDriverName == 'overlay'
+
+- name: Provision GHCR publisher authentication
+  when: kionite_builder_ghcr_auth_enabled | bool
+  block:
+    - name: Load Vault credentials in a namespace
+      ansible.builtin.include_vars:
+        file: '{{ kionite_builder_secrets_file }}'
+        name: kionite_builder_registry_secrets
+      no_log: true
+
+    - name: Require the named publishing credential
+      ansible.builtin.assert:
+        that:
+          - kionite_builder_registry_secrets[kionite_builder_ghcr_secret_key] is string
+          - kionite_builder_registry_secrets[kionite_builder_ghcr_secret_key] | length > 0
+      no_log: true
+
+    - name: Install persistent restricted GHCR auth file
+      ansible.builtin.copy:
+        dest: '{{ kionite_builder_home }}/.config/containers/auth.json'
+        content: >-
+          {{ {'auths': {'ghcr.io': {'auth':
+          (kionite_builder_ghcr_username ~ ':' ~
+          kionite_builder_registry_secrets[kionite_builder_ghcr_secret_key]) | b64encode}}} | to_json }}
+        owner: '{{ kionite_builder_user }}'
+        group: '{{ kionite_builder_user }}'
+        mode: '0600'
+      no_log: true
+      diff: false
+
+- name: Configure optional success monitor
+  when: kionite_builder_monitor_enabled | bool
+  block:
+    - name: Load monitor endpoint from Vault
+      ansible.builtin.include_vars:
+        file: '{{ kionite_builder_secrets_file }}'
+        name: kionite_builder_monitor_secrets
+      no_log: true
+
+    - name: Install restricted monitor environment file
+      ansible.builtin.copy:
+        dest: '{{ kionite_builder_home }}/.config/kionite-monitor.env'
+        content: 'KIONITE_SUCCESS_PUSH_URL={{ kionite_builder_monitor_secrets[kionite_builder_monitor_secret_key] | to_json }}'
+        owner: '{{ kionite_builder_user }}'
+        group: '{{ kionite_builder_user }}'
+        mode: '0600'
+      no_log: true
+      diff: false
+
+- name: Remove disabled monitor environment
+  ansible.builtin.file:
+    path: '{{ kionite_builder_home }}/.config/kionite-monitor.env'
+    state: absent
+  when: not (kionite_builder_monitor_enabled | bool)
+
+- name: Inspect former system-level timer
+  ansible.builtin.stat:
+    path: /etc/systemd/system/kionite-build.timer
+  register: kionite_builder_old_timer
+
+- name: Stop former system-level pipeline units
+  ansible.builtin.systemd_service:
+    name: '{{ item }}'
+    enabled: false
+    state: stopped
+  loop:
+    - kionite-build.timer
+    - kionite-build.service
+  when: kionite_builder_old_timer.stat.exists
+
+- name: Remove former system-level units
+  ansible.builtin.file:
+    path: '/etc/systemd/system/{{ item }}'
+    state: absent
+  loop:
+    - kionite-build.service
+    - kionite-build.timer
+  register: kionite_builder_removed_units
+
+- name: Reload system manager after removing former units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: kionite_builder_removed_units is changed
+
+- name: Install pipeline user service and nightly timer
+  ansible.builtin.template:
+    src: '{{ item }}.j2'
+    dest: '{{ kionite_builder_home }}/.config/systemd/user/{{ item }}'
+    owner: '{{ kionite_builder_user }}'
+    group: '{{ kionite_builder_user }}'
+    mode: '0644'
+  loop:
+    - kionite-build.service
+    - kionite-build.timer
+  notify: Reload builder user systemd units
+
+- name: Apply user unit changes before enabling timer
+  ansible.builtin.meta: flush_handlers
+
+- name: Require successful end-to-end publication before enabling automation
+  when: kionite_builder_timer_enabled | bool
+  block:
+    - name: Inspect last successful pipeline run
+      ansible.builtin.slurp:
+        src: '{{ kionite_builder_home }}/last-success.json'
+      register: kionite_builder_success
+
+    - name: Require a published successful run
+      ansible.builtin.assert:
+        that:
+          - (kionite_builder_success.content | b64decode | from_json).status == 'success'
+          - (kionite_builder_success.content | b64decode | from_json).published_reference is defined
+
+- name: Configure nightly timer
+  become: true
+  become_user: '{{ kionite_builder_user }}'
+  ansible.builtin.systemd_service:
+    scope: user
+    name: kionite-build.timer
+    enabled: '{{ kionite_builder_timer_enabled | bool }}'
+    state: "{{ 'started' if kionite_builder_timer_enabled | bool else 'stopped' }}"
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ ansible_facts.getent_passwd[kionite_builder_user][1] }}'

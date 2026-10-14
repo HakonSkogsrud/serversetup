@@ -3,6 +3,9 @@ all:
   children:
     vms:
       hosts:
+        kionite-builder:
+          ansible_host: 10.0.0.139
+          ansible_user: haaksk
         github-runner:
           ansible_user: "{{ template.user }}"
           ansible_host: "{{ vms.github_runner.ip }}"

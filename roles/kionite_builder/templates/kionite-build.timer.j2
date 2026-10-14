@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly Kionite build
+
+[Timer]
+OnCalendar={{ kionite_builder_schedule }}
+RandomizedDelaySec=10min
+Persistent=true
+Unit=kionite-build.service
+
+[Install]
+WantedBy=timers.target

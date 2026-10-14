@@ -1,0 +1,115 @@
+---
+# Adopt VM 103 by default. Cloning is explicit; deletion/recreation is prohibited.
+- name: Provision Kionite builder resources
+  hosts: proxmox
+  become: true
+  vars:
+    kionite_builder_vmid: 103
+    kionite_builder_vm_name: builder
+    kionite_builder_ip: 10.0.0.139
+    kionite_builder_create: false
+    kionite_builder_cores: 4
+    kionite_builder_memory: 12288
+    kionite_builder_disk_gib: 150
+  tasks:
+    - name: Reject destructive recreation
+      ansible.builtin.assert:
+        that: not (force_recreate | default(false) | bool)
+
+    - name: Inspect VM existence
+      ansible.builtin.command:
+        argv: [qm, status, '{{ kionite_builder_vmid | string }}']
+      register: builder_vm_status
+      changed_when: false
+      failed_when: false
+
+    - name: Require explicit creation for missing VM
+      ansible.builtin.assert:
+        that: builder_vm_status.rc == 0 or kionite_builder_create | bool
+        fail_msg: VM is missing; set kionite_builder_create=true to clone the configured template.
+
+    - name: Create missing VM using existing provisioning role
+      ansible.builtin.include_role:
+        name: create_vm
+      vars:
+        force_recreate: false
+        create_vm_name: '{{ kionite_builder_vm_name }}'
+        create_vm_newid: '{{ kionite_builder_vmid }}'
+        create_vm_ipaddr: '{{ kionite_builder_ip }}'
+        create_vm_cores: '{{ kionite_builder_cores }}'
+        create_vm_memory: '{{ kionite_builder_memory }}'
+        create_vm_balloon: 0
+        create_vm_disk_size: '{{ kionite_builder_disk_gib }}G'
+      when: builder_vm_status.rc != 0
+
+    - name: Read current VM configuration
+      ansible.builtin.command:
+        argv:
+          - pvesh
+          - get
+          - '/nodes/{{ proxmox.node }}/qemu/{{ kionite_builder_vmid }}/config'
+          - --output-format
+          - json
+      register: builder_vm_config
+      changed_when: false
+      no_log: true
+
+    - name: Verify adopted VM identity and disk format
+      ansible.builtin.assert:
+        that:
+          - config.name == kionite_builder_vm_name
+          - config.scsi0 is defined
+          - config.scsi0 is search('size=[0-9]+G')
+        fail_msg: VM name/disk does not match the expected builder; inspect before adoption.
+      vars:
+        config: '{{ builder_vm_config.stdout | from_json }}'
+
+    - name: Configure builder CPU and memory
+      ansible.builtin.command:
+        argv:
+          - qm
+          - set
+          - '{{ kionite_builder_vmid | string }}'
+          - --cpu
+          - host
+          - --cores
+          - '{{ kionite_builder_cores | string }}'
+          - --sockets
+          - '1'
+          - --memory
+          - '{{ kionite_builder_memory | string }}'
+          - --balloon
+          - '0'
+          - --onboot
+          - '1'
+      vars:
+        config: '{{ builder_vm_config.stdout | from_json }}'
+      when: >-
+        config.cpu | default('') != 'host' or
+        config.cores | default(1) | int != kionite_builder_cores | int or
+        config.sockets | default(1) | int != 1 or
+        config.memory | int != kionite_builder_memory | int or
+        config.balloon | default(config.memory) | int != 0 or
+        config.onboot | default(0) | int != 1
+      register: builder_vm_resources
+
+    - name: Grow builder disk without shrinking
+      ansible.builtin.command:
+        argv:
+          - qm
+          - resize
+          - '{{ kionite_builder_vmid | string }}'
+          - scsi0
+          - '{{ kionite_builder_disk_gib }}G'
+      vars:
+        config: '{{ builder_vm_config.stdout | from_json }}'
+        disk_size: '{{ (config.scsi0 | regex_findall("size=([0-9]+)G"))[0] | int }}'
+      when: disk_size | int < kionite_builder_disk_gib | int
+
+    - name: Report pending hardware activation
+      ansible.builtin.debug:
+        msg: >-
+          Hardware changes require a controlled shutdown/start; this playbook does
+          not interrupt running builds. Grow the guest partition/filesystem after
+          disk expansion. Verify /dev/kvm and resource counts after startup.
+      when: builder_vm_resources is changed

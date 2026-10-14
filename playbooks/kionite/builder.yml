@@ -1,0 +1,7 @@
+---
+# Configure an existing builder. This playbook never creates/deletes a VM or reboots.
+- name: Configure dedicated Kionite builder
+  hosts: kionite-builder
+  become: true
+  roles:
+    - kionite_builder

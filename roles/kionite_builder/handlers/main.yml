@@ -1,0 +1,9 @@
+---
+- name: Reload builder user systemd units
+  become: true
+  become_user: '{{ kionite_builder_user }}'
+  ansible.builtin.systemd_service:
+    scope: user
+    daemon_reload: true
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ ansible_facts.getent_passwd[kionite_builder_user][1] }}'

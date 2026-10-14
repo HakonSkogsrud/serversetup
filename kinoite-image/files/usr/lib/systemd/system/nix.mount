@@ -1,0 +1,14 @@
+[Unit]
+Description=Bind persistent Nix storage onto /nix
+Requires=var-nix.service
+After=var-nix.service
+Before=systemd-tmpfiles-setup.service
+
+[Mount]
+What=/var/nix
+Where=/nix
+Type=none
+Options=bind
+
+[Install]
+WantedBy=local-fs.target
