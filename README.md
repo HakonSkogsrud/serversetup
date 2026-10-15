@@ -19,6 +19,20 @@ My homelab uses a strict GitOps principle where a single GitHub repository is th
 - **Monitoring:** **UptimeKuma** tracks service uptime with push/ping/HTTP checks across the infrastructure.
 - **Observability:** **Loki** centralizes log aggregation from all VMs (via **Grafana Alloy**), while **Grafana** provides dashboards for error logs, internet uptime checks, and other metrics.
 
+### Kionite image builder
+
+A dedicated AlmaLinux VM builds the custom [Kionite desktop image](https://github.com/HakonSkogsrud/kionite)
+nightly around 03:00 Europe/Oslo. Ansible manages the build account, rootless Podman,
+bcvk/QEMU testing, systemd timer, GHCR credentials and Kuma success monitoring.
+Passed builds publish to `ghcr.io/hakonskogsrud/kionite:stable`; five registry
+builds and two local pipeline images are retained. Clients update manually with
+`bootc upgrade` and a reboot. This builder is adopted and maintained in place.
+
+The image owns the base OS and host integration. Nix/Home Manager supplies user
+and project tools, Flatpak supplies manually installed desktop apps, and Stow
+manages personal dotfiles separately. See the [builder guide](playbooks/kionite/README.md)
+for provisioning, scheduling, credentials, monitoring and retention.
+
 ### Core Infrastructure & Security
 
 - **Primary Host:** Focused on storage performance, running a ZFS **RAID 1 Mirror** (2x 4TB SSDs). Services use raw ZFS performance by mounting datasets via **virtiofs**.
