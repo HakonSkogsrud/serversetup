@@ -13,7 +13,7 @@ nextcloud_backup_path: "{{ nextcloud_storage_path }}/backups"
 nextcloud_postgres_path: "{{ nextcloud_project_dir }}/postgres"
 nextcloud_restore_marker_path: "{{ nextcloud_project_dir }}/.restore-in-progress"
 nextcloud_http_port: "{{ vms.nextcloud.port }}"
-nextcloud_eurooffice_version: "v9.3.2"
+nextcloud_eurooffice_version: "v9.3.6"
 nextcloud_eurooffice_http_port: "{{ vms.nextcloud.eurooffice_port }}"
 
 nextcloud_admin_user: nextcloud-admin
