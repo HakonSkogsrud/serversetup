@@ -31,7 +31,6 @@
     - scheduled_reboot
     - pihole_podman
     - internet_monitor
-    - alloy
 
 - name: Restore secondary host power-saving mode
   hosts: proxmox2

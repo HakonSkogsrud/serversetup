@@ -17,7 +17,6 @@
     - role: disk_health
       tags:
         - disk_health
-    - alloy
   post_tasks:
     - name: Restore MacBook Pro powersave mode
       ansible.builtin.include_role:

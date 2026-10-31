@@ -18,4 +18,3 @@
     - proxmox_config
     - tailscale_static_route
     - disk_health
-    - alloy
