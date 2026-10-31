@@ -1,3 +1,0 @@
----
-- name: Install and configure Grafana Alloy
-  ansible.builtin.import_tasks: alloy.yml

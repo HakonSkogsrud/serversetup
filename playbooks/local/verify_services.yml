@@ -14,8 +14,7 @@
   vars_files:
     - ../secrets.yml
   vars:
-    expected_running_services:
-      - alloy.service
+    expected_running_services: []
     expected_enabled_services:
       - zfs-load-key.service
     expected_timers:
@@ -34,8 +33,7 @@
   vars_files:
     - ../secrets.yml
   vars:
-    expected_running_services:
-      - alloy.service
+    expected_running_services: []
     expected_enabled_services: []
     expected_timers:
       - create-template-vm.timer
@@ -53,7 +51,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - docker.service
       - firewalld.service
     expected_enabled_services: []
@@ -77,7 +74,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - docker.service
     expected_enabled_services: []
     expected_timers:
@@ -97,7 +93,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - docker.service
       - firewalld.service
     expected_enabled_services: []
@@ -117,7 +112,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - smb.service
       - nmb.service
     expected_enabled_services: []
@@ -136,7 +130,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - github-runner.service
       - firewalld.service
     expected_enabled_services: []
@@ -155,7 +148,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - tailscaled.service
       - firewalld.service
     expected_enabled_services: []
@@ -174,7 +166,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - tailscaled.service
       - firewalld.service
     expected_enabled_services: []
@@ -193,7 +184,6 @@
     - ../secrets.yml
   vars:
     expected_running_services:
-      - alloy.service
       - firewalld.service
     expected_enabled_services: []
     expected_timers:

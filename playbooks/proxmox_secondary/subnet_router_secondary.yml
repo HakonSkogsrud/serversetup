@@ -47,7 +47,6 @@
     - tailscale_serve
     - scheduled_reboot
     - scheduled_update
-    - alloy
 
 - name: Restore secondary host power-saving mode
   hosts: proxmox2

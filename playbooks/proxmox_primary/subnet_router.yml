@@ -42,4 +42,3 @@
     - tailscale_serve
     - scheduled_reboot
     - scheduled_update
-    - alloy

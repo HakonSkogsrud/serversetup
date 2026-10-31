@@ -28,4 +28,3 @@
     - scheduled_reboot
     - scheduled_update
     - tailscale_static_route
-    - alloy

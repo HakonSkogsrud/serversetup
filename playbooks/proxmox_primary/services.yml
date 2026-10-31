@@ -29,18 +29,6 @@
         tasks_from: backup.yml
       when: force_recreate | default(false) | bool
 
-    - name: Take backup of grafana
-      ansible.builtin.include_role:
-        name: grafana
-        tasks_from: backup.yml
-      when: force_recreate | default(false) | bool
-
-    - name: Take backup of loki
-      ansible.builtin.include_role:
-        name: loki
-        tasks_from: backup.yml
-      when: force_recreate | default(false) | bool
-
     - name: Take backup of pihole
       ansible.builtin.include_role:
         name: pihole_docker
@@ -83,11 +71,8 @@
       - "/home/{{ template.user }}/caddy/docker-compose.yml"
       - "/home/{{ template.user }}/vaultwarden/docker-compose.yml"
       - "/home/{{ template.user }}/uptimekuma/docker-compose.yml"
-      - "/home/{{ template.user }}/loki/docker-compose.yml"
-      - "/home/{{ template.user }}/grafana/docker-compose.yml"
       - "/home/{{ template.user }}/syncthing/docker-compose.yml"
     docker_auto_update_uptimekuma_push_url: "http://10.0.0.44:3001/api/push/9ZVVWCZP0NfHGzCdtzlzdoxYuB2nOFC2?status=up&msg=OK&ping="
-    alloy_docker_installed: true
     scheduled_reboot_timer_calendar: "Sun *-*-* 01:00:00"
   roles:
     - almalinux_vm_bootstrap
@@ -102,11 +87,8 @@
     - syncthing
     - couchdb
     - docker_auto_update
-    - alloy
     - echovault
     - caddy
     - vaultwarden
     - uptimekuma
-    - loki
-    - grafana
     - nebula_sync
