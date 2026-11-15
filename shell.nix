@@ -1,7 +1,8 @@
-{ pkgs ? import <nixpkgs> {} }:
-
-pkgs.mkShell {
-  packages = with pkgs; [
+let
+  pkgs = import <nixpkgs> { };
+in
+pkgs.mkShellNoCC {
+  pagkages = with pkgs; [
     ansible
     ansible-lint
     ansible-language-server
