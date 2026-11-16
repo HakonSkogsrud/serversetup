@@ -2,7 +2,7 @@
 - name: Back up Nextcloud before VM recreation
   hosts: nextcloud
   become: true
-  gather_facts: false
+  gather_facts: true
   vars_files:
     - ../../secrets.yml
   tasks:
